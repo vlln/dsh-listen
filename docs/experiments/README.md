@@ -1,5 +1,7 @@
 # 实验
 
+当前以[轻量benchmark驱动方向](../direction.md)为准。以下多路线协议仅作储备，不要求先跑完才搭功能。
+
 - [协议](0001-evaluation-protocol.md)：候选路线、语料、控制、指标、预算门禁。
 - [结果模板](result-template.md)：尚无运行结果。
 - [素材清单模板](manifest-template.json)：只有字段定义，没有素材或录音。
