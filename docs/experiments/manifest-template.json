@@ -1,0 +1,23 @@
+{
+  "status": "template-not-executed",
+  "protocol_version": "draft-1",
+  "samples": [],
+  "sample_fields": {
+    "id": "unique-id",
+    "source_group": "same-source-derivatives-share-split",
+    "split": "development-or-heldout",
+    "domain": "music-speech-environment-mixed-control",
+    "sha256": "fill-after-authorized-acquisition",
+    "source_url_or_recording_provenance": "required",
+    "license_and_attribution": "required",
+    "external_upload_approval": "not-granted",
+    "duration_seconds": null,
+    "sample_rate_hz": null,
+    "channels": null,
+    "questions": [],
+    "reference_facts": [],
+    "unanswerable_claims": [],
+    "event_intervals": [],
+    "annotators_and_adjudication": "required"
+  }
+}
