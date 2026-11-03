@@ -22,7 +22,10 @@ created: 2026-11-03T13:00:00Z
 | 分析参数 | 范围、提取项目、频谱时频折衷、显示频段、声道呈现 | Agent在允许值内选择，返回实际生效参数与解释 |
 | 部署策略 | 本地/API供应商、凭据、下载、外发同意、价格/资源上限 | 用户设置/宿主；Agent不能用参数授权或改供应商 |
 
-## 3. Agent可见参数提案
+## 工具封装粒度待对照
+单listen只是聚合候选，非最终决定。正交特征可拆为signal/transcript/events工具，共用同一底层Pipeline。具体[粒度对照规划](../experiments/0002-tool-granularity-comparison.md)比较同能力同资源预算下的正确率/交互/成本；不将Agent工具数与安装包数捆绑。
+
+## 3. Agent可见参数提案（聚合方案）
 沿用source_path/attachment_id/from/to；新增以下受限参数，不增加自由文本：
 
 | 参数 | 默认/允许值 | 影响与边界 |

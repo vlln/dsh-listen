@@ -2,7 +2,8 @@
 
 当前以[轻量benchmark驱动方向](../direction.md)为准。以下多路线协议仅作储备，不要求先跑完才搭功能。
 
-- [协议](0001-evaluation-protocol.md)：候选路线、语料、控制、指标、预算门禁。
+- [封装粒度对照](0002-tool-granularity-comparison.md)：当前规划，聚合/正交拆工具同能力同资源预算对比，未执行。
+- [早期协议](0001-evaluation-protocol.md)：储备，候选路线、语料、控制、指标、预算门禁。
 - [结果模板](result-template.md)：尚无运行结果。
 - [素材清单模板](manifest-template.json)：只有字段定义，没有素材或录音。
 - [官方来源入口](sources.md)：索引级证据，全文待核实。
