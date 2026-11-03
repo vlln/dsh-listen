@@ -10,6 +10,9 @@ created: 2026-11-03T12:16:44Z
 
 上游：[推进方向](../direction.md)、[能力Spec](../spec/0001-listening-capability.md)。用户修订：不设question参数；工具是程序化证据提取，返回文本、图像/音频特征和统计特征，由Agent理解。不实现、不冻结。
 
+## 当前修订优先级
+[可调轻量Pipeline](../adr/0003-portable-configurable-pipeline.md)为新约束：允许Agent选择features、spectral_detail、frequency_range_hz、channel_view；后端由用户配置，可本地或API。不再要求默认本地模型/TF。下文固定配方指版本化的默认配方，参数、部署与完成状态以该修订为准。
+
 ## 1. 职责分离
 音频 → 固定版本的提取管线 → 证据包 → Agent结合用户问题推理。
 工具不接收问题、选项或答案键，不替Agent作语义问答。不将通用音频问答模型作为默认主路径；不暗中读取会话问题来路由提取。
@@ -23,7 +26,7 @@ created: 2026-11-03T12:16:44Z
 | from | number? | 原文件秒数，默认0 |
 | to | number? | 原文件秒数，默认文件末尾 |
 
-无question、prompt、候选声源文本、model/provider等参数。首版使用固定证据配方，不加一个自由文本字段变相传问题。可按from/to重提局部。
+无question、prompt、候选声源文本、model/provider等参数。不加自由文本字段变相传问题；可调features、频谱细节、可视频段及声道呈现，具体枚举和作用范围见当前修订；可按from/to重提局部。
 
 先检查宿主文件权限、软链最终目标/附件访问权，再探测解码；外发另需授权，给路径不等于同意上传。不接受URL，不静默选最新附件；校验有限数值及0≤from<to≤duration。过长明确要求缩窗，不悄悄抽样。
 
@@ -66,7 +69,7 @@ job_id: string | null
 
 默认精简表格/分段文本+一张可读图，不输出海量矩阵。长转写截断要报告未返回范围，提取覆盖与显示覆盖分别记录；缺失通道/覆盖与限制不能因输出预算被截掉。
 
-complete仅表示固定配方的必需特征覆盖请求范围，不保证识别全部声音。完整目标配方含DSP、ASR与固定标签；ASR/标签未安装时可返回DSP但整体partial，不能静默缩配方。可选暂缓特征未启用不使整体失败；无任何可用结果为failed。running为非终态，其余终态不留任务继续运行。jobs取回方式在实现前核实宿主契约，不要求盲重调listen轮询。
+complete相对于本次requested_features：显式只选signal成功可complete；默认三项缺ASR/标签则partial。列available_features/missing_features，缺组件不自动下载/外发；不保证识别全部声音。无任何可用结果为failed。running为非终态，其余终态不留任务继续运行。jobs取回方式在实现前核实宿主契约，不要求盲重调listen轮询。
 
 ## 5. 预处理与权限
 保留原文件/hash/声道，按每种方法派生输入。ASR的16k mono不自动用于图像和音乐统计；禁止统一降采样、折mono、去噪、去静音或归一化而不记录信息损失。数值测量注明基于原声还是派生信号。
