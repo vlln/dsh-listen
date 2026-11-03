@@ -1,8 +1,8 @@
 # 研究导航
 
-当前阶段：DESIGN（草拟；INIT 的形态确认待人类决定）。
+当前阶段：DESIGN。用户已确认按此前思路确定[第一版规划基线](v1-baseline.md)，不再反复展开同一方向选择；底层契约/版本验证属于后续工程任务，尚未宣称通过。
 当前推进方向：[轻量 benchmark → 最小功能 → 一轮测评](direction.md)。此前多路线实验保留作储备，不是开发前置条件。
-当前架构：无question的固定证据提取，输出文本、图像/音频特征、统计，由主Agent推理。具体参数见[特征配方](spec/0002-feature-recipe.md)，候选实现栈见[ADR-0002](adr/0002-extraction-stack.md)。
+当前架构：无question的可调特征Pipeline，输出文本、图像/音频特征、统计，由主Agent多轮推理。数学参考见[特征配方](spec/0002-feature-recipe.md)，当前部署与参数以[ADR-0003](adr/0003-portable-configurable-pipeline.md)为准；ADR-0002不是默认安装方案。
 本轮交付：逐特征技术设计；无实现/安装/实验执行、无性能结论、无设计冻结。[审查与开工前待核](feature-design-review.md)列出尚不能省略的核验。
 
 ## 阅读顺序
