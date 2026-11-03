@@ -1,6 +1,6 @@
 # 接口候选
 
-- [Agent工具可见面](0001-agent-tool-surface.md)：draft，首版单一listen入口、内部技巧、证据返回与benchmark衔接。
+- [Agent工具可见面](0001-agent-tool-surface.md)：draft，无question参数的listen，固定提取文本、图像/音频特征、统计特征，由Agent推理。
 
 本稿是设计提案，不是正式冻结接口。先用选定benchmark的开发样例核对最小任务，再冻结入参、错误、大小与时长上限。
 
