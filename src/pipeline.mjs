@@ -19,6 +19,7 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
    checkCancel();
    const provider=feature==='signal'?{version:analyzeVersion}:extractors[feature];
    if(!provider){evidence[feature]={status:'unavailable',reason:'not_configured'};missing.push(feature);continue;}
+   try{if(provider.validate)await provider.validate();checkCancel();}catch(error){checkCancel();evidence[feature]={status:'unavailable',reason:'provider_changed'};missing.push(feature);continue;}
    const parameters=feature==='signal'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:{};
    const key=evidenceKey({owner:context.owner,sourceHash:audio.source.sha256,range:[audio.coverage.from,audio.coverage.to],component:feature,version:provider.version,parameters});
    let result=cache.get(key);
