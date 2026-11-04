@@ -2,7 +2,7 @@
 title: 首批10case完整工具参考运行
 description: 复用MMAU缓存固定开发十题，600000ms会话上限与40请求硬预算，真实DSH headless运行并外部官方评分。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T10:20:00Z
 ---
 
