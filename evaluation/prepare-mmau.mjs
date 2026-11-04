@@ -4,7 +4,7 @@ const file=await asyncBufferFromFile('.work/mmau-media/test_mini.parquet.partial
 const rows=await parquetReadObjects({file,columns:['instruction','choices','answer','other_attributes'],compressors});
 const officialEnvelope=JSON.parse(await fs.readFile('.work/metadata/mmau-annotations-api.json'));const official=new Map(JSON.parse(Buffer.from(officialEnvelope.content,'base64')).map(r=>[r.id,r]));
 let textMismatch=0;
-const samples=rows.map((r,index)=>{const a=JSON.parse(r.other_attributes),o=official.get(a.id);if(!o)throw Error('UNKNOWN_MEDIA_ID');if(o.question!==r.instruction||JSON.stringify(o.choices)!==JSON.stringify(r.choices)||o.answer!==r.answer)textMismatch++;return {...a,audio_id:o.audio_id,question:o.question,choices:o.choices,answer:o.answer,physical_row:index};});
+const samples=rows.map((r,index)=>{const a=JSON.parse(r.other_attributes),o=official.get(a.id);if(!o)throw Error('UNKNOWN_MEDIA_ID');if(o.question!==r.instruction||JSON.stringify(o.choices)!==JSON.stringify(r.choices)||o.answer!==r.answer)textMismatch++;return {...a,audio_id:o.audio_id,question:o.question,choices:o.choices,answer:o.answer,difficulty:o.difficulty,...(o['sub-category']!==undefined?{'sub-category':o['sub-category']}:{}),physical_row:index};});
 const prepared=prepareEvaluation(samples,{seed:'dsh-listen-v1',developmentPerDomain:10});
 const directory='.work/mmau-prepared';await fs.mkdir(directory,{recursive:true,mode:0o700});
 await fs.writeFile(`${directory}/agent.json`,JSON.stringify(prepared.agent));await fs.writeFile(`${directory}/keys.json`,JSON.stringify(prepared.keys),{mode:0o600});await fs.writeFile(`${directory}/split.json`,JSON.stringify({seed:prepared.seed,development_ids:prepared.development_ids,test_ids:prepared.test_ids}));

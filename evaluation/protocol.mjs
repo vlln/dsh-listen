@@ -4,7 +4,7 @@ export function prepareEvaluation(samples,{seed='dsh-listen-v1',developmentPerDo
  const ids=new Set(),groups=new Map(),agent=[],keys=[];
  for(const row of samples){
   if(!row||typeof row.id!=='string'||ids.has(row.id)||!['sound','speech','music'].includes(row.task)||typeof row.question!=='string'||!Array.isArray(row.choices)||row.choices.length<2||!row.choices.every(c=>typeof c==='string')||!row.choices.includes(row.answer)||typeof row.audio_id!=='string')throw Error('INVALID_DATASET');
-  ids.add(row.id);agent.push({id:row.id,audio_id:row.audio_id,question:row.question,choices:[...row.choices]});keys.push({id:row.id,task:row.task,choices:[...row.choices],answer:row.answer});
+  ids.add(row.id);agent.push({id:row.id,audio_id:row.audio_id,question:row.question,choices:[...row.choices]});keys.push({id:row.id,audio_id:row.audio_id,question:row.question,task:row.task,choices:[...row.choices],answer:row.answer,...(row.difficulty!==undefined?{difficulty:row.difficulty}:{}),...(row['sub-category']!==undefined?{'sub-category':row['sub-category']}:{})});
   const group=groups.get(row.task)??[];group.push(row.id);groups.set(row.task,group);
  }
  const development_ids=[];
@@ -22,6 +22,6 @@ export function scorePredictions(keys,predictions){
  const expected=new Set(keys.map(k=>k.id)),byId=new Map();if(expected.size!==keys.length)throw Error('DUPLICATE_KEY_ID');
  for(const p of predictions){if(!expected.has(p.id)||byId.has(p.id))throw Error('DUPLICATE_OR_UNKNOWN_PREDICTION');byId.set(p.id,p);}
  let correct=0,completed=0;const domains={},officialRows=[];
- for(const key of keys){const prediction=byId.get(key.id);const index=prediction?.choice_index;const valid=prediction?.status==='complete'&&Number.isInteger(index)&&index>=0&&index<key.choices.length;const text=valid?key.choices[index]:'';const match=valid&&officialTokenMatch(key.answer,text,key.choices);correct+=Number(match);completed+=Number(valid);const d=domains[key.task]??={correct:0,total:0};d.total++;d.correct+=Number(match);officialRows.push({...key,model_output:text});}
+ for(const key of keys){const prediction=byId.get(key.id);const valid=prediction?.status==='complete'&&typeof prediction.model_output==='string'&&prediction.model_output.trim().length>0;const text=valid?prediction.model_output:'';const match=valid&&officialTokenMatch(key.answer,text,key.choices);correct+=Number(match);completed+=Number(valid);const d=domains[key.task]??={correct:0,total:0};d.total++;d.correct+=Number(match);officialRows.push({...key,model_output:text});}
  return {total:keys.length,correct,completed,accuracy:keys.length?correct/keys.length:null,completion_rate:keys.length?completed/keys.length:null,domains,officialRows};
 }

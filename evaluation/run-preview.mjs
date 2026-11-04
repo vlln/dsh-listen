@@ -1,6 +1,8 @@
 // Executes only the user-approved nine development tasks; never reads answer keys.
-import fs from 'node:fs/promises';import path from 'node:path';import {spawn} from 'node:child_process';
+import fs from 'node:fs/promises';import path from 'node:path';import {spawn} from 'node:child_process';import {assertPreparedTask} from './headless-adapter.mjs';
 const root=process.cwd(),manifest=JSON.parse(await fs.readFile('.work/headless-preview/manifest.json'));
+// Validate every task before profile writes or any model dispatch; legacy manifests fail closed.
+const tasks=await Promise.all(manifest.map(async sample=>{const text=await fs.readFile(path.join(sample.directory,'task.txt'),'utf8');assertPreparedTask(sample,text);return text;}));
 const modelPatch=await fs.readFile('.work/real-preview-model.patch.yml','utf8');
 const home=path.resolve('.work/dsh-system-home'),pluginPatch=path.join(home,'profiles/headless/cordis.patch.yml');
 const original=await fs.readFile(pluginPatch,'utf8');const runs=[];
@@ -9,9 +11,9 @@ try{
   const runtimePatch=modelPatch.replace('mode: aggregate',`mode: ${mode}`);const runtimeFile=path.resolve(`.work/preview-${mode}.patch.yml`);await fs.writeFile(runtimeFile,runtimePatch);
   const plugin=mode==='baseline'?'- id: dsh-listen\n  disabled: true\n':original.replace('mode: aggregate',`mode: ${mode}`);await fs.writeFile(pluginPatch,plugin);
   for(let index=0;index<manifest.length;index++){
-   if(mode==='aggregate'&&index===0){runs.push({mode,index,existing:true,events:path.resolve('.work/preview-aggregate-first.jsonl')});continue;}
+   // Do not reuse historical runs produced under the retired index/JSON protocol.
    const budget=JSON.parse(await fs.readFile('.work/headless-preview/request-budget.json'));if(budget.requests>=40)throw Error('PREVIEW_BUDGET_EXHAUSTED');
-   const sample=manifest[index],prefix=path.resolve(`.work/preview-${mode}-${index}`),task=await fs.readFile(path.join(sample.directory,'task.txt'));
+   const sample=manifest[index],prefix=path.resolve(`.work/preview-${mode}-${index}`),task=tasks[index];
    const out=await fs.open(prefix+'.jsonl','wx',0o600),err=await fs.open(prefix+'.stderr','wx',0o600);
    const child=spawn('dsh',['--profile','headless','--patch',runtimeFile,'--json','-'],{cwd:sample.directory,env:{...process.env,NODE_USE_ENV_PROXY:'0',DSH_HOME:home},stdio:['pipe',out.fd,err.fd]});child.stdin.end(task);
    const timer=setTimeout(()=>child.kill('SIGTERM'),180000);let code;

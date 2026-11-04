@@ -1,5 +1,7 @@
+import {mkdtemp,writeFile,unlink,rmdir} from 'node:fs/promises';
+import path from 'node:path';
 export function makeHostBridge({fs,workingDirectory,scratch,resolveAttachment,localExecution=false}={}){
- if(!fs||['resolve','contains','processPath'].some(name=>typeof fs[name]!=='function')||typeof workingDirectory?.ensure!=='function'||typeof scratch!=='string'||!scratch)throw Error('INVALID_HOST_SERVICES');
+ if(!fs||['resolve','readBytes'].some(name=>typeof fs[name]!=='function')||typeof workingDirectory?.ensure!=='function'||typeof scratch!=='string'||!scratch)throw Error('INVALID_HOST_SERVICES');
  const contexts=new WeakSet();
  async function caller(exec){
   if(!exec?.agent?.session?.id||!(exec.signal instanceof AbortSignal))throw Error('INVALID_CALLER');
@@ -16,10 +18,13 @@ export function makeHostBridge({fs,workingDirectory,scratch,resolveAttachment,lo
    if(typeof resolveAttachment!=='function')throw Error('ATTACHMENT_AUTHORIZATION_UNAVAILABLE');
    return resolveAttachment(source.value,context);
   }
-  const root=await fs.resolve(context.cwd,{signal:context.signal}),file=await fs.resolve(source.value,{cwd:context.cwd,signal:context.signal});
-  if(!fs.contains(root,file))throw Error('ACCESS_DENIED');
+  const target=await fs.resolve(source.value,{cwd:context.cwd,signal:context.signal});
+  const bytes=await fs.readBytes(target,context.signal,256*1024*1024);
   if(context.signal.aborted)throw Error('CANCELLED');
-  return {file:fs.processPath(file),root:fs.processPath(root),scratch};
+  const directory=await mkdtemp(path.join(scratch,'file-')),file=path.join(directory,'source.media');
+  try{await writeFile(file,bytes,{mode:0o600});if(context.signal.aborted)throw Error('CANCELLED');}
+  catch(error){await unlink(file).catch(()=>{});await rmdir(directory);throw error;}
+  return {file,root:directory,scratch,async dispose(){await unlink(file);await rmdir(directory);}};
  }
  return {caller,authorize};
 }

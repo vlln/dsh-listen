@@ -4,7 +4,7 @@ test('real Cordis disable aborts and awaits an in-flight audio tool before retur
  const {Context}=await import('@deepseek-ai/cordis'),entry=await import('../../src/index.mjs');
  const ctx=new Context(),tools=new Map();let notifyStarted,stopped=false,images=0;
  const started=new Promise(resolve=>{notifyStarted=resolve;});
- ctx.provide('fs',{resolve:async()=>{throw Error('SHOULD_NOT_REACH_DECODE');},contains:()=>false,processPath:()=>{throw Error('SHOULD_NOT_READ');}});
+ ctx.provide('fs',{resolve:async()=>{throw Error('SHOULD_NOT_REACH_DECODE');},readBytes:async()=>{throw Error('SHOULD_NOT_READ');}});
  ctx.provide('workingDirectory',{ensure:async(agent,signal)=>{notifyStarted();await new Promise(resolve=>{if(signal.aborted)resolve();else signal.addEventListener('abort',resolve,{once:true});});await new Promise(resolve=>setImmediate(resolve));stopped=true;throw Error('CANCELLED');}});
  ctx.provide('attachments',{saveImage:async()=>{images++;throw Error('SHOULD_NOT_SAVE');}});
  ctx.provide('tools',{register:tool=>{tools.set(tool.name,tool);return ()=>tools.delete(tool.name);}});
