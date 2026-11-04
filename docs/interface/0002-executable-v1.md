@@ -2,7 +2,7 @@
 title: 第一版最小执行契约
 description: 收敛既有修订，明确生产实现边界、参数、状态和未验证能力。
 type: interface
-status: proposed
+status: active
 created: 2026-11-03T14:30:00Z
 ---
 
