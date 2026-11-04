@@ -1,0 +1,9 @@
+- insert:
+    - id: dsh-listen
+      name: dsh-listen
+      config:
+        scratch: !!js dshHomePath('data', 'dsh-listen', 'scratch')
+        mode: aggregate
+        localExecution: false
+        asrEnabled: false
+        eventsEnabled: false
