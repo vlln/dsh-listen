@@ -23,6 +23,12 @@ test('success preserves final text and observed counters, not missing counters',
   assert.match(await fs.readFile(path.join(dir,'stderr.log'),'utf8'),/synthetic stderr/);
 });
 
+test('answer words about payment and authentication are not control-plane errors',async t=>{
+  const dir=await fixture(t),text='The speaker discusses payment, authentication, and quota.';
+  const result=await session(dir,`console.log(JSON.stringify({type:'final',text:${JSON.stringify(text)}}));`);
+  assert.equal(result.status,'complete');assert.equal(result.model_output,text);assert.equal(result.stop_batch,false);
+});
+
 test('failure, empty final and spawn errors never become predictions',async t=>{
   for(const code of [`console.log(JSON.stringify({type:'final',text:'wrong'}));process.exitCode=2;`,`console.log(JSON.stringify({type:'final',text:'  '}));`,'']){
     const dir=await fixture(t),result=await session(dir,code);assert.equal(result.status,'failed');assert.equal(result.model_output,'');
