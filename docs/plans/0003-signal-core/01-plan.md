@@ -2,7 +2,7 @@
 title: 正式信号数值核心
 description: 参数/PCM验证、电平与声道统计，随后频谱/制图和worker。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T01:42:00Z
 ---
 

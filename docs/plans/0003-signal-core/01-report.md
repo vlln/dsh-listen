@@ -2,7 +2,7 @@
 title: 正式信号核心首单元报告
 description: 电平/能量/声道源码TDD8项通过，源码coverage100/97.30，feature尚未结束。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T01:45:00Z
 ---
 
@@ -30,5 +30,8 @@ npm run check
 # 正式PNG绘制
 TDD实现Raster与renderPlot，不依赖OS字体/外部graphics runtime；图含源时间、mel中心Hz刻度、共享相对dB色条、声道视图/波形。独立审查发现合法大幅值波形一端未clip可导致无限长line，以及公开Raster几何无界；已双端clamp、拒绝非有限/过大几何和坏wave bucket并新增回归。`npm run gate:feature`35/35 PASS，image branch96.77%、raster branch100%，全源码line100%；包10159字节。当前不包含完整能量strip的PNG展示（数值能量已返回），视觉系统验收后须明确是否满足既定呈现规格，不能以单元测试当已实际送达Agent。
 
-# 未完成
-同feature尚需正式制图/worker等按计划推进及review修正。没有解码/权限/ASR/events/插件，未跑完整系统或MMAU。Goal保持active，不提前合并或标Plan done。
+# 正式worker与能量轨迹
+analyzeSignal父线程先PCM/参数准入，worker独立describe/prepare/render，回传紧凑metadata/统计和PNG；取消/超时terminate后等exit再结算。PNG补绿色能量轨迹及固定-80..0 dBFS说明。初次worker catch分支coverage50%被真实门禁拦下，简化错误传递为String(error)后40/40 PASS，所有src line100%，analysis branch88.46%、worker100%；包11237字节。worker RSS非总内存保障仍披露，不等于完整资源验收。独立review发现fake signal可在Worker启动后抛错漏清理、短view可能复制巨大backing；已启动前验证AbortSignal、仅复制有效PCM到紧凑buffer并transfer，保留caller所有权，回归41/41 PASS；analysis branch91.43%，包11366字节。
+
+# 本feature结论
+已实现并按独立review修正signal/spectrum/plot/raster/image/worker，正式gate通过，可合并develop。未运行SYSTEM_TEST视觉/安装/DSH调用，不把单元门禁当最终工程验收。后续独立feature实现解码/权限/缓存/ASR/events/插件，MMAU效果仍待。Goal保持active。
