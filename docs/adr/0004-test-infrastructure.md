@@ -2,7 +2,7 @@
 title: 轻量测试基础设施提案
 description: Node内置测试与覆盖、外部依赖隔离、打包及正式门禁计划。
 type: adr
-status: proposed
+status: accepted
 created: 2026-11-03T14:30:00Z
 ---
 

@@ -2,7 +2,7 @@
 title: 建立正式轻量测试基建
 description: 已批准契约下的依赖锁定、质量和安装预算负控及Node测试入口。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T01:25:00Z
 ---
 

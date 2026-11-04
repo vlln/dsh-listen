@@ -2,7 +2,7 @@
 title: 正式基建首轮结果
 description: 两个固定依赖、673215字节闭包、三项负控通过，业务与远程CI尚未验证。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T01:25:00Z
 ---
 
@@ -21,4 +21,4 @@ CI yaml声明ubuntu/macos Node22同样入口，未推送、未验证远程，不
 
 # 尚未通过
 fixture助手已补并3/3 PASS：PCM16 WAV头/载荷一致，loopback响应结束后连接关闭，服务/客户端异常均传播且server清理。真实npm pack得2183字节，隔离目录ignore-scripts安装3包exit0，包identity/固定两依赖/无install脚本核验通过；不是功能可用证据。
-基建出口确认及合并未齐；不标ADR accepted、不推进DEVELOP。远程CI未运行。源码/插件为空，工程验收/效果验收均未完成。
+用户已明确批准基建出口：ADR accepted并合并develop进入DEVELOP；合并记录为后续git锚点。远程CI未运行。源码/插件为空，工程验收/效果验收均未完成。
