@@ -44,7 +44,7 @@ DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-l
 ## 使用方式
 让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view。工具不接受question/prompt，语义判断留在主Agent。
 示例：`listen({source_path:"recording.wav",features:["signal"],from:0,to:10})`；随后可缩到1–2秒、改transient，不必自己转码/裁文件。
-结果包含覆盖、有效参数、方法/单位、限制和图像附件。`complete`仅针对本次请求项；不会证明所有声音均识别。候选标签/ASR都可能错误，静音或无转写不是“无人声”。
+from/to均可不填，分别默认开头/结尾；都不填分析整个音频。超过源时长的边界截至结尾，返回source.duration_seconds为完整时长、coverage为实际分析区间；截取后空区间拒绝，实际分析仍限60秒。结果包含覆盖、有效参数、方法/单位、限制和图像附件。`complete`仅针对本次请求项；不会证明所有声音均识别。候选标签/ASR都可能错误，静音或无转写不是“无人声”。
 
 ## 安全与数据
 - 本地信号/本地提取不上传原音频；API ASR是可选明确外发。

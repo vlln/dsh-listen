@@ -13,7 +13,7 @@ created: 2026-11-03T14:30:00Z
 ## 输入与工具面
 聚合listen，拆分audio_signal/audio_transcript/audio_events，共用执行器；配置选择一种面，不同时暴露对照两面。
 - source_path/attachment_id恰好一个。路径基于调用Agent cwd，附件只从当前有权会话解析；无执行Agent上下文则fail closed。生产解析必须走宿主文件身份/工作目录/附件能力，不能照搬spike传root就认为权限已检查。
-- from默认0，to默认文件末尾；有限数值且0≤from<to≤时长，≤60秒；size≤256MiB、8–192kHz、1–2声道、单音轨。首版格式目标WAV/FLAC/MP3/M4A/OGG，但实际每种格式需验证才列支持，不声称WAV-only spike覆盖全部。
+- from/to均可省略，分别默认0/文件末尾；都省略为整个音频。有限非负边界超过音频时长则截至末尾；实际非空区间须≤60秒，资源上限在截取后检查。返回source.duration_seconds说明完整音频时长，coverage说明实际样本区间，requested_parameters保留请求。截取后为空返回EMPTY_RANGE，负数/倒序/非有限仍拒绝（用户于2026-11-04明确修订）；size≤256MiB、8–192kHz、1–2声道、单音轨。首版格式目标WAV/FLAC/MP3/M4A/OGG，但实际每种格式需验证才列支持，不声称WAV-only spike覆盖全部。
 - features默认signal/transcript/events，非空且不重复。拆分工具固定其唯一feature；signal含元数据/波形/能量/mel/统计。
 - spectral_detail transient/balanced/tonal对应1024/2048/4096，hop=N/4。frequency_range_hz仅裁图，不变全带统计；channel_view separate/power_mean仅显示。未用到图像的请求传显示参数拒绝PARAMETER_NOT_APPLICABLE，不静默忽略。
 - 未声明字段一律UNKNOWN_PARAMETER，特别拒绝question/prompt/自由shell/供应商/授权字段；宿主implicit参数根开放不等于工具应接受额外字段。
