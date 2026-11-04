@@ -3,8 +3,10 @@ import {normalizeRequest} from './request.mjs';
 import {EvidenceCache,evidenceKey} from './cache.mjs';
 import {decodeAudio} from './decode.mjs';
 import {analyzeSignal} from './analysis.mjs';
-export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSignal,extractors={},cache=new EvidenceCache()}={}){
+export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSignal,analyzeVersion='signal-v1',extractors={},cache=new EvidenceCache()}={}){
  if(typeof authorize!=='function'||typeof decode!=='function'||typeof analyze!=='function')throw Error('INVALID_PIPELINE');
+ if(typeof analyzeVersion!=='string'||!analyzeVersion)throw Error('INVALID_ANALYZER_VERSION');
+ for(const [feature,provider] of Object.entries(extractors))if(!['transcript','events'].includes(feature)||!provider||typeof provider.version!=='string'||!provider.version||typeof provider.extract!=='function')throw Error('INVALID_EXTRACTOR_CONFIGURATION');
  return async function inspect(args,context,onlyFeature){
   const request=normalizeRequest(args,onlyFeature);
   if(!context||typeof context.owner!=='string'||!context.owner||!(context.signal instanceof AbortSignal))throw Error('INVALID_CALLER');
@@ -15,7 +17,7 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
   const evidence={},missing=[];let hits=0,computed=0,png;
   for(const feature of request.features){
    checkCancel();
-   const provider=feature==='signal'?{version:'signal-v1'}:extractors[feature];
+   const provider=feature==='signal'?{version:analyzeVersion}:extractors[feature];
    if(!provider){evidence[feature]={status:'unavailable',reason:'not_configured'};missing.push(feature);continue;}
    const parameters=feature==='signal'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:{};
    const key=evidenceKey({owner:context.owner,sourceHash:audio.source.sha256,range:[audio.coverage.from,audio.coverage.to],component:feature,version:provider.version,parameters});
