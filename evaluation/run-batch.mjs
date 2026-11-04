@@ -9,7 +9,7 @@ import {StringDecoder} from 'node:string_decoder';
 import {fileURLToPath} from 'node:url';
 
 const LOG_LIMIT = 32 * 1024 * 1024;
-const STOP_PATTERN = /quota|insufficient|payment|HTTP.?40[129]|HTTP.?429|unauthori[sz]ed|authentication|HEADLESS_PREVIEW_REQUEST_LIMIT|INVALID_BUDGET|EEXIST.*budget/i;
+const STOP_PATTERN = /quota|insufficient|payment|HTTP.?40[129]|HTTP.?429|unauthori[sz]ed|authentication|MISSING_CREDENTIAL|no API key|MODEL_NOT_FOUND|not available|no[^\r\n]*model|HEADLESS_PREVIEW_REQUEST_LIMIT|INVALID_BUDGET|EEXIST.*budget/i;
 
 /** Run one shell-free POSIX session. The caller assigns the manifest id. */
 export async function runSession({command,args=[],cwd,env,task,outputDirectory,timeoutMs=600000,graceMs=2000}) {
@@ -20,7 +20,7 @@ export async function runSession({command,args=[],cwd,env,task,outputDirectory,t
   let err;
   try{err=await fs.open(path.join(outputDirectory,'stderr.log'),'wx',0o600);}catch(error){await out.close();throw error;}
   const started=performance.now(),deadline=started+timeoutMs;
-  let child,reaped=false,settled=false,timedOut=false,cancelled=false,failure,cleanupFailed=false,finalText,exitCode,signal;
+  let child,reaped=false,settled=false,timedOut=false,cancelled=false,failure,cleanupFailed=false,finalText,exitCode,signal,sessionId;
   let deadlineTimer,killTimer,finishTimer,stdoutBytes=0,stderrBytes=0,line='',stderrTail='',steps=0;
   const usage={},missingUsage=new Set(),calls=[],byId=new Map();
   const decoder=new StringDecoder('utf8');
@@ -49,6 +49,7 @@ export async function runSession({command,args=[],cwd,env,task,outputDirectory,t
     if(timedOut||cancelled||failure)return;
     let row;try{row=JSON.parse(text);}catch{return;}
     sawEvents=true;
+    if(row.type==='session'&&typeof (row.sessionId??row.id)==='string')sessionId=row.sessionId??row.id;
     if(row.type==='final'&&typeof row.text==='string')finalText=row.text;
     if(row.type==='status'&&row.phase==='step_end'){
       steps++;
@@ -110,7 +111,7 @@ export async function runSession({command,args=[],cwd,env,task,outputDirectory,t
   const complete=!timedOut&&!cancelled&&!failure&&!cleanupFailed&&exitCode===0&&typeof finalText==='string'&&finalText.trim().length>0;
   for(const key of missingUsage)delete usage[key];
   return {status:timedOut?'timeout':complete?'complete':'failed',model_output:complete?finalText:'',duration_ms:Math.round(performance.now()-started),
-    ...(steps?{model_requests:steps}:{}),...(Object.keys(usage).length?{usage}:{}),...(sawEvents?{tool_calls:calls}:{}),
+    ...(sessionId?{session_id:sessionId}:{}),...(steps?{model_requests:steps}:{}),...(Object.keys(usage).length?{usage}:{}),...(sawEvents?{tool_calls:calls}:{}),
     exit_code:exitCode??null,signal:signal??null,cleanup_failed:cleanupFailed,stop_batch:cleanupFailed||cancelled||fatal,
     ...(failure?{error:failure}:{}),...(cancelled?{cancelled:true}:{})};
 }
@@ -118,10 +119,48 @@ export async function runSession({command,args=[],cwd,env,task,outputDirectory,t
 async function json(file){return JSON.parse(await fs.readFile(file,'utf8'));}
 async function save(file,value){const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});await fs.rename(temp,file);}
 
+// Read only the simple scalar restriction stanza emitted by the preparation script.
+// Comments, unrelated plugin fields, and substrings are not authorization evidence.
+function restrictionConfig(text){
+  const lines=text.split(/\r?\n/),matches=[];
+  const scalar=value=>{
+    value=value.trim();
+    if(value.startsWith('"')){try{return JSON.parse(value);}catch{return undefined;}}
+    if(/^'[^']*'$/.test(value))return value.slice(1,-1);
+    if(!value||/[#&*!{}\[\]>|]/.test(value))return undefined;
+    if(/^(?:0|[1-9][0-9]*)$/.test(value))return Number(value);
+    if(value==='true'||value==='false')return value==='true';
+    return value;
+  };
+  for(let i=0;i<lines.length;i++){
+    const match=lines[i].match(/^( *)- id: *audio-evaluation-restriction\s*$/);
+    if(!match)continue;
+    const indent=match[1].length,fields={},config={};let inConfig=false;
+    for(let j=i+1;j<lines.length;j++){
+      if(!lines[j].trim()||/^\s*#/.test(lines[j]))continue;
+      const depth=lines[j].match(/^ */)[0].length;if(depth<=indent)break;
+      const field=lines[j].match(/^ *(\w+):\s*(.*?)\s*$/);
+      if(!field)throw Error('MISSING_BATCH_RESTRICTION');
+      const [,key,value]=field;
+      if(depth===indent+2){
+        if(Object.hasOwn(fields,key))throw Error('MISSING_BATCH_RESTRICTION');
+        fields[key]=scalar(value);inConfig=key==='config'&&value==='';
+      }else if(inConfig&&depth===indent+4){
+        if(Object.hasOwn(config,key))throw Error('MISSING_BATCH_RESTRICTION');
+        config[key]=scalar(value);
+        if(config[key]===undefined)throw Error('MISSING_BATCH_RESTRICTION');
+      }else throw Error('MISSING_BATCH_RESTRICTION');
+    }
+    matches.push({fields,config});
+  }
+  if(matches.length!==1)throw Error('MISSING_BATCH_RESTRICTION');
+  return matches[0];
+}
+
 export async function runBatch(runDirectory){
   const directory=path.resolve(runDirectory),run=await json(path.join(directory,'run.json')),manifest=await json(path.join(directory,'manifest.json'));
   const rows=manifest.samples;
-  if(!Array.isArray(rows)||rows.length!==10)throw Error('INVALID_BATCH_MANIFEST: expected ten samples');
+  if(![10,60].includes(run.authorized_cases)||!Array.isArray(rows)||rows.length!==run.authorized_cases)throw Error('INVALID_BATCH_MANIFEST: expected authorized_cases 10 or 60 samples');
   const ids=new Set(),tasks=[];
   // Validate the entire batch before spawning any session (including later tasks).
   for(const row of rows){
@@ -133,26 +172,27 @@ export async function runBatch(runDirectory){
     if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
     tasks.push({workspace,task});
   }
-  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||!run.model||run.session_timeout_ms!==600000||run.max_audio_calls!==3||run.max_model_requests!==40)throw Error('INVALID_BATCH_RUN_CONFIG');
+  const limit=run.max_model_requests;
+  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||!run.model||run.session_timeout_ms!==600000||run.max_audio_calls!==3||limit!==run.authorized_cases*4)throw Error('INVALID_BATCH_RUN_CONFIG');
   const home=path.resolve(directory,run.dsh_home),overlay=path.resolve(directory,run.overlay_path),budget=path.join(directory,'budget.json');
   const overlayText=await fs.readFile(overlay,'utf8');
-  // The existing restriction enforces three tool executions and forty requests.
   const restriction=fileURLToPath(new URL('./restrict-headless.mjs',import.meta.url));
-  if(!overlayText.includes(restriction)||!overlayText.includes(budget)||!/^\s*budgetFile:\s*\S+/m.test(overlayText))throw Error('MISSING_BATCH_RESTRICTION');
+  const {fields,config}=restrictionConfig(overlayText);
+  if(fields.name!==restriction||(fields.disabled!==undefined&&fields.disabled!==false)||config.mode!=='aggregate'||config.budgetFile!==budget||(config.maxModelRequests??40)!==limit)throw Error('MISSING_BATCH_RESTRICTION');
   const budgetState=await json(budget);
-  if(!Number.isSafeInteger(budgetState.requests)||budgetState.requests<0||budgetState.requests>40)throw Error('INVALID_BATCH_BUDGET');
+  if(!Number.isSafeInteger(budgetState.requests)||budgetState.requests<0||budgetState.requests>limit)throw Error('INVALID_BATCH_BUDGET');
   // Directory exclusivity is the execution lock: interrupted batches never resume.
   const results=path.join(directory,'results');await fs.mkdir(results,{mode:0o700});
-  let stopped=budgetState.requests>=40;
+  let stopped=budgetState.requests>=limit;
   run.status='running';await save(path.join(directory,'run.json'),run);
   try{
     for(let index=0;index<rows.length;index++){
       const row=rows[index],outputDirectory=path.join(results,row.id);await fs.mkdir(outputDirectory,{mode:0o700});
       let before;
-      if(!stopped){const state=await json(budget);before=state.requests;if(!Number.isSafeInteger(before)||before<0||before>=40)stopped=true;}
+      if(!stopped){const state=await json(budget);before=state.requests;if(!Number.isSafeInteger(before)||before<0||before>=limit)stopped=true;}
       const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...process.env,DSH_HOME:home,NODE_USE_ENV_PROXY:'0'},task:tasks[index].task,outputDirectory});
       if(result.status!=='not_run'){
-        try{const after=(await json(budget)).requests;if(!Number.isSafeInteger(after)||after<before||after>40)throw Error('INVALID_BATCH_BUDGET');result.model_requests=after-before;}
+        try{const after=(await json(budget)).requests;if(!Number.isSafeInteger(after)||after<before||after>limit)throw Error('INVALID_BATCH_BUDGET');result.model_requests=after-before;}
         catch(error){delete result.model_requests;result.stop_batch=true;result.error=error.message;}
       }
       await save(path.join(outputDirectory,'result.json'),{id:row.id,...result});

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {fileURLToPath} from 'node:url';
 import {runSession,runBatch} from '../../evaluation/run-batch.mjs';
 
 const root=path.resolve('.work/batch-runner-tests');
@@ -12,12 +13,13 @@ function session(dir,code,extra={}){return runSession({command:process.execPath,
 test('success preserves final text and observed counters, not missing counters',async t=>{
   const dir=await fixture(t);
   const result=await session(dir,`process.stdin.resume();for(const e of [
+    {type:'session',sessionId:'synthetic-session'},
     {type:'status',phase:'step_end',usage:{inputTokens:12,outputTokens:3}},
     {type:'tool_call',callId:'a',name:'listen'},
     {type:'tool_result',callId:'a',status:'completed'},
     {type:'final',text:'  exact answer\\n'}])console.log(JSON.stringify(e));console.error('synthetic stderr');`);
   assert.equal(result.status,'complete');assert.equal(result.model_output,'  exact answer\n');
-  assert.equal(result.model_requests,1);assert.deepEqual(result.usage,{input_tokens:12,output_tokens:3});
+  assert.equal(result.session_id,'synthetic-session');assert.equal(result.model_requests,1);assert.deepEqual(result.usage,{input_tokens:12,output_tokens:3});
   assert.deepEqual(result.tool_calls,[{name:'listen',status:'completed'}]);assert.equal(result.cleanup_failed,false);
   assert.match(await fs.readFile(path.join(dir,'events.jsonl'),'utf8'),/final/);
   assert.match(await fs.readFile(path.join(dir,'stderr.log'),'utf8'),/synthetic stderr/);
@@ -27,6 +29,13 @@ test('answer words about payment and authentication are not control-plane errors
   const dir=await fixture(t),text='The speaker discusses payment, authentication, and quota.';
   const result=await session(dir,`console.log(JSON.stringify({type:'final',text:${JSON.stringify(text)}}));`);
   assert.equal(result.status,'complete');assert.equal(result.model_output,text);assert.equal(result.stop_batch,false);
+});
+
+test('credential and unavailable-model control-plane failures stop the batch',async t=>{
+  for(const text of ['MISSING_CREDENTIAL','no API key configured','MODEL_NOT_FOUND','model not available','no configured model','insufficient balance']){
+    const dir=await fixture(t),result=await session(dir,`console.log(JSON.stringify({type:'error',message:${JSON.stringify(text)}}));`);
+    assert.equal(result.stop_batch,true);assert.equal(result.model_output,'');assert.equal(result.error,'AUTH_QUOTA_OR_BUDGET_FAILURE');
+  }
 });
 
 test('failure, empty final and spawn errors never become predictions',async t=>{
@@ -78,9 +87,53 @@ test('each log is bounded at 32 MiB and overflow cancels session',async t=>{
   assert.equal((await fs.stat(path.join(dir,'stderr.log'))).size,32*1024*1024);
 });
 
+async function batchFixture(t,count=60){
+  const dir=await fixture(t),workspace=path.join(dir,'shared');await fs.mkdir(workspace);
+  await fs.writeFile(path.join(workspace,'task.txt'),'synthetic');await fs.writeFile(path.join(workspace,'audio.wav'),'audio');
+  const run={project_root:dir,authorized_cases:count,max_model_requests:count*4,dsh_home:'home',overlay_path:'overlay.yml',model:'deepseek-flash',session_timeout_ms:600000,max_audio_calls:3};
+  const samples=Array.from({length:count},(_,i)=>({id:`case-${i}`,workspace:'shared',task_protocol:'mmau-plain-text-v1',task_sha256:createHash('sha256').update('synthetic').digest('hex'),audio_sha256:createHash('sha256').update('audio').digest('hex')}));
+  const restriction=fileURLToPath(new URL('../../evaluation/restrict-headless.mjs',import.meta.url));
+  const overlay=`- insert:\n    - id: audio-evaluation-restriction\n      name: ${restriction}\n      config:\n        mode: aggregate\n        budgetFile: ${path.join(dir,'budget.json')}\n${count===60?'        maxModelRequests: 240\n':''}`;
+  await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
+  await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:count*4}));await fs.writeFile(path.join(dir,'overlay.yml'),overlay);
+  return {dir,run,samples,overlay};
+}
+
+test('authorized ten and sixty exhausted budgets produce all not_run results with no dispatch',async t=>{
+  for(const count of [10,60]){
+    const {dir}=await batchFixture(t,count);await runBatch(dir);
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8')).status,'stopped');
+    const results=await fs.readdir(path.join(dir,'results'));assert.equal(results.length,count);
+    for(const id of results){const output=path.join(dir,'results',id);assert.deepEqual(await fs.readdir(output),['result.json']);assert.deepEqual(JSON.parse(await fs.readFile(path.join(output,'result.json'),'utf8')),{id,status:'not_run',model_output:''});}
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'budget.json'),'utf8')).requests,count*4);
+  }
+});
+
+test('batch refuses missing or mismatched authorization and ceilings before any dispatch',async t=>{
+  for(const change of [run=>delete run.authorized_cases,run=>run.authorized_cases=20,run=>run.authorized_cases=10,run=>run.max_model_requests=40,run=>run.max_model_requests=241]){
+    const {dir,run}=await batchFixture(t);change(run);await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
+    await assert.rejects(runBatch(dir),/INVALID_BATCH_/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+  }
+});
+
+test('batch validates restriction actual fields, not matching comments or unrelated strings',async t=>{
+  const changes=[text=>text.replace('mode: aggregate','mode: split'),text=>text.replace('maxModelRequests: 240','maxModelRequests: 40'),text=>text.replace('maxModelRequests: 240','maxModelRequests: "240"'),text=>text.replace('        maxModelRequests: 240\n',''),text=>text.replace('budgetFile: ','budgetFile: wrong-'),text=>text.replace('      name: ','      name: wrong-'),text=>text.replace('      config:','      disabled: true\n      config:')];
+  for(const change of changes){
+    const {dir,overlay}=await batchFixture(t);await fs.writeFile(path.join(dir,'overlay.yml'),change(overlay)+'\n# '+overlay.replaceAll('\n','\n# '));
+    await assert.rejects(runBatch(dir),/MISSING_BATCH_RESTRICTION/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+  }
+});
+
+test('sixty-case batch validates last task and refuses over-ceiling budget before dispatch',async t=>{
+  const {dir,samples}=await batchFixture(t);samples[59].task_sha256='changed';await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
+  await assert.rejects(runBatch(dir),/BATCH_TASK_HASH_MISMATCH/);
+  samples[59].task_sha256=samples[0].task_sha256;await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:241}));
+  await assert.rejects(runBatch(dir),/INVALID_BATCH_BUDGET/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+});
+
 test('batch validates every task hash before creating results or launching commands',async t=>{
   const dir=await fixture(t),workspace=path.join(dir,'shared');await fs.mkdir(workspace);await fs.writeFile(path.join(workspace,'task.txt'),'synthetic');
-  await fs.writeFile(path.join(dir,'run.json'),JSON.stringify({project_root:dir}));
+  await fs.writeFile(path.join(dir,'run.json'),JSON.stringify({project_root:dir,authorized_cases:10}));
   const samples=Array.from({length:10},(_,i)=>({id:`case-${i}`,workspace:'shared',task_protocol:'mmau-plain-text-v1',task_sha256:'wrong'}));
   await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
   await assert.rejects(runBatch(dir),/BATCH_TASK_HASH_MISMATCH/);
