@@ -4,11 +4,14 @@ export async function analyzeSignal(channels,sampleRate,options={}){
  const allowed=new Set(['signal','timeoutMs','offset','columns','detail','frequencyRange','channelView']);
  for(const key of Object.keys(options))if(!allowed.has(key))throw Error('UNKNOWN_ANALYSIS_PARAMETER');
  const {signal,timeoutMs=20000,...plotOptions}=options;
+ if(signal!==undefined&&!(signal instanceof AbortSignal))throw Error('INVALID_ABORT_SIGNAL');
  if(signal?.aborted)throw Error('CANCELLED');
  validatePcm(channels,sampleRate);
  if(!Number.isInteger(timeoutMs)||timeoutMs<1||timeoutMs>180000)throw Error('INVALID_TIMEOUT');
+ // Clone only the validated view, never its potentially huge backing store.
+ const compact=channels.map(channel=>channel instanceof Float32Array?new Float32Array(channel):new Float64Array(channel));
  return new Promise((resolve,reject)=>{
-  const worker=new Worker(new URL('./analysis-worker.mjs',import.meta.url),{workerData:{channels,sampleRate,options:plotOptions},resourceLimits:{maxOldGenerationSizeMb:256,maxYoungGenerationSizeMb:32}});
+  const worker=new Worker(new URL('./analysis-worker.mjs',import.meta.url),{workerData:{channels:compact,sampleRate,options:plotOptions},transferList:compact.map(channel=>channel.buffer),resourceLimits:{maxOldGenerationSizeMb:256,maxYoungGenerationSizeMb:32}});
   let result,reason;
   const terminate=why=>{if(reason)return;reason=why;void worker.terminate();};
   const abort=()=>terminate('CANCELLED');signal?.addEventListener('abort',abort,{once:true});
