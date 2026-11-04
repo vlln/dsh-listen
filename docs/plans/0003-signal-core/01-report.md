@@ -25,7 +25,7 @@ npm run check
 先红（缺模块）再实现src/spectrum.mjs：未归一rFFT/Hann、不乘单边倍数、三预设、源时间/尾pad、功率权重centroid/rolloff/flatness、Slaney128 mel、共享参考相对dB、时间拥有区线性功率聚合。`npm run gate:feature`19/19 PASS，spectrum line100%、branch93.33%；包6573字节、依赖673215不变。独立审查发现export applyMel未校验滤波权重域，以及极端有限功率加权可溢出；已校验权重有限非负/乘积overflow明确失败，改归一化稳定加权平均并加回归。最终gate20/20 PASS，spectrum branch93.67%，包6628字节。不能以覆盖率代替数学评审。
 
 # 正式绘图数据层
-按TDD新增preparePlot：有界列数、全源时间波形min/max、mel功率分桶、显示裁频、分声道与功率均值（波形用包络union非波形平均）。F08始终balanced全频，不随显示参数改变；同片段参考峰值不因crop变化。`npm run gate:feature`26/26 PASS，plot-data line100%、branch94.87%，包7683字节。独立review进行中，PNG和worker尚未正式实现。
+按TDD新增preparePlot：有界列数、全源时间波形min/max、mel功率分桶、显示裁频、分声道与功率均值（波形用包络union非波形平均）。F08始终balanced全频，不随显示参数改变；同片段参考峰值不因crop变化。`npm run gate:feature`26/26 PASS，plot-data line100%、branch94.87%，包7683字节。独立review发现空裁频在FFT后才拒绝，已前置并回归；另单列statistics_parameters区分显示FFT与固定balanced统计。最终gate27/27 PASS，plot-data branch97.50%，包7690字节。PNG和worker尚未正式实现。
 
 # 未完成
 同feature尚需正式制图/worker等按计划推进及review修正。没有解码/权限/ASR/events/插件，未跑完整系统或MMAU。Goal保持active，不提前合并或标Plan done。
