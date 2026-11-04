@@ -15,6 +15,10 @@ export const Config=z.object({
  asrModel:z.string().default(''),
  asrRequiresKey:z.boolean().default(false).description('Credential resolver must be supplied by deployment; never put keys in this field.'),
  asrTimeoutMs:z.number().default(20000),
+ eventsEnabled:z.boolean().default(false),
+ eventsPython:z.string().default(''),
+ eventsModelPath:z.string().default(''),
+ eventsTimeoutMs:z.number().default(20000),
  allowExternalAudio:z.boolean().default(false).description('Deployment permission only; requires user approval before external audio processing.')
 });
 export async function apply(ctx,config){await installAudioPlugin(ctx,config,{defineTool});}
