@@ -1,6 +1,6 @@
 import {createHash} from 'node:crypto';
 import {encodeAsrWav} from './wav.mjs';
-function parseResponse(data,coverage){
+export function parseAsrResponse(data,coverage){
  if(!data||typeof data.text!=='string'||data.text.length>100000)throw Error('ASR_INVALID_SCHEMA');
  const segments=[];
  if(data.segments!==undefined){
@@ -38,7 +38,7 @@ export function makeAsrProvider({endpoint,model,allowExternal=false,secretProvid
    try{for(;;){const {value,done}=await reader.read();if(done)break;size+=value.length;if(size>maxResponseBytes){await reader.cancel();throw Error('ASR_RESPONSE_LIMIT');}chunks.push(value);}}finally{reader.releaseLock();}
    let data;try{data=JSON.parse(Buffer.concat(chunks).toString('utf8'));}catch{throw Error('ASR_INVALID_JSON');}
    if(signal.aborted)throw Error('CANCELLED');
-   return {...parseResponse(data,audio.coverage),preprocessing:encoded.metadata};
+   return {...parseAsrResponse(data,audio.coverage),preprocessing:encoded.metadata};
   }catch(error){if(reason)throw Error(reason);if(error.message?.startsWith('ASR_')||error.message==='CANCELLED')throw error;throw Error('ASR_RESPONSE_FAILED');}
   finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
  }};
