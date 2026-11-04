@@ -11,5 +11,9 @@ created: 2026-11-04T04:16:00Z
 独立DSH_HOME位于项目.work，用官方dsh headless --dump-config初始化，再官方dsh plugin --profile headless add tarball --ignore-scripts成功3包。CLI警告plain dependency/no bundle，已作为纯Cordis路线在隔离patch插入一行及显式scratch/localExecution，不改用户真实profile。
 `dsh --profile headless --dump-config-schema` exit0，输出确含dsh-listen、scratch、eventsEnabled及config条目。这证明真实profile解析/SDK依赖解析，不是实际boot或工具执行成功。
 
+# 真实本地服务系统集成
+新增test/system/local-services.test.mjs（不重复单元），真实安装runtime的Cordis/LocalFileSystem/LocalAttachmentStore，生成WAV→正式工具执行→PNG持久化→readImage校验→render ImageBlock→dispose清理。1/1 PASS，图像sha256 cffef7d917739aa647668f282661c68e5aa454d779434671084f3fc9345bef07、1200×540、15743字节，实际read_image查看了持久对象。工作目录/工具注册仍局部测试提供，完整Agent/沙箱权限/会话附件归属尚未闭合；不能当完整DSH应用验收。
+视觉看到0.1秒短窗pad造成频谱扩散，图中参数与限制应保留；单点energy只有像素而非长线，非错误但可读性后续专项确认。不据此新增语义能力。
+
 # 约束与欠账
 无模型请求/付费/外发；没有启动替代GUI或生产部署。当前SYSTEM_TEST准备阶段，真实boot负控/工具调用/真实附件持久化/图像送达、权限/sandbox、手动用户测试以及MMAU效果仍待。纯Cordis包安装后需显式启用的体验应在README如实说明或后续改bundle后再验证，不把依赖安装当已启用。
