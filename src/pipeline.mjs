@@ -12,8 +12,9 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
   if(!context||typeof context.owner!=='string'||!context.owner||!(context.signal instanceof AbortSignal))throw Error('INVALID_CALLER');
   const checkCancel=()=>{if(context.signal.aborted)throw Error('CANCELLED');};checkCancel();
   // Authorization always precedes cache access, and identity comes from decoded snapshot.
-  const source=await authorize(request.source,context);checkCancel();
-  const audio=await decode(source.file,{...source,from:request.from,to:request.to===null?undefined:request.to,signal:context.signal});checkCancel();
+  const source=await authorize(request.source,context);
+  let audio;
+  try{checkCancel();audio=await decode(source.file,{...source,from:request.from,to:request.to===null?undefined:request.to,signal:context.signal});checkCancel();}finally{if(source.dispose)await source.dispose();}
   const evidence={},missing=[];let hits=0,computed=0,png;
   for(const feature of request.features){
    checkCancel();
