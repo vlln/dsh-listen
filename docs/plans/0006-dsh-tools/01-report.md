@@ -16,5 +16,8 @@ TDD实现makeHostBridge，Agent.session.id提供owner，workingDirectory.ensure�
 # 生命周期与Cordis入口
 正式installAudioPlugin注册选定工具面，注册中途失败回滚已注册项，禁用effect清理；scratch仅部署配置，不隐式使用HOME。生命周期替身测试新增4项，gate103/103 PASS，plugin line/branch100%，包18309字节。新增index命名导出/明确inject/Config；用test-only SDK resolver从安装运行时只读导入成功（name/inject/apply/Config），没有安装SDK闭包或修改真实profile。入口import成功不等于严格Cordis装载成功。index加入后完整源码coverage需真实入口测试，不能排除它假称全绿。
 
+# 真实SDK与Cordis验证
+引入test-only Node register loader解析已安装SDK，完整gate104/104 PASS、index line/branch100%，包18634字节。随后新增真实Cordis Context/plugin/dispose测试暴露Invalid effect：entry.apply返回installAudioPlugin的任意对象，Cordis把它当effect拒绝；改为await不返回对象后真实mount/一次fail-closed工具调用/dispose通过。测试服务仍为替身，真实严格依赖牵线已验证但不是完整DSH应用/附件送达。未改真实profile，未新增服务器。
+
 # 尚缺
 真实调用Agent cwd/附件白名单/沙箱执行身份，Cordis注册清理、实际图像投影、独立DSH_HOME测试、插件manifest/icon/locale和用户设置均待完成。无ASR/events真实路径及MMAU结果，Goal保持active。
