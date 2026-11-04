@@ -4,6 +4,10 @@
 
 新批次的项目内目录、逐题10分钟总截止与失败留档见[批次约定](batch-layout.md)；旧preview runner不作为新10题批次入口。
 
+## 后续主模型
+
+用户指定后续使用 `deepseek-flash`。模型选择覆盖见[model.patch.yml](model.patch.yml)，使用宿主内置 `deepseek-official/deepseek-flash`；认证仍由DSH服务处理，首次真实运行前核验可用性，不静默回退其他模型。旧gpt-6.1-sol批次和配置不改写；切换主模型后需要重新建立参考结果，不与旧模型分数直接归因为工具差异。当前只固定配置，未发起flash请求。
+
 ## 题目与批处理
 
 `headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；工具上限仍由运行时执行（每题 3 次），不混入题面，音频/任务按题隔离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
