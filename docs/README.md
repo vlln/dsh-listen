@@ -3,7 +3,7 @@
 当前阶段：DEVELOP（基建本地自证已获用户出口批准；远程CI未推送、完整系统/效果仍待验收）。[第一版基线](v1-baseline.md)不再发散；进展见[正式基建容器](plans/0002-test-infra/README.md)。
 当前推进方向：[轻量 benchmark → 最小功能 → 一轮测评](direction.md)。此前多路线实验保留作储备，不是开发前置条件。
 当前架构：无question的可调特征Pipeline，输出文本、图像/音频特征、统计，由主Agent多轮推理。数学参考见[特征配方](spec/0002-feature-recipe.md)，当前部署与参数以[ADR-0003](adr/0003-portable-configurable-pipeline.md)为准；ADR-0002不是默认安装方案。
-当前交付：正式依赖/测试门禁已开始搭建，尚无正式插件功能或benchmark成绩；spike验证代码保留原分支不合并。[审查与开工前待核](feature-design-review.md)列出尚不能省略的核验。
+当前交付：正式信号/解码/Pipeline/DSH适配/可选本地及API ASR/本地事件feature已合并develop，最新完整门禁138项通过；真实本地模型仅受控烟测。完整DSH系统、权限/附件、安装和benchmark效果尚未验收；spike代码未合并。[审查与开工前待核](feature-design-review.md)列出尚不能省略的核验。
 
 ## 阅读顺序
 1. [愿景](vision.md)：目标、用户和非目标。
