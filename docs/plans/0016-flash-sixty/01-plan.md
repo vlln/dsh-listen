@@ -2,7 +2,7 @@
 title: 固定60题Flash运行
 description: 三域各20题固定哈希选样，修复listen和deepseek-flash，在240请求与逐题10分钟内完成并官方计分。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T10:52:00Z
 ---
 
