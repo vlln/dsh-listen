@@ -1,7 +1,7 @@
 # 贡献与实验规范
 
 ## 工作边界
-当前只写研究文档；没有构建命令、测试框架和插件入口。不要把命令占位符描述为已运行测试。
+用户已授权按Goal实施验证，以[验收基线](docs/acceptance.md)为准。正式基建与产品代码在独立分支；spike不合并，不把原型通过当产品验收。
 
 ## 分支与提交
 - main：初始化锚点及未来正式发布；develop：文档/实现集成。
@@ -23,4 +23,8 @@
 - 权重/依赖/音频下载、外发、付费都必须另获授权；secret 不能进入请求日志、git、报告。
 
 ## 测试与评估基础设施
-待 TEST_INFRA 决定；本轮只有实验协议，不创建 runner 或自动测试脚本。
+- Node22内置node:test/assert；`npm run gate`运行静态/依赖检查及test/infra负控，源码尚空不等于业务测试通过。
+- 单元入口`npm run test:unit`将在首个feature补用例后启用；当前无test/unit，不能报告该命令已通过。
+- `npm ci --ignore-scripts --no-audit --no-fund`复现依赖，不运行install脚本。
+- CI声明Linux/macOS Node22；没有推送/远程运行证据前不称CI已绿。
+- 各层测试不重复计数；正式全链路/安装/DSH隔离验证在SYSTEM_TEST，付费benchmark不进CI。
