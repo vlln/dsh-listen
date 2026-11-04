@@ -7,7 +7,7 @@ export async function filesUnder(root){
 }
 export async function checkSources(root,{maxLines=400}={}){
  const files=(await filesUnder(root)).filter(f=>f.endsWith('.mjs'));
- for(const file of files){const text=await readFile(file,'utf8');if(text.split('\n').length>maxLines)throw Error(`FILE_LINE_LIMIT: ${file}`);if(/(?:from\s*|import\s*\()\s*['"][^'"]*(?:\.work|scripts\/spike)/.test(text))throw Error(`FORBIDDEN_IMPORT: ${file}`);}
+ for(const file of files){const text=await readFile(file,'utf8');if(text.split('\n').length>maxLines)throw Error(`FILE_LINE_LIMIT: ${file}`);if(/(?:from\s*|import\s*(?:\(\s*)?)\s*['"][^'"]*(?:\.work|scripts\/spike)/.test(text))throw Error(`FORBIDDEN_IMPORT: ${file}`);}
  return files;
 }
 export function checkManifest(pkg){
