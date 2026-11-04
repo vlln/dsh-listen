@@ -1,0 +1,37 @@
+---
+title: 正式信号核心首单元报告
+description: 电平/能量/声道源码TDD8项通过，源码coverage100/97.30，feature尚未结束。
+type: report
+status: complete
+created: 2026-11-04T01:45:00Z
+---
+
+# 实现与证据
+先写test/unit/signal.test.mjs，运行因src/signal.mjs不存在失败（红）；随后独立正式实现src/signal.mjs，不import/.work或spike。
+
+命令：
+```sh
+node --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/coverage.mjs --test-reporter-destination=stdout test/unit/signal.test.mjs
+npm run check
+```
+8/8 PASS，signal.mjs line100%、branch97.30%、func100%，正式coverage reporter核对src目标清单并通过。静态check源码1文件、依赖673215字节、包4279字节，均在门槛内；不等于全产品体积或系统验收。
+
+已实现PCM/采样率/范围有限输入校验、RMS/峰值/DC/near-full-scale、0值null-dB、25ms/10ms真实尾帧与100ms功率桶、低能量等值容差、逐声道/联合统计、Pearson反相风险和静音声道缺失语义、源offset/单位/限制。
+
+# 独立审查修正
+发现并修正3项：常量双声道浮点残差可伪造相关→显式常量检测；极端Float64有限幅值可平方溢出→明确限制为解码float32可表示非零幅度范围（不把此范围外当静音）；公开quantile容器/元素增加有限数值验证。回归新增后`npm run gate:feature`10/10 PASS，source line100%、branch97.75%。package4586字节，依赖不变。新增幅度域是技术输入限制，非clip，后续契约须明确传达。
+
+# 正式频谱单元
+先红（缺模块）再实现src/spectrum.mjs：未归一rFFT/Hann、不乘单边倍数、三预设、源时间/尾pad、功率权重centroid/rolloff/flatness、Slaney128 mel、共享参考相对dB、时间拥有区线性功率聚合。`npm run gate:feature`19/19 PASS，spectrum line100%、branch93.33%；包6573字节、依赖673215不变。独立审查发现export applyMel未校验滤波权重域，以及极端有限功率加权可溢出；已校验权重有限非负/乘积overflow明确失败，改归一化稳定加权平均并加回归。最终gate20/20 PASS，spectrum branch93.67%，包6628字节。不能以覆盖率代替数学评审。
+
+# 正式绘图数据层
+按TDD新增preparePlot：有界列数、全源时间波形min/max、mel功率分桶、显示裁频、分声道与功率均值（波形用包络union非波形平均）。F08始终balanced全频，不随显示参数改变；同片段参考峰值不因crop变化。`npm run gate:feature`26/26 PASS，plot-data line100%、branch94.87%，包7683字节。独立review发现空裁频在FFT后才拒绝，已前置并回归；另单列statistics_parameters区分显示FFT与固定balanced统计。最终gate27/27 PASS，plot-data branch97.50%，包7690字节。PNG和worker尚未正式实现。
+
+# 正式PNG绘制
+TDD实现Raster与renderPlot，不依赖OS字体/外部graphics runtime；图含源时间、mel中心Hz刻度、共享相对dB色条、声道视图/波形。独立审查发现合法大幅值波形一端未clip可导致无限长line，以及公开Raster几何无界；已双端clamp、拒绝非有限/过大几何和坏wave bucket并新增回归。`npm run gate:feature`35/35 PASS，image branch96.77%、raster branch100%，全源码line100%；包10159字节。当前不包含完整能量strip的PNG展示（数值能量已返回），视觉系统验收后须明确是否满足既定呈现规格，不能以单元测试当已实际送达Agent。
+
+# 正式worker与能量轨迹
+analyzeSignal父线程先PCM/参数准入，worker独立describe/prepare/render，回传紧凑metadata/统计和PNG；取消/超时terminate后等exit再结算。PNG补绿色能量轨迹及固定-80..0 dBFS说明。初次worker catch分支coverage50%被真实门禁拦下，简化错误传递为String(error)后40/40 PASS，所有src line100%，analysis branch88.46%、worker100%；包11237字节。worker RSS非总内存保障仍披露，不等于完整资源验收。独立review发现fake signal可在Worker启动后抛错漏清理、短view可能复制巨大backing；已启动前验证AbortSignal、仅复制有效PCM到紧凑buffer并transfer，保留caller所有权，回归41/41 PASS；analysis branch91.43%，包11366字节。
+
+# 本feature结论
+已实现并按独立review修正signal/spectrum/plot/raster/image/worker，正式gate通过，可合并develop。未运行SYSTEM_TEST视觉/安装/DSH调用，不把单元门禁当最终工程验收。后续独立feature实现解码/权限/缓存/ASR/events/插件，MMAU效果仍待。Goal保持active。
