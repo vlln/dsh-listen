@@ -8,7 +8,11 @@ export function validatePcm(channels,sampleRate){
  if(!count||count>MAX_SECONDS*sampleRate)throw Error('RANGE_LIMIT');
  for(const channel of channels){
   if(!(channel instanceof Float32Array||channel instanceof Float64Array)||channel.length!==count)throw Error('INVALID_PCM_SHAPE');
-  for(const value of channel)if(!Number.isFinite(value))throw Error('NONFINITE_SAMPLE');
+  for(const value of channel){
+   if(!Number.isFinite(value))throw Error('NONFINITE_SAMPLE');
+   // Decoder contract is float32 PCM; reject magnitudes not representable there.
+   if(Math.abs(value)>3.4028234663852886e38||(value!==0&&Math.abs(value)<1.401298464324817e-45))throw Error('UNSUPPORTED_PCM_MAGNITUDE');
+  }
  }
  return count;
 }
@@ -18,6 +22,7 @@ export function amplitudeDbfs(value){
 }
 export function linearQuantile(values,q){
  if(!Number.isFinite(q)||q<0||q>1)throw Error('INVALID_QUANTILE');
+ if(!(Array.isArray(values)||values instanceof Float32Array||values instanceof Float64Array)||[...values].some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('INVALID_QUANTILE_VALUES');
  if(!values.length)return null;
  const sorted=[...values].sort((a,b)=>a-b),position=(sorted.length-1)*q;
  return sorted[Math.floor(position)]+(sorted[Math.ceil(position)]-sorted[Math.floor(position)])*(position-Math.floor(position));
@@ -41,7 +46,8 @@ function relationship(channels,levels){
  if(channels.length!==2)return null;
  let cov=0,lvar=0,rvar=0;
  for(let i=0;i<channels[0].length;i++){const l=channels[0][i]-levels[0].dc,r=channels[1][i]-levels[1].dc;cov+=l*r;lvar+=l*l;rvar+=r*r;}
- const correlation=lvar>0&&rvar>0?Math.max(-1,Math.min(1,cov/Math.sqrt(lvar*rvar))):null;
+ const leftConstant=channels[0].every(x=>x===channels[0][0]),rightConstant=channels[1].every(x=>x===channels[1][0]);
+ const correlation=!leftConstant&&!rightConstant&&lvar>0&&rvar>0?Math.max(-1,Math.min(1,cov/Math.sqrt(lvar*rvar))):null;
  const left=levels[0].rms,right=levels[1].rms;
  return {correlation,balance_db:left>0&&right>0?20*Math.log10(left/right):null,mute_side:left===0&&right===0?'both':left===0?'left':right===0?'right':null,phase_cancellation_risk:correlation!==null&&correlation<-.8};
 }
