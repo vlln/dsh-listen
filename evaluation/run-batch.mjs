@@ -31,32 +31,21 @@ export async function runBatch(runDirectory,options={}){
     if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
     tasks.push({workspace,task});
   }
-  const limit=run.max_model_requests;
-  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000||!Number.isSafeInteger(limit)||limit<=0)throw Error('INVALID_BATCH_RUN_CONFIG');
-  const overlay=path.resolve(directory,run.overlay_path),budget=path.join(directory,'budget.json');
+  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000)throw Error('INVALID_BATCH_RUN_CONFIG');
+  const overlay=path.resolve(directory,run.overlay_path);
   const preset=fileURLToPath(new URL('./preset.patch.yml',import.meta.url));
-  const requestBudget=fileURLToPath(new URL('./request-budget.patch.yml',import.meta.url));
-  const budgetState=await json(budget);
-  if(!Number.isSafeInteger(budgetState.requests)||budgetState.requests<0||budgetState.requests>limit)throw Error('INVALID_BATCH_BUDGET');
+  const env={...process.env,NODE_USE_ENV_PROXY:'0'};
+  for(const key of ['DSH_EVALUATION_BUDGET_FILE','DSH_EVALUATION_SESSION_BUDGET_FILE','DSH_EVALUATION_MAX_REQUESTS'])delete env[key];
   // Directory exclusivity is the execution lock: interrupted batches never resume.
   const results=path.join(directory,'results');await fs.mkdir(results,{mode:0o700});
-  let stopped=budgetState.requests>=limit;
+  let stopped=false;
   run.concurrency=concurrency;run.worker_homes=homes;
   run.status='running';await save(path.join(directory,'run.json'),run);
   let nextIndex=0;
   async function worker(home){
     try{while(nextIndex<rows.length){
       const index=nextIndex++,row=rows[index],outputDirectory=path.join(results,row.id);await fs.mkdir(outputDirectory,{mode:0o700});
-      let before;
-      if(!stopped){const state=await json(budget);before=state.requests;if(!Number.isSafeInteger(before)||before<0||before>=limit)stopped=true;}
-      const sessionBudget=path.join(outputDirectory,'requests.json');
-      let result={status:'not_run',model_output:''};
-      if(!stopped){
-        await fs.writeFile(sessionBudget,'{"requests":0}\n',{flag:'wx',mode:0o600});
-        result=await runSession({command:'dsh',args:['--profile','headless','--patch',preset,'--patch',requestBudget,'--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...process.env,DSH_HOME:home,NODE_USE_ENV_PROXY:'0',DSH_EVALUATION_BUDGET_FILE:budget,DSH_EVALUATION_SESSION_BUDGET_FILE:sessionBudget,DSH_EVALUATION_MAX_REQUESTS:String(limit)},task:tasks[index].task,outputDirectory});
-        try{const after=(await json(budget)).requests,count=(await json(sessionBudget)).requests;if(!Number.isSafeInteger(after)||after<before||after>limit||!Number.isSafeInteger(count)||count<0||count>after)throw Error('INVALID_BATCH_BUDGET');result.model_requests=count;}
-        catch(error){delete result.model_requests;result.stop_batch=true;result.error=error.message;}
-      }
+      const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',preset,'--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...env,DSH_HOME:home},task:tasks[index].task,outputDirectory});
       if(result.stop_batch)stopped=true;
       await save(path.join(outputDirectory,'result.json'),{id:row.id,...result});
       console.log(JSON.stringify({id:row.id,status:result.status,model_requests:result.model_requests??null,duration_ms:result.duration_ms??null}));

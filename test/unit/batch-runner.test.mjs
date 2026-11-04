@@ -32,7 +32,7 @@ test('answer words about payment and authentication are not control-plane errors
 });
 
 test('credential and unavailable-model control-plane failures stop the batch',async t=>{
-  for(const text of ['MISSING_CREDENTIAL','no API key configured','MODEL_NOT_FOUND','model not available','no configured model','insufficient balance','BUDGET_LOCK_TIMEOUT']){
+  for(const text of ['MISSING_CREDENTIAL','no API key configured','MODEL_NOT_FOUND','model not available','no configured model','insufficient balance']){
     const dir=await fixture(t),result=await session(dir,`console.log(JSON.stringify({type:'error',message:${JSON.stringify(text)}}));`);
     assert.equal(result.stop_batch,true);assert.equal(result.model_output,'');assert.equal(result.error,'AUTH_QUOTA_OR_BUDGET_FAILURE');
   }
@@ -87,41 +87,16 @@ test('each log is bounded at 32 MiB and overflow cancels session',async t=>{
   assert.equal((await fs.stat(path.join(dir,'stderr.log'))).size,32*1024*1024);
 });
 
-async function batchFixture(t,count=3,limit=5){
+async function batchFixture(t,count=3){
   const dir=await fixture(t),workspace=path.join(dir,'shared');await fs.mkdir(workspace);
   await fs.writeFile(path.join(workspace,'task.txt'),'synthetic');await fs.writeFile(path.join(workspace,'audio.wav'),'audio');
-  const run={project_root:dir,max_model_requests:limit,dsh_home:'home',overlay_path:'overlay.yml',session_timeout_ms:600000};
+  const run={project_root:dir,dsh_home:'home',overlay_path:'overlay.yml',session_timeout_ms:600000};
   const samples=Array.from({length:count},(_,i)=>({id:`case-${i}`,workspace:'shared',task_protocol:'mmau-plain-text-v1',task_sha256:createHash('sha256').update('synthetic').digest('hex'),audio_sha256:createHash('sha256').update('audio').digest('hex')}));
   await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
-  await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:limit}));
   // Deliberately opaque to the runner; only DSH may interpret this trusted config.
   await fs.writeFile(path.join(dir,'overlay.yml'),'trusted configuration, not runner-parsed YAML');
-  return {dir,run,samples,limit};
+  return {dir,run,samples};
 }
-
-test('arbitrary three and seven case exhausted budgets need no count authorization',async t=>{
-  for(const [count,limit] of [[3,2],[7,11]]){
-    const {dir}=await batchFixture(t,count,limit);await runBatch(dir);
-    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8')).status,'stopped');
-    const results=await fs.readdir(path.join(dir,'results'));assert.equal(results.length,count);
-    for(const id of results){const output=path.join(dir,'results',id);assert.deepEqual(await fs.readdir(output),['result.json']);assert.deepEqual(JSON.parse(await fs.readFile(path.join(output,'result.json'),'utf8')),{id,status:'not_run',model_output:''});}
-    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'budget.json'),'utf8')).requests,limit);
-  }
-});
-
-test('batch requires an explicit independent positive safe request limit',async t=>{
-  for(const value of [undefined,0,-1,1.5,'5',Number.MAX_SAFE_INTEGER+1]){
-    const {dir,run}=await batchFixture(t);run.max_model_requests=value;await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
-    await assert.rejects(runBatch(dir),/INVALID_BATCH_RUN_CONFIG/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
-  }
-});
-
-test('runner ignores legacy authorization counts and does not inspect overlay YAML',async t=>{
-  const {dir,run}=await batchFixture(t,3,17);run.authorized_cases=60;await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
-  await runBatch(dir);
-  assert.equal((await fs.readdir(path.join(dir,'results'))).length,3);
-  await assert.rejects(runBatch(dir),{code:'EEXIST'});
-});
 
 test('batch rejects empty, unsafe or duplicate ids before any dispatch',async t=>{
   for(const change of [rows=>rows.splice(0),rows=>rows[0].id='../escape',rows=>rows[0].id='.',rows=>rows[0].id='',rows=>rows[1].id=rows[0].id,rows=>rows[2]=null]){
@@ -130,49 +105,52 @@ test('batch rejects empty, unsafe or duplicate ids before any dispatch',async t=
   }
 });
 
-test('batch validates last task and refuses over-ceiling budget before dispatch',async t=>{
-  const {dir,samples,limit}=await batchFixture(t,7,9);samples[6].task_sha256='changed';await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
-  await assert.rejects(runBatch(dir),/BATCH_TASK_HASH_MISMATCH/);
-  samples[6].task_sha256=samples[0].task_sha256;await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:limit+1}));
-  await assert.rejects(runBatch(dir),/INVALID_BATCH_BUDGET/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+test('batch validates last task before dispatch',async t=>{
+  const {dir,samples}=await batchFixture(t,7);samples[6].task_sha256='changed';await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
+  await assert.rejects(runBatch(dir),/BATCH_TASK_HASH_MISMATCH/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
 });
 
 test('batch validates every task protocol and task/audio hash before results',async t=>{
   for(const [key,value,error] of [['task_protocol','changed','BATCH_TASK_PROTOCOL_MISMATCH'],['task_sha256','changed','BATCH_TASK_HASH_MISMATCH'],['audio_sha256','changed','BATCH_AUDIO_HASH_MISMATCH']]){
-    const {dir,samples}=await batchFixture(t,3,8);samples[2][key]=value;await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
+    const {dir,samples}=await batchFixture(t,3);samples[2][key]=value;await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
     await assert.rejects(runBatch(dir),new RegExp(error));await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
   }
 });
 
-test('synthetic dsh receives ordered patches and budget env, serial sessions stop at independent limit',async t=>{
-  const {dir,run}=await batchFixture(t,7,3),bin=path.join(dir,'bin'),calls=path.join(dir,'calls.jsonl');await fs.mkdir(bin);
-  const fake=`#!${process.execPath}
-import fs from 'node:fs';import path from 'node:path';
-const budget=process.env.DSH_EVALUATION_BUDGET_FILE;
-const lock=path.join(path.dirname(budget),'active.lock');
-fs.writeFileSync(lock,'active',{flag:'wx'});
-fs.appendFileSync(${JSON.stringify(calls)},JSON.stringify({args:process.argv.slice(2),budget,limit:process.env.DSH_EVALUATION_MAX_REQUESTS,home:process.env.DSH_HOME,cwd:process.cwd()})+'\\n');
+test('all cases launch without budget patch or env despite stale limits and exhausted budget',async t=>{
+  for(const staleLimit of [undefined,0,-1,'obsolete',3]){
+    const {dir,run}=await batchFixture(t,7),bin=path.join(dir,'bin'),calls=path.join(dir,'calls.jsonl'),lock=path.join(dir,'active.lock');await fs.mkdir(bin);
+    run.max_model_requests=staleLimit;run.authorized_cases=1;await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
+    const staleBudget=JSON.stringify({requests:3});await fs.writeFile(path.join(dir,'budget.json'),staleBudget);
+    const fake=`#!${process.execPath}
+import fs from 'node:fs';
+fs.writeFileSync(${JSON.stringify(lock)},'active',{flag:'wx'});
+fs.appendFileSync(${JSON.stringify(calls)},JSON.stringify({args:process.argv.slice(2),budgetEnv:Object.keys(process.env).filter(key=>key.startsWith('DSH_EVALUATION_')),home:process.env.DSH_HOME,cwd:process.cwd()})+'\\n');
 let task='';process.stdin.on('data',chunk=>task+=chunk);process.stdin.on('end',()=>{
   if(task!=='synthetic')process.exit(2);
-  const state=JSON.parse(fs.readFileSync(budget,'utf8'));state.requests++;
-  fs.writeFileSync(budget,JSON.stringify(state));fs.writeFileSync(process.env.DSH_EVALUATION_SESSION_BUDGET_FILE,JSON.stringify({requests:1}));fs.unlinkSync(lock);
+  for(let i=0;i<2;i++)console.log(JSON.stringify({type:'status',phase:'step_end'}));
+  fs.unlinkSync(${JSON.stringify(lock)});
   console.log(JSON.stringify({type:'final',text:'synthetic answer'}));
 });
 `;
-  await fs.writeFile(path.join(bin,'dsh'),fake,{mode:0o700});await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:0}));
-  const oldPath=process.env.PATH;process.env.PATH=bin+path.delimiter+oldPath;
-  try{await runBatch(dir);}finally{if(oldPath===undefined)delete process.env.PATH;else process.env.PATH=oldPath;}
-  const observed=(await fs.readFile(calls,'utf8')).trim().split('\n').map(line=>JSON.parse(line));assert.equal(observed.length,3);
-  const preset=fileURLToPath(new URL('../../evaluation/preset.patch.yml',import.meta.url));
-  const budgetPatch=fileURLToPath(new URL('../../evaluation/request-budget.patch.yml',import.meta.url));
-  for(const call of observed){
-    assert.deepEqual(call.args,['--profile','headless','--patch',preset,'--patch',budgetPatch,'--patch',path.join(dir,'overlay.yml'),'--json','-']);
-    assert.equal(call.budget,path.join(dir,'budget.json'));assert.equal(call.limit,'3');assert.equal(call.home,path.join(dir,run.dsh_home));assert.equal(call.cwd,path.join(dir,'shared'));
+    await fs.writeFile(path.join(bin,'dsh'),fake,{mode:0o700});
+    const overrides={PATH:bin+path.delimiter+(process.env.PATH??''),DSH_EVALUATION_BUDGET_FILE:path.join(dir,'inherited-budget.json'),DSH_EVALUATION_SESSION_BUDGET_FILE:path.join(dir,'inherited-session.json'),DSH_EVALUATION_MAX_REQUESTS:'0'};
+    const old=Object.fromEntries(Object.keys(overrides).map(key=>[key,process.env[key]]));Object.assign(process.env,overrides);
+    try{await runBatch(dir);}finally{for(const [key,value] of Object.entries(old)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
+    const observed=(await fs.readFile(calls,'utf8')).trim().split('\n').map(JSON.parse);assert.equal(observed.length,7);
+    const preset=fileURLToPath(new URL('../../evaluation/preset.patch.yml',import.meta.url));
+    for(const call of observed){
+      assert.deepEqual(call.args,['--profile','headless','--patch',preset,'--patch',path.join(dir,'overlay.yml'),'--json','-']);
+      assert.deepEqual(call.budgetEnv,[]);assert.equal(call.home,path.join(dir,run.dsh_home));assert.equal(call.cwd,path.join(dir,'shared'));
+    }
+    for(let i=0;i<7;i++){
+      const output=path.join(dir,'results',`case-${i}`),result=JSON.parse(await fs.readFile(path.join(output,'result.json'),'utf8'));
+      assert.equal(result.status,'complete');assert.equal(result.model_requests,2);assert.equal(result.model_output,'synthetic answer');
+      assert.deepEqual((await fs.readdir(output)).sort(),['events.jsonl','result.json','stderr.log']);
+      assert.match(await fs.readFile(path.join(output,'events.jsonl'),'utf8'),/synthetic answer/);assert.equal(await fs.readFile(path.join(output,'stderr.log'),'utf8'),'');
+    }
+    assert.equal(await fs.readFile(path.join(dir,'budget.json'),'utf8'),staleBudget);
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8')).status,'finished');
+    await assert.rejects(runBatch(dir),{code:'EEXIST'});
   }
-  for(let i=0;i<7;i++){
-    const output=path.join(dir,'results',`case-${i}`),result=JSON.parse(await fs.readFile(path.join(output,'result.json'),'utf8'));
-    assert.equal(result.status,i<3?'complete':'not_run');
-    if(i<3){assert.equal(result.model_requests,1);assert.equal(result.model_output,'synthetic answer');assert.match(await fs.readFile(path.join(output,'events.jsonl'),'utf8'),/synthetic answer/);assert.equal(await fs.readFile(path.join(output,'stderr.log'),'utf8'),'');}
-  }
-  assert.equal(JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8')).status,'stopped');
 });

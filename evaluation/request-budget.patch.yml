@@ -1,8 +1,4 @@
-# The adapter supplies the run-local counter and explicit ceiling.
-# No tool policy; DSH/preset owns tool composition.
+# Historical compatibility: no hook, counter, or request limit.
 - insert:
     - id: audio-evaluation-request-budget
       name: ./request-budget.mjs
-      config:
-        budgetFile: !!js process.env.DSH_EVALUATION_BUDGET_FILE
-        maxModelRequests: !!js Number(process.env.DSH_EVALUATION_MAX_REQUESTS)
