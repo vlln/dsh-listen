@@ -2,7 +2,7 @@
 title: 正式有界本地解码
 description: 子进程生命周期、受控快照和白名单解码的TDD实现。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T02:05:00Z
 ---
 

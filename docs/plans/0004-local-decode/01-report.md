@@ -2,7 +2,7 @@
 title: 正式本地解码开发记录
 description: 进程边界首单元通过，快照/媒体解码尚未实现。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T02:09:00Z
 ---
 
