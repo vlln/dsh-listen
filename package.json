@@ -1,0 +1,17 @@
+{
+  "name": "dsh-listen",
+  "version": "0.0.0-dev",
+  "private": true,
+  "type": "module",
+  "description": "Question-independent audio evidence extraction for DSH agents",
+  "license": "MIT",
+  "engines": { "node": ">=22" },
+  "files": ["src", "LICENSE", "README.md"],
+  "scripts": {
+    "test:infra": "node --test test/infra/*.test.mjs",
+    "test:unit": "node --test test/unit/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "gate": "npm run check && npm run test:infra"
+  },
+  "dependencies": { "fft.js": "4.0.4", "pngjs": "7.0.0" }
+}
