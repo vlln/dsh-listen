@@ -16,5 +16,8 @@ Node内建Buffer无新增依赖。真实服务须支持所提交sr/PCM16/WAV，�
 # 正式API客户端
 TDD实现makeAsrProvider：配置endpoint/model/授权（部署非工具参数）、禁redirect，Node FormData上传native WAV，无question/prompt；流式响应字节限额，状态码错误不回显正文，JSON/段时间校验+source offset，缺timing明确unavailable，超时/取消清理。loopback7/7 PASS，无真实secret/公网调用。实际SDK完整gate116/116 PASS，asr line100%、branch81.97%，wav100%；包20887字节、依赖不变。独立review发现等待secretProvider不受timeout/cancel，已传入同一signal并race deadline，未完成凭据阶段绝不发请求；回归117/117 PASS，asr branch82.61%，包21001字节。该race只能结束本工具等待，供应商凭据解析必须响应signal以释放自有资源；本轮只挂起无资源Promise的fake，未调用真实凭据。
 
+# 配置接入
+configureExtractors/Config接Plugin→Pipeline，默认disabled无key/权重；启用错误endpoint/未授权外发/要求key却无resolver构造时拒绝。loopback真实multipart经Pipeline映射source offset并cache一次，提取器设置4项通过。完整SDK gate121/121 PASS，extractors line/branch100%，包21426字节。凭据resolver只能由部署注入，当前官方entry尚无已验证的凭据服务绑定：requiresKey启用会fail-closed，不能宣称BYOK用户路径完整。
+
 # 未完成
 API endpoint/授权/限额/响应/offset/取消、用户配置接Plugin和真实能力验收仍待；Goal active。真实API外发与付费需要单独授权。
