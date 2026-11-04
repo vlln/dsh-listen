@@ -17,5 +17,8 @@ TDD新增createSourceSnapshot：root内realpath包含检查、O_NOFOLLOW最终�
 # 正式FFmpeg解码
 TDD实现decodeAudio：复用私有snapshot，FFprobe JSON单audio轨准入，file/pipe协议及wav/flac/mp3/mov/ogg demux白名单；源sr/声道float32输出，无归一化/downmix；ceil源样本裁剪，stdout按精确PCM字节上限，长度不符明确失败；finally释放快照。真实合成WAV开发集成测试覆盖mono/stereo/范围/坏媒体/cleanup。初次branch78.95%被门禁拦下，补format duration fallback/未知metadata回归后60/60 PASS，decode branch84.62%、line100%；包13957字节。压缩格式只列目标白名单，尚未逐项实证支持。独立review发现ffprobe十进制时长转ceil样本会误拒44100Hz/1000样本WAV；默认末尾改为硬60秒PCM预算内解EOF，以实测样本决定coverage/duration并标duration_basis，显式区间仍严格长度校验。新增44100Hz全段和offset EOF回归，最终gate61/61 PASS，decode branch87.50%，包14071字节。
 
+# 压缩格式开发集成
+新增formats测试6/6 PASS：本项目WAV转FLAC、MP3(libmp3lame)、M4A/AAC、Ogg/Opus，再真实解码验证原sr/双声道/0.1–0.3秒精确样本数/全段EOF和清理；实际双轨M4A拒绝，m3u含URL拒绝。初次libvorbis不可用报PROCESS_EXIT_8，查本机encoder确认未编入，改用已存在libopus生成Ogg（48kHz），不跳过失败或下载编码器。此证明本机这四种具体codec样本，不证明所有容器变体/平台支持。
+
 # 未完成
-快照/哈希/清理/授权包含关系、真实FFmpeg白名单/裁剪、压缩格式、多轨、宿主附件权限均未完成。没有ASR/events或效果评估，Goal保持active，本feature尚不合并。
+本feature范围已含快照/哈希/清理、本地root包含检查和FFmpeg裁剪/具体codec开发验证。宿主强制权限/附件、全平台进程/系统隔离及性能RSS仍待后续；无ASR/events/效果评估。最后feature门禁/报告收尾后可合并，不能把本地root检查当已完成宿主授权。Goal保持active。
