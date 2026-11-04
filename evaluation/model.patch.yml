@@ -1,0 +1,7 @@
+# Future evaluation model selection. Authentication stays with DSH services.
+# Do not apply this to historical runs or compare changed models as tool ablations.
+- id: agent-default-model
+  name: '@deepseek-ai/dsh-agent-default-model'
+  config:
+    provider: deepseek-official
+    model: deepseek-flash
