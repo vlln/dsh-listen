@@ -22,7 +22,7 @@ npm run check
 发现并修正3项：常量双声道浮点残差可伪造相关→显式常量检测；极端Float64有限幅值可平方溢出→明确限制为解码float32可表示非零幅度范围（不把此范围外当静音）；公开quantile容器/元素增加有限数值验证。回归新增后`npm run gate:feature`10/10 PASS，source line100%、branch97.75%。package4586字节，依赖不变。新增幅度域是技术输入限制，非clip，后续契约须明确传达。
 
 # 正式频谱单元
-先红（缺模块）再实现src/spectrum.mjs：未归一rFFT/Hann、不乘单边倍数、三预设、源时间/尾pad、功率权重centroid/rolloff/flatness、Slaney128 mel、共享参考相对dB、时间拥有区线性功率聚合。`npm run gate:feature`19/19 PASS，spectrum line100%、branch93.33%；包6573字节、依赖673215不变。独立审查进行中，不能以覆盖率代替数学评审。
+先红（缺模块）再实现src/spectrum.mjs：未归一rFFT/Hann、不乘单边倍数、三预设、源时间/尾pad、功率权重centroid/rolloff/flatness、Slaney128 mel、共享参考相对dB、时间拥有区线性功率聚合。`npm run gate:feature`19/19 PASS，spectrum line100%、branch93.33%；包6573字节、依赖673215不变。独立审查发现export applyMel未校验滤波权重域，以及极端有限功率加权可溢出；已校验权重有限非负/乘积overflow明确失败，改归一化稳定加权平均并加回归。最终gate20/20 PASS，spectrum branch93.67%，包6628字节。不能以覆盖率代替数学评审。
 
 # 未完成
 同feature尚需正式制图/worker等按计划推进及review修正。没有解码/权限/ASR/events/插件，未跑完整系统或MMAU。Goal保持active，不提前合并或标Plan done。
