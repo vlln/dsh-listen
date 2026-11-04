@@ -2,7 +2,7 @@
 title: 可选固定词表事件提取
 description: 轻运行时/模型制品核实与规范事件证据，不模拟真实标签能力。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T03:45:00Z
 ---
 
