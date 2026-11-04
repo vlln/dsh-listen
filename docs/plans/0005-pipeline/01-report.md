@@ -2,7 +2,7 @@
 title: Pipeline参数与缓存开发记录
 description: 正式请求规格与有界LRU首轮通过，编排尚未接通。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T02:35:00Z
 ---
 
@@ -18,4 +18,4 @@ TDD实现createPipeline：先宿主注入authorize再decode验证source hash，�
 新增pipeline-real3/3 PASS，使用真实FFmpeg/worker/PNG，不依赖fake信号提取：默认partial缺ASR/events、重复相同参数cache命中但authorization/decode仍重查、调transient不命中、源内容改变hash失效、访问拒绝不查旧证据、scratch清空。另加不同analyzeVersion共享cache不串用回归，pipeline mock组8/8 PASS。未把本地authorize回调当DSH权限适配。
 
 # 尚未完成
-该缓存没有权限检查能力，必须每次由Pipeline在cache lookup前调授权；owner不能来自Agent参数。尚未接decode/worker/后端，只有参数和cache不是可用工具，不宣称ASR/events能力或效果验收。Goal保持active。
+本feature已按计划接decode/worker/可选provider状态，测试/独立review修正可合并。缓存本身不含权限能力，每次Pipeline必须先调宿主authorize；DSH适配下一feature实现，owner不能来自Agent参数。真实ASR/events和效果仍未验收，Goal保持active。

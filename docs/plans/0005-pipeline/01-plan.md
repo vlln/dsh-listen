@@ -2,7 +2,7 @@
 title: 可调证据Pipeline服务
 description: 参数验证、有界调用方缓存、解码分析编排与可选能力状态。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T02:30:00Z
 ---
 
