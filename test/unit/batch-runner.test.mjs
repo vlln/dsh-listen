@@ -90,10 +90,10 @@ test('each log is bounded at 32 MiB and overflow cancels session',async t=>{
 async function batchFixture(t,count=60){
   const dir=await fixture(t),workspace=path.join(dir,'shared');await fs.mkdir(workspace);
   await fs.writeFile(path.join(workspace,'task.txt'),'synthetic');await fs.writeFile(path.join(workspace,'audio.wav'),'audio');
-  const run={project_root:dir,authorized_cases:count,max_model_requests:count*4,dsh_home:'home',overlay_path:'overlay.yml',model:'deepseek-flash',session_timeout_ms:600000,max_audio_calls:3};
+  const run={project_root:dir,authorized_cases:count,max_model_requests:count*4,dsh_home:'home',overlay_path:'overlay.yml',model:'deepseek-flash',session_timeout_ms:600000};
   const samples=Array.from({length:count},(_,i)=>({id:`case-${i}`,workspace:'shared',task_protocol:'mmau-plain-text-v1',task_sha256:createHash('sha256').update('synthetic').digest('hex'),audio_sha256:createHash('sha256').update('audio').digest('hex')}));
-  const restriction=fileURLToPath(new URL('../../evaluation/restrict-headless.mjs',import.meta.url));
-  const overlay=`- insert:\n    - id: audio-evaluation-restriction\n      name: ${restriction}\n      config:\n        mode: aggregate\n        budgetFile: ${path.join(dir,'budget.json')}\n${count===60?'        maxModelRequests: 240\n':''}`;
+  const restriction=fileURLToPath(new URL('../../evaluation/request-budget.mjs',import.meta.url));
+  const overlay=`- insert:\n    - id: audio-evaluation-request-budget\n      name: ${restriction}\n      config:\n        budgetFile: ${path.join(dir,'budget.json')}\n${count===60?'        maxModelRequests: 240\n':''}`;
   await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
   await fs.writeFile(path.join(dir,'budget.json'),JSON.stringify({requests:count*4}));await fs.writeFile(path.join(dir,'overlay.yml'),overlay);
   return {dir,run,samples,overlay};
@@ -116,11 +116,11 @@ test('batch refuses missing or mismatched authorization and ceilings before any 
   }
 });
 
-test('batch validates restriction actual fields, not matching comments or unrelated strings',async t=>{
-  const changes=[text=>text.replace('mode: aggregate','mode: split'),text=>text.replace('maxModelRequests: 240','maxModelRequests: 40'),text=>text.replace('maxModelRequests: 240','maxModelRequests: "240"'),text=>text.replace('        maxModelRequests: 240\n',''),text=>text.replace('budgetFile: ','budgetFile: wrong-'),text=>text.replace('      name: ','      name: wrong-'),text=>text.replace('      config:','      disabled: true\n      config:')];
+test('batch validates request-budget actual fields, not matching comments or unrelated strings',async t=>{
+  const changes=[text=>text.replace('maxModelRequests: 240','maxModelRequests: 40'),text=>text.replace('maxModelRequests: 240','maxModelRequests: "240"'),text=>text.replace('        maxModelRequests: 240\n',''),text=>text.replace('budgetFile: ','budgetFile: wrong-'),text=>text.replace('      name: ','      name: wrong-'),text=>text.replace('      config:','      disabled: true\n      config:')];
   for(const change of changes){
     const {dir,overlay}=await batchFixture(t);await fs.writeFile(path.join(dir,'overlay.yml'),change(overlay)+'\n# '+overlay.replaceAll('\n','\n# '));
-    await assert.rejects(runBatch(dir),/MISSING_BATCH_RESTRICTION/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+    await assert.rejects(runBatch(dir),/MISSING_BATCH_REQUEST_BUDGET/);await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
   }
 });
 

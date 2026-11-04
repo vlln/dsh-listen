@@ -10,7 +10,7 @@ function waveEnvelope(channels,count,columns,offset,sr){
 }
 function meanChannelPower(channels){
  if(channels.length===1)return channels[0];
- return channels[0].map((row,i)=>Float64Array.from(row,(v,k)=>v/2+channels[1][i][k]/2));
+ return channels[0].map((row,i)=>Float64Array.from(row,(_,k)=>channels.reduce((sum,channel)=>sum+channel[i][k]/channels.length,0)));
 }
 export function preparePlot(channels,sampleRate,{offset=0,detail='balanced',frequencyRange=[0,sampleRate/2],channelView='separate',columns=990}={}){
  const count=validatePcm(channels,sampleRate);

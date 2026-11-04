@@ -1,11 +1,18 @@
 const MAX_SECONDS=60;
+export const MAX_CHANNELS=8;
+// Preserve the former stereo/192 kHz/60 s ceiling, including worker-copy costs.
+export const MAX_AGGREGATE_SAMPLES=2*192000*MAX_SECONDS;
+export function validateSampleBudget(count,sampleRate,channels){
+ if(count*channels>MAX_AGGREGATE_SAMPLES)throw Error(`AGGREGATE_SAMPLE_LIMIT: sample_rate_hz=${sampleRate}; channels=${channels}; samples_per_channel=${count}; max_aggregate_samples=${MAX_AGGREGATE_SAMPLES}. Select a shorter interval; no implicit downmix is applied.`);
+}
 const THRESHOLD_POWER=1e-6;
 const isLow=power=>power<THRESHOLD_POWER&&Math.abs(power-THRESHOLD_POWER)>1e-18;
 export function validatePcm(channels,sampleRate){
- if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw Error('INVALID_RATE');
- if(!Array.isArray(channels)||channels.length<1||channels.length>2)throw Error('INVALID_CHANNEL_COUNT');
+ if(!Number.isInteger(sampleRate)||sampleRate<8000||sampleRate>192000)throw Error(`INVALID_RATE: sample_rate_hz=${Number.isFinite(sampleRate)?sampleRate:'invalid'}; allowed=8000..192000 integer Hz`);
+ if(!Array.isArray(channels)||channels.length<1||channels.length>MAX_CHANNELS)throw Error(`INVALID_CHANNEL_COUNT: channels=${Array.isArray(channels)?channels.length:'invalid'}; allowed=1..${MAX_CHANNELS}`);
  const count=channels[0]?.length;
- if(!count||count>MAX_SECONDS*sampleRate)throw Error('RANGE_LIMIT');
+ if(!count||count>MAX_SECONDS*sampleRate)throw Error(`RANGE_LIMIT: sample_rate_hz=${sampleRate}; channels=${channels.length}; allowed_duration_seconds=0..${MAX_SECONDS} (nonempty)`);
+ validateSampleBudget(count,sampleRate,channels.length);
  for(const channel of channels){
   if(!(channel instanceof Float32Array||channel instanceof Float64Array)||channel.length!==count)throw Error('INVALID_PCM_SHAPE');
   for(const value of channel){
@@ -66,5 +73,5 @@ export function describeSignal(channels,sampleRate,{offset=0}={}){
  const levels=channels.map(levelSummary),{frames,window,hop}=framePowers(channels,sampleRate,count);
  const lowFraction=selector=>frames.reduce((sum,f)=>sum+(isLow(selector(f))?f.ownedEnd-f.start:0),0)/count;
  levels.forEach((level,c)=>{const rms=frames.map(f=>Math.sqrt(f.powers[c]));level.frame_rms_quantiles={p10:linearQuantile(rms,.1),p50:linearQuantile(rms,.5),p90:linearQuantile(rms,.9)};level.low_energy_fraction=lowFraction(f=>f.powers[c]);});
- return {method:'signal-v1',sample_count:count,sample_rate_hz:sampleRate,coverage:{from:offset,to:offset+count/sampleRate},units:{level:'dBFS',amplitude:'full-scale linear',time:'source seconds'},parameters:{window_samples:window,hop_samples:hop,energy_bin_seconds:.1,low_energy_threshold_dbfs:-60,threshold_relative_tolerance:1e-12},digital_zero:levels.every(l=>l.digital_zero),channels:levels,low_energy_fraction:lowFraction(f=>f.combined),stereo:relationship(channels,levels),energy:energyBins(frames,count,sampleRate,offset),limitations:['RMS is not perceptual loudness or LUFS.','Sample peak is not true peak; near-full-scale samples do not prove clipping.','Low energy is not a voice-activity decision.']};
+ return {method:'signal-v1',sample_count:count,sample_rate_hz:sampleRate,coverage:{from:offset,to:offset+count/sampleRate},units:{level:'dBFS',amplitude:'full-scale linear',time:'source seconds'},parameters:{window_samples:window,hop_samples:hop,energy_bin_seconds:.1,low_energy_threshold_dbfs:-60,threshold_relative_tolerance:1e-12},digital_zero:levels.every(l=>l.digital_zero),channels:levels,low_energy_fraction:lowFraction(f=>f.combined),stereo:relationship(channels,levels),stereo_unavailable_reason:channels.length===2?null:'requires_exactly_two_channels',energy:energyBins(frames,count,sampleRate,offset),limitations:['RMS is not perceptual loudness or LUFS.','Sample peak is not true peak; near-full-scale samples do not prove clipping.','Low energy is not a voice-activity decision.']};
 }

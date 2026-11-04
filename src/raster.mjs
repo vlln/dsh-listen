@@ -11,7 +11,7 @@ const GLYPHS={
 };
 export function formatNumber(value){if(!Number.isFinite(value))throw Error('INVALID_NUMBER');return Math.abs(value)>=100?String(Math.round(value)):value.toFixed(2);}
 export class Raster{
- constructor(width,height){if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>2000||height>1600)throw Error('INVALID_RASTER');this.width=width;this.height=height;this.image=new PNG({width,height});this.image.data.fill(255);}
+ constructor(width,height){if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>2000||height>3060)throw Error('INVALID_RASTER');this.width=width;this.height=height;this.image=new PNG({width,height});this.image.data.fill(255);}
  pixel(x,y,color){if(!Number.isFinite(x)||!Number.isFinite(y)||!Array.isArray(color)||color.length!==3||color.some(v=>!Number.isFinite(v)||v<0||v>255))throw Error('INVALID_PIXEL');x=Math.round(x);y=Math.round(y);if(x<0||y<0||x>=this.width||y>=this.height)return;const i=(y*this.width+x)*4;this.image.data[i]=color[0];this.image.data[i+1]=color[1];this.image.data[i+2]=color[2];this.image.data[i+3]=255;}
  line(x0,y0,x1,y1,color){if([x0,y0,x1,y1].some(v=>!Number.isFinite(v)||Math.abs(v)>10000))throw Error('INVALID_LINE');const steps=Math.max(Math.abs(x1-x0),Math.abs(y1-y0),1);for(let i=0;i<=steps;i++)this.pixel(x0+(x1-x0)*i/steps,y0+(y1-y0)*i/steps,color);}
  rect(x,y,width,height,color){if([x,y,width,height].some(v=>!Number.isFinite(v))||!Number.isInteger(width)||!Number.isInteger(height)||width<0||height<0||width>2000||height>1600)throw Error('INVALID_RECT');for(let j=0;j<height;j++)for(let i=0;i<width;i++)this.pixel(x+i,y+j,color);}

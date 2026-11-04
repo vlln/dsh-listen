@@ -1,0 +1,2 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {normalizeRequest} from '../../src/request.mjs';
+test('feature display mismatch and source ambiguity tell agent how to recover',()=>{assert.throws(()=>normalizeRequest({source_path:'a',features:['transcript'],spectral_detail:'tonal'}),/PARAMETER_NOT_APPLICABLE.*remove display parameters or request signal/);assert.throws(()=>normalizeRequest({source_path:'a',attachment_id:'b'}),/INVALID_SOURCE.*exactly one/);});

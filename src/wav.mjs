@@ -6,5 +6,5 @@ export function encodeAsrWav(channels,sampleRate){
   let sum=0;for(const channel of channels){if(Math.abs(channel[i])>1)throw Error('ASR_OVER_RANGE');sum+=channel[i]/channels.length;}
   bytes.writeInt16LE(Math.round(sum*32767),44+i*2);
  }
- return {bytes,metadata:{sample_rate_hz:sampleRate,channels:1,encoding:'PCM16',downmix:channels.length===1?'none':'arithmetic_mean',resampled:false,limitations:channels.length===1?['PCM16 conversion introduces quantization.']:['Arithmetic stereo downmix can cancel opposite-phase content.','PCM16 conversion introduces quantization.']}};
+ return {bytes,metadata:{input_sample_rate_hz:sampleRate,input_channels:channels.length,sample_rate_hz:sampleRate,channels:1,encoding:'PCM16',downmix:channels.length===1?'none':'arithmetic_mean',resampled:false,limitations:channels.length===1?['PCM16 conversion introduces quantization.']:['Arithmetic channel downmix can cancel opposite-phase content.','PCM16 conversion introduces quantization.']}};
 }

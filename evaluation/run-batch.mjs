@@ -119,9 +119,9 @@ export async function runSession({command,args=[],cwd,env,task,outputDirectory,t
 async function json(file){return JSON.parse(await fs.readFile(file,'utf8'));}
 async function save(file,value){const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});await fs.rename(temp,file);}
 
-// Read only the simple scalar restriction stanza emitted by the preparation script.
+// Read only the simple scalar request-budget stanza emitted by preparation.
 // Comments, unrelated plugin fields, and substrings are not authorization evidence.
-function restrictionConfig(text){
+function budgetConfig(text){
   const lines=text.split(/\r?\n/),matches=[];
   const scalar=value=>{
     value=value.trim();
@@ -133,27 +133,27 @@ function restrictionConfig(text){
     return value;
   };
   for(let i=0;i<lines.length;i++){
-    const match=lines[i].match(/^( *)- id: *audio-evaluation-restriction\s*$/);
+    const match=lines[i].match(/^( *)- id: *audio-evaluation-request-budget\s*$/);
     if(!match)continue;
     const indent=match[1].length,fields={},config={};let inConfig=false;
     for(let j=i+1;j<lines.length;j++){
       if(!lines[j].trim()||/^\s*#/.test(lines[j]))continue;
       const depth=lines[j].match(/^ */)[0].length;if(depth<=indent)break;
       const field=lines[j].match(/^ *(\w+):\s*(.*?)\s*$/);
-      if(!field)throw Error('MISSING_BATCH_RESTRICTION');
+      if(!field)throw Error('MISSING_BATCH_REQUEST_BUDGET');
       const [,key,value]=field;
       if(depth===indent+2){
-        if(Object.hasOwn(fields,key))throw Error('MISSING_BATCH_RESTRICTION');
+        if(Object.hasOwn(fields,key))throw Error('MISSING_BATCH_REQUEST_BUDGET');
         fields[key]=scalar(value);inConfig=key==='config'&&value==='';
       }else if(inConfig&&depth===indent+4){
-        if(Object.hasOwn(config,key))throw Error('MISSING_BATCH_RESTRICTION');
+        if(Object.hasOwn(config,key))throw Error('MISSING_BATCH_REQUEST_BUDGET');
         config[key]=scalar(value);
-        if(config[key]===undefined)throw Error('MISSING_BATCH_RESTRICTION');
-      }else throw Error('MISSING_BATCH_RESTRICTION');
+        if(config[key]===undefined)throw Error('MISSING_BATCH_REQUEST_BUDGET');
+      }else throw Error('MISSING_BATCH_REQUEST_BUDGET');
     }
     matches.push({fields,config});
   }
-  if(matches.length!==1)throw Error('MISSING_BATCH_RESTRICTION');
+  if(matches.length!==1)throw Error('MISSING_BATCH_REQUEST_BUDGET');
   return matches[0];
 }
 
@@ -173,12 +173,13 @@ export async function runBatch(runDirectory){
     tasks.push({workspace,task});
   }
   const limit=run.max_model_requests;
-  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||!run.model||run.session_timeout_ms!==600000||run.max_audio_calls!==3||limit!==run.authorized_cases*4)throw Error('INVALID_BATCH_RUN_CONFIG');
+  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||!run.model||run.session_timeout_ms!==600000||limit!==run.authorized_cases*4)throw Error('INVALID_BATCH_RUN_CONFIG');
   const home=path.resolve(directory,run.dsh_home),overlay=path.resolve(directory,run.overlay_path),budget=path.join(directory,'budget.json');
   const overlayText=await fs.readFile(overlay,'utf8');
-  const restriction=fileURLToPath(new URL('./restrict-headless.mjs',import.meta.url));
-  const {fields,config}=restrictionConfig(overlayText);
-  if(fields.name!==restriction||(fields.disabled!==undefined&&fields.disabled!==false)||config.mode!=='aggregate'||config.budgetFile!==budget||(config.maxModelRequests??40)!==limit)throw Error('MISSING_BATCH_RESTRICTION');
+  const requestBudget=fileURLToPath(new URL('./request-budget.mjs',import.meta.url));
+   const preset=fileURLToPath(new URL('./preset.patch.yml',import.meta.url));
+  const {fields,config}=budgetConfig(overlayText);
+  if(fields.name!==requestBudget||(fields.disabled!==undefined&&fields.disabled!==false)||config.budgetFile!==budget||(config.maxModelRequests??40)!==limit)throw Error('MISSING_BATCH_REQUEST_BUDGET');
   const budgetState=await json(budget);
   if(!Number.isSafeInteger(budgetState.requests)||budgetState.requests<0||budgetState.requests>limit)throw Error('INVALID_BATCH_BUDGET');
   // Directory exclusivity is the execution lock: interrupted batches never resume.
@@ -190,7 +191,7 @@ export async function runBatch(runDirectory){
       const row=rows[index],outputDirectory=path.join(results,row.id);await fs.mkdir(outputDirectory,{mode:0o700});
       let before;
       if(!stopped){const state=await json(budget);before=state.requests;if(!Number.isSafeInteger(before)||before<0||before>=limit)stopped=true;}
-      const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...process.env,DSH_HOME:home,NODE_USE_ENV_PROXY:'0'},task:tasks[index].task,outputDirectory});
+      const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',preset,'--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...process.env,DSH_HOME:home,NODE_USE_ENV_PROXY:'0'},task:tasks[index].task,outputDirectory});
       if(result.status!=='not_run'){
         try{const after=(await json(budget)).requests;if(!Number.isSafeInteger(after)||after<before||after>limit)throw Error('INVALID_BATCH_BUDGET');result.model_requests=after-before;}
         catch(error){delete result.model_requests;result.stop_batch=true;result.error=error.message;}

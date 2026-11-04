@@ -1,9 +1,10 @@
 import {Raster,formatNumber} from './raster.mjs';
 import {displayPowerDb} from './spectrum.mjs';
+import {MAX_CHANNELS} from './signal.mjs';
 const INK=[25,35,45],BLUE=[35,95,175],GRAY=[205,210,215];
 function color(value){return [Math.round(18+230*value),Math.round(20+170*value*value),Math.round(55+50*(1-value))];}
 function validatePlot(plot){
- if(!plot||!Array.isArray(plot.channels)||plot.channels.length<1||plot.channels.length>2||!Array.isArray(plot.frequency_hz)||!plot.frequency_hz.length||!Number.isFinite(plot.reference_power)||plot.reference_power<0||!Number.isFinite(plot.coverage?.from)||!Number.isFinite(plot.coverage?.to)||plot.coverage.to<=plot.coverage.from)throw Error('INVALID_PLOT');
+ if(!plot||!Array.isArray(plot.channels)||plot.channels.length<1||plot.channels.length>MAX_CHANNELS||!Array.isArray(plot.frequency_hz)||!plot.frequency_hz.length||!Number.isFinite(plot.reference_power)||plot.reference_power<0||!Number.isFinite(plot.coverage?.from)||!Number.isFinite(plot.coverage?.to)||plot.coverage.to<=plot.coverage.from)throw Error('INVALID_PLOT');
  if(!Array.isArray(plot.energy)||plot.energy.some(b=>!Number.isFinite(b.rms)||b.rms<0||!Number.isFinite(b.from)||!Number.isFinite(b.to)||b.to<=b.from))throw Error('INVALID_ENERGY');
  for(const ch of plot.channels){if(!Array.isArray(ch.mel)||!ch.mel.length||!Array.isArray(ch.wave)||!ch.wave.length)throw Error('INVALID_PLOT');for(const bucket of ch.wave)if(!bucket||[bucket.from,bucket.to,bucket.min,bucket.max].some(v=>!Number.isFinite(v))||bucket.to<=bucket.from||bucket.min>bucket.max)throw Error('INVALID_WAVE_BUCKET');for(const row of ch.mel){if(row.length!==plot.frequency_hz.length||[...row].some(v=>!Number.isFinite(v)||v<0))throw Error('INVALID_POWER');}}
 }
