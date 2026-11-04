@@ -9,7 +9,7 @@ created: 2026-11-04T02:09:00Z
 # 子进程边界
 TDD先缺模块红，再实现src/process.mjs，不读spike。argv/shell=false，命令/限额/signal前置校验；stdout硬限、stderr drain不保留回显；超时/取消发组TERM/KILL、close后结算；Windows暂拒绝不冒称进程树支持。
 `npm run gate:feature`47/47 PASS，process line100%、branch84.09%；包12078字节、依赖673215不变。测试实际Node子进程，含stderr大流、退出7/2、缺binary、无shell、输出超额、timeout/abort/fake signal。
-独立review进行中，不能凭覆盖率宣称进程组全平台清理可靠；继承宿主环境/早退子孙等还需审计。
+独立review发现脱组孙进程持管道可阻close、close时历史PGID信号可能误杀：已force阶段销毁本地管道、exit后不再向历史组发信号并清理管道。新增抗TERM直接子进程回归后48/48 PASS，process branch84.09%。此runner限定受信非daemonizing二进制，不能保证清理主动脱组后代；生产FFmpeg调用不接受任意命令，完整隔离仍需系统验证。不得宣称任意进程树回收安全。
 
 # 未完成
 快照/哈希/清理/授权包含关系、真实FFmpeg白名单/裁剪、压缩格式、多轨、宿主附件权限均未完成。没有ASR/events或效果评估，Goal保持active，本feature尚不合并。
