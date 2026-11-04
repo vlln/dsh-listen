@@ -2,11 +2,19 @@
 
 `protocol.mjs` 固定分层 dev/test、隔离题干/答案，并把所有预定题（含失败）纳入分母。Agent 输入仅 id/audio_id/question/choices；task/answer/difficulty/sub-category 仅在外部评分器，工具提取不读题目或选项。keys 及评分导出不得放入 Agent 工作区。
 
+新批次的项目内目录、逐题10分钟总截止与失败留档见[批次约定](batch-layout.md)；旧preview runner不作为新10题批次入口。
+
 ## 题目与批处理
 
-`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。工具上限仍为每题 3 次，音频/任务按题隔离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
+`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；工具上限仍由运行时执行（每题 3 次），不混入题面，音频/任务按题隔离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
 
-用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和预算，记录 JSON 工具轨迹。执行仍须已有批次授权及请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
+用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和预算，记录 JSON 工具轨迹。执行仍须已有批次授权及请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。准备产物记录 plain-text 协议版本和 task SHA256；runner 在任何配置写入或调用前核验全部题面，旧 manifest 或被改动题面直接拒绝。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
+
+## 每次运行的汇总
+
+入口：[summarize-run.mjs](summarize-run.mjs)，字段和命令见[汇总格式](summary-format.md)。命令：`node evaluation/summarize-run.mjs RUN_DIRECTORY EXTERNAL_KEYS_PATH`。它只读取已落盘结果和外部标注，不发起模型请求。
+
+离线汇总以固定manifest为分母，读取run内逐题result和共享数据集外部keys；不依赖模型，不修改原始回答。MMAU维度包括总体micro accuracy、sound/music/speech、easy/medium/hard及sub-category，均同时报告correct/total；没有样本的组不写伪0%成绩。工程指标包括完成/超时/失败/未运行、耗时分布、模型请求、工具调用及token，并报告缺测覆盖。官方scorer输入始终包含每个预定ID，失败model_output为空串。本地摘要与官方CLI输出分开标记。
 
 ## 外部评分与官方依据
 
