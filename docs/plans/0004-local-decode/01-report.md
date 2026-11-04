@@ -14,5 +14,8 @@ TDD先缺模块红，再实现src/process.mjs，不读spike。argv/shell=false�
 # 正式源快照
 TDD新增createSourceSnapshot：root内realpath包含检查、O_NOFOLLOW最终源打开、fstat大小/常规文件、有界分块复制、SHA256、私有mkdtemp/0600文件、复制后size/mtime/ctime变化检测、幂等dispose和失败清理。`npm run gate:feature`53/53 PASS，source line100%、branch81.58%，包12962字节。支持空字节快照不冒称有效媒体。独立review发现EOF/最终stat/close取消窗口，已终态前复查并新增active取消后scratch清理回归。最终gate54/54 PASS，source branch86.96%。父目录替换race依赖同权限并发参与者，需宿主强制sandbox/稳定身份层后续加固，不能仅靠本模块宣称授权边界关闭。
 
+# 正式FFmpeg解码
+TDD实现decodeAudio：复用私有snapshot，FFprobe JSON单audio轨准入，file/pipe协议及wav/flac/mp3/mov/ogg demux白名单；源sr/声道float32输出，无归一化/downmix；ceil源样本裁剪，stdout按精确PCM字节上限，长度不符明确失败；finally释放快照。真实合成WAV开发集成测试覆盖mono/stereo/范围/坏媒体/cleanup。初次branch78.95%被门禁拦下，补format duration fallback/未知metadata回归后60/60 PASS，decode branch84.62%、line100%；包13957字节。压缩格式只列目标白名单，尚未逐项实证支持。独立review进行中。
+
 # 未完成
 快照/哈希/清理/授权包含关系、真实FFmpeg白名单/裁剪、压缩格式、多轨、宿主附件权限均未完成。没有ASR/events或效果评估，Goal保持active，本feature尚不合并。
