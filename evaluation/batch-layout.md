@@ -16,15 +16,14 @@
       AGENTS.md               # 通用隔离说明，无答案或题目线索
     scoring/keys.json         # 唯一外部标注，禁止Agent读取
   runs/<run-id>/
-    run.json                  # 配置、commit、dirty、版本、协议、预算、状态
+    run.json                  # 配置、commit、dirty、版本、协议、并发数、状态
     manifest.json             # 所选ID及共享数据版本/hash引用，不复制题面/音频
     config/                   # 无密钥profile/overlay快照及包hash
     # DSH_HOME引用已安装评测profile，普通run不重复建runtime或安装插件
-    budget.json               # 本批请求计数
     results/<sample-id>/
       events.jsonl            # 原始headless事件
       stderr.log              # 有界日志
-      result.json             # 会话ID、时间、状态、原始回答、预算用量
+      result.json             # 会话ID、时间、状态、原始回答、观测请求数
     scoring/
       predictions.json        # 全部预定ID的原始model_output，失败空串
       official-input.json     # 评分派生产物；标注来自共享keys
@@ -44,10 +43,10 @@ runtime、results和scoring都在case cwd外。此布局仅实现数据分离，
 ## 运行与截止
 
 - 新参考批次拟定10题、当前完整listen配置、开发集sound4/speech3/music3，优先排除既有3题；封存970不动。真实调用须另有批次授权，不能从剩余历史预算推导。
-- 每题一个独立DSH headless进程/会话，使用原生audio-evaluation preset（安装版minimal+音频工具），无评测工具拦截、无音频调用次数上限。全批模型请求预算独立配置（历史10题40、60题240），记录全部请求/重试；10题不是10次请求。用户批准的后续语义替代历史3次限制，旧批次不重写。
+- 每题一个独立DSH headless进程/会话，使用原生audio-evaluation preset（安装版minimal+音频工具），无评测工具拦截、无音频调用次数上限。不限制模型请求次数，不再加载历史40/240次预算；请求数仅从会话事件观测统计。用户批准的后续语义替代历史3次限制，旧批次不重写。
 - `session_timeout_ms=600000`。从启动本题headless进程前开始，用单调时钟计时；包含模型请求、提取、工具执行及模型等待，不因进度/重试重置。依赖安装和批次准备在会话计时外单独记录。
 - 到期立即取消整个会话并发TERM，标记timeout；只允许有界终止宽限后KILL本题受管进程，宽限不再接受结果或追加推理。取消/回收失败则停止批次，避免失控后台任务；后代进程回收需先有实际测试，不能把只杀父进程当保证。
-- 到期后出现final也不算成功；已耗预算保留，预测写空串，计入预定分母。单题普通失败/timeout可继续下一题；认证/配额/预算耗尽或清理失败停止批次，剩余题记not_run并留在分母。
+- 到期后出现final也不算成功；已发生请求的可测统计保留，预测写空串，计入预定分母。单题普通失败/timeout可继续下一题；认证/服务端配额错误或清理失败停止批次，剩余题记not_run并留在分母。
 - result.json显式记录id/status/model_output以及可测的duration_ms/model_requests/tool_calls/usage；缺测字段省略或null，不填0。usage区分input_tokens/output_tokens/cache_read_tokens。manifest统一使用samples数组，run元数据引用共享数据版本。
 - JSON状态原子写入，事件流随执行落盘；中断后默认不自动重试/续跑/覆盖。有意重跑必须新run-id，保留原失败和重跑关联。
 

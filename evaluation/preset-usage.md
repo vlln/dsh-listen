@@ -10,10 +10,10 @@ run-batch加载[preset.patch.yml](preset.patch.yml)及每批runtime overlay。pr
 
 1. 模型路由（后续deepseek-flash）和必要凭据服务引用，不读取/复制密钥。
 2. 按原生完整config替换preset-audio-evaluation：id保持audio-evaluation，plugins须是完整显式YAML列表，可在准备阶段用preset.mjs的evaluationPlugins(baseUrl, listenConfig)生成并序列化；不要把动态!!js表达式嵌入plugins数组（安装版不会展开）。也可复制preset.patch.yml中完整plugins列表，仅配置audio-listen子行。listenConfig必须给scratch并显式启用localExecution及可选已有本地提取器；默认不自动开启或下载。
-3. 预算由适配器统一加载request-budget.patch.yml并传入本次路径/上限，无需每批overlay另写预算条目。[request-budget.mjs](request-budget.mjs)只监听llm/stream计数，不消费tools服务。
+3. 不配置请求次数预算；适配器不加载预算patch、不注册llm请求拦截。历史request-budget/restrict-headless入口为无操作兼容，次数统计来自DSH事件。
 4. 不再放宿主dsh-listen启用行、不插audio-evaluation-restriction，不使用max_audio_calls；旧run不会自动迁移/复跑。
 
-实际每题600000ms总截止保留。去除音频次数限制不等于解除全批费用预算；请求预算耗尽仍停止。旧restricted批次原样保留，不能修改其元数据伪装新配置。
+实际每题600000ms总截止保留。模型请求和音频调用均不限制次数；不存在默认240或其他请求上限。旧restricted批次原样保留，不能修改其元数据伪装新配置。
 
 ## 数据边界
 

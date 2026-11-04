@@ -14,9 +14,9 @@
 
 ## 题目与批处理
 
-`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；后续使用原生audio-evaluation preset（安装版minimal + 音频工具），不做评测工具拦截、没有3次音频调用限额；仅保留10分钟会话截止及独立主模型请求预算。音频/任务按题分离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
+`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；后续使用原生audio-evaluation preset（安装版minimal + 音频工具），不做评测工具拦截、没有3次音频调用限额；保留10分钟会话截止，不限制主模型请求次数。音频/任务按题分离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
 
-用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和预算，记录 JSON 工具轨迹。执行仍须已有批次授权及请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。准备产物记录 plain-text 协议版本和 task SHA256；runner 在任何配置写入或调用前核验全部题面，旧 manifest 或被改动题面直接拒绝。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
+用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和截止，记录 JSON 工具轨迹。执行仍须已有批次授权，不设请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。准备产物记录 plain-text 协议版本和 task SHA256；runner 在任何配置写入或调用前核验全部题面，旧 manifest 或被改动题面直接拒绝。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
 
 ## 每次运行的汇总
 
