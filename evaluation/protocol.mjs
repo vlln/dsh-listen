@@ -9,7 +9,11 @@ export function prepareEvaluation(samples,{seed='dsh-listen-v1',developmentPerDo
  }
  const development_ids=[];
  for(const ids of groups.values()){ids.sort((a,b)=>createHash('sha256').update(`${seed}:${a}`).digest('hex').localeCompare(createHash('sha256').update(`${seed}:${b}`).digest('hex')));development_ids.push(...ids.slice(0,developmentPerDomain));}
- const dev=new Set(development_ids),test_ids=[...ids].filter(id=>!dev.has(id));
+ // Same source audio must never leak between development and sealed test questions.
+ const selected=new Set(development_ids),devAudio=new Set(samples.filter(s=>selected.has(s.id)).map(s=>s.audio_id));
+ const dev=new Set(samples.filter(s=>devAudio.has(s.audio_id)).map(s=>s.id));
+ development_ids.splice(0,development_ids.length,...dev);
+ const test_ids=[...ids].filter(id=>!dev.has(id));
  return {version:'evaluation-v1',seed,agent,keys,development_ids,test_ids};
 }
 function tokenSet(text){return new Set(text.toLowerCase().match(/[\p{L}\p{N}_]+/gu)??[]);}
