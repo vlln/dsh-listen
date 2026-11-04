@@ -2,7 +2,7 @@
 title: DSH工具面适配首轮记录
 description: 聚合拆分共用inspect与图像引用投影，尚未实际宿主装载。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T02:48:00Z
 ---
 
@@ -22,6 +22,9 @@ TDD实现makeHostBridge，Agent.session.id提供owner，workingDirectory.ensure�
 # 实际成功调用与包清单
 真实Cordis+实际defineTool调用本项目生成WAV，正式decode/worker/Pipeline输出complete、800样本、实际PNG字节及ImageBlock引用；2项Cordis测试（成功/默认拒绝）通过。fs/附件服务仍为隔离替身，不能当实际文件沙箱/附件持久化已验证。
 包新增main/exports/icon/locale，pack清单23项、19186字节，index/icon/en/zh均包含，test/.work未泄漏；无SDK依赖闭包。图标仅SVG已创建，尚未真实Plugins视觉验收；不称完整交付。
+
+# Feature收尾
+使用实际SDK最后gate106/106 PASS，index line/branch100%、包19186字节，开发单元范围可合并。以下系统/真实后端项是明确后续验收欠账，不用mock或feature覆盖冒充完成。
 
 # 尚缺
 真实调用Agent cwd/附件白名单/沙箱执行身份，Cordis注册清理、实际图像投影、独立DSH_HOME测试、插件manifest/icon/locale和用户设置均待完成。无ASR/events真实路径及MMAU结果，Goal保持active。

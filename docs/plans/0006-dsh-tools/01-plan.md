@@ -2,7 +2,7 @@
 title: DSH工具适配与隔离集成
 description: 共用工具面、规范输出/图像引用、调用者和宿主授权适配。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T02:45:00Z
 ---
 
