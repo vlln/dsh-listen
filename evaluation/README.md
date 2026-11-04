@@ -2,6 +2,8 @@
 
 `protocol.mjs` 固定分层 dev/test、隔离题干/答案，并把所有预定题（含失败）纳入分母。Agent 输入仅 id/audio_id/question/choices；task/answer/difficulty/sub-category 仅在外部评分器，工具提取不读题目或选项。keys 及评分导出不得放入 Agent 工作区。
 
+批量执行入口与最小职责见[薄适配器](thin-adapter.md)。正常运行复用已安装DSH_HOME与固定题单，不每批安装或重复导入数据。
+
 新批次的项目内目录、逐题10分钟总截止与失败留档见[批次约定](batch-layout.md)；旧preview runner不作为新10题批次入口。
 
 ## 后续主模型

@@ -19,7 +19,7 @@
     run.json                  # 配置、commit、dirty、版本、协议、预算、状态
     manifest.json             # 所选ID及共享数据版本/hash引用，不复制题面/音频
     config/                   # 无密钥profile/overlay快照及包hash
-    runtime/                  # 本批DSH_HOME；会话/生成附件，不导入原音频副本
+    # DSH_HOME引用已安装评测profile，普通run不重复建runtime或安装插件
     budget.json               # 本批请求计数
     results/<sample-id>/
       events.jsonl            # 原始headless事件
