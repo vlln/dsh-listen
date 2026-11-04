@@ -18,4 +18,8 @@ export function checkManifest(pkg){
 export async function checkDependencyBytes(root,limit=5*1024*1024){
  let total=0;for(const file of await filesUnder(root))total+=(await stat(file)).size;if(total>limit)throw Error(`DEPENDENCY_SIZE_LIMIT: ${total} > ${limit}`);return total;
 }
+export function packedResult(report,name){
+ const result=Array.isArray(report)?report.find(x=>x.name===name):report?.[name];
+ if(!result||result.name!==name||!Number.isInteger(result.size))throw Error('INVALID_PACK_REPORT');return result;
+}
 export function checkPackedBytes(bytes,limit=1024*1024){if(!Number.isInteger(bytes)||bytes<0||bytes>limit)throw Error('PACKAGE_SIZE_LIMIT');}

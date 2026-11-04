@@ -1,0 +1,4 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {checkCoverage} from '../../scripts/coverage.mjs';
+test('negative control: test files and empty sources cannot fake source coverage',()=>{assert.throws(()=>checkCoverage({files:[{path:'/repo/test/high.test.mjs',coveredLinePercent:100,coveredBranchPercent:100}]}),/NO_SOURCE/);});
+test('negative control: either line or branch deficit fails gate',()=>{for(const metrics of [{coveredLinePercent:89,coveredBranchPercent:100},{coveredLinePercent:100,coveredBranchPercent:79}])assert.throws(()=>checkCoverage({files:[{path:'/repo/src/dsp.mjs',...metrics}]}),/BELOW/);});
+test('valid source coverage passes while malformed report fails closed',()=>{assert.equal(checkCoverage({files:[{path:'/repo/src/dsp.mjs',coveredLinePercent:90,coveredBranchPercent:80}]}).files,1);assert.throws(()=>checkCoverage({files:[{path:'/repo/src/x.mjs',coveredLinePercent:NaN,coveredBranchPercent:100}]}),/INVALID/);});
