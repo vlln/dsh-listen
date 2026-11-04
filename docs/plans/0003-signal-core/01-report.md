@@ -27,5 +27,8 @@ npm run check
 # 正式绘图数据层
 按TDD新增preparePlot：有界列数、全源时间波形min/max、mel功率分桶、显示裁频、分声道与功率均值（波形用包络union非波形平均）。F08始终balanced全频，不随显示参数改变；同片段参考峰值不因crop变化。`npm run gate:feature`26/26 PASS，plot-data line100%、branch94.87%，包7683字节。独立review发现空裁频在FFT后才拒绝，已前置并回归；另单列statistics_parameters区分显示FFT与固定balanced统计。最终gate27/27 PASS，plot-data branch97.50%，包7690字节。PNG和worker尚未正式实现。
 
+# 正式PNG绘制
+TDD实现Raster与renderPlot，不依赖OS字体/外部graphics runtime；图含源时间、mel中心Hz刻度、共享相对dB色条、声道视图/波形。独立审查发现合法大幅值波形一端未clip可导致无限长line，以及公开Raster几何无界；已双端clamp、拒绝非有限/过大几何和坏wave bucket并新增回归。`npm run gate:feature`35/35 PASS，image branch96.77%、raster branch100%，全源码line100%；包10159字节。当前不包含完整能量strip的PNG展示（数值能量已返回），视觉系统验收后须明确是否满足既定呈现规格，不能以单元测试当已实际送达Agent。
+
 # 未完成
 同feature尚需正式制图/worker等按计划推进及review修正。没有解码/权限/ASR/events/插件，未跑完整系统或MMAU。Goal保持active，不提前合并或标Plan done。
