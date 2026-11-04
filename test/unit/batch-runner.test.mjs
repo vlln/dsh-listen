@@ -32,7 +32,7 @@ test('answer words about payment and authentication are not control-plane errors
 });
 
 test('credential and unavailable-model control-plane failures stop the batch',async t=>{
-  for(const text of ['MISSING_CREDENTIAL','no API key configured','MODEL_NOT_FOUND','model not available','no configured model','insufficient balance']){
+  for(const text of ['MISSING_CREDENTIAL','no API key configured','MODEL_NOT_FOUND','model not available','no configured model','insufficient balance','BUDGET_LOCK_TIMEOUT']){
     const dir=await fixture(t),result=await session(dir,`console.log(JSON.stringify({type:'error',message:${JSON.stringify(text)}}));`);
     assert.equal(result.stop_batch,true);assert.equal(result.model_output,'');assert.equal(result.error,'AUTH_QUOTA_OR_BUDGET_FAILURE');
   }
@@ -155,7 +155,7 @@ fs.appendFileSync(${JSON.stringify(calls)},JSON.stringify({args:process.argv.sli
 let task='';process.stdin.on('data',chunk=>task+=chunk);process.stdin.on('end',()=>{
   if(task!=='synthetic')process.exit(2);
   const state=JSON.parse(fs.readFileSync(budget,'utf8'));state.requests++;
-  fs.writeFileSync(budget,JSON.stringify(state));fs.unlinkSync(lock);
+  fs.writeFileSync(budget,JSON.stringify(state));fs.writeFileSync(process.env.DSH_EVALUATION_SESSION_BUDGET_FILE,JSON.stringify({requests:1}));fs.unlinkSync(lock);
   console.log(JSON.stringify({type:'final',text:'synthetic answer'}));
 });
 `;

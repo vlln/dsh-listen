@@ -7,7 +7,7 @@ import {performance} from 'node:perf_hooks';
 import {StringDecoder} from 'node:string_decoder';
 
 const LOG_LIMIT = 32 * 1024 * 1024;
-const STOP_PATTERN = /quota|insufficient|payment|HTTP.?40[129]|HTTP.?429|unauthori[sz]ed|authentication|MISSING_CREDENTIAL|no API key|MODEL_NOT_FOUND|not available|no[^\r\n]*model|HEADLESS_PREVIEW_REQUEST_LIMIT|INVALID_BUDGET|EEXIST.*budget/i;
+const STOP_PATTERN = /quota|insufficient|payment|HTTP.?40[129]|HTTP.?429|unauthori[sz]ed|authentication|MISSING_CREDENTIAL|no API key|MODEL_NOT_FOUND|not available|no[^\r\n]*model|HEADLESS_PREVIEW_REQUEST_LIMIT|BUDGET_LOCK_TIMEOUT|INVALID_BUDGET|EEXIST.*budget/i;
 
 /** Run one shell-free POSIX session. The caller assigns the manifest id. */
 export async function runSession({command,args=[],cwd,env,task,outputDirectory,timeoutMs=600000,graceMs=2000}) {
