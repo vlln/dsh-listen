@@ -15,7 +15,8 @@ export function makeMelFilters(sr,size,bands=128){
 function validPower(values){if(!(Array.isArray(values)||values instanceof Float64Array||values instanceof Float32Array)||!values.length||[...values].some(v=>!Number.isFinite(v)||v<0))throw Error('INVALID_POWER');}
 export function applyMel(power,filters){
  validPower(power);if(!Array.isArray(filters)||!filters.length||filters.some(f=>f.length!==power.length))throw Error('MEL_SHAPE');
- return Float64Array.from(filters,filter=>filter.reduce((sum,w,k)=>sum+w*power[k],0));
+ for(const filter of filters)validPower(filter);
+ return Float64Array.from(filters,filter=>{const value=filter.reduce((sum,w,k)=>sum+w*power[k],0);if(!Number.isFinite(value))throw Error('POWER_OVERFLOW');return value;});
 }
 export function displayPowerDb(power,reference){
  if(!Number.isFinite(power)||power<0||!Number.isFinite(reference)||reference<0||power>reference*(1+1e-12))throw Error('INVALID_DISPLAY');
@@ -61,8 +62,8 @@ export function aggregatePower(rows,{samples,hop,columns}){
   const start=c*samples/columns,end=(c+1)*samples/columns,result=new Float64Array(bands);let total=0;
   for(let j=Math.min(rows.length-1,Math.floor(start/hop));j<rows.length;j++){
    const a=j*hop,b=j===rows.length-1?samples:Math.min(samples,(j+1)*hop);if(a>=end)break;
-   const weight=Math.max(0,Math.min(end,b)-Math.max(start,a));total+=weight;for(let k=0;k<bands;k++)result[k]+=weight*rows[j][k];
+   const weight=Math.max(0,Math.min(end,b)-Math.max(start,a));const nextTotal=total+weight;for(let k=0;k<bands;k++)result[k]=result[k]*(total/nextTotal)+rows[j][k]*(weight/nextTotal);total=nextTotal;
   }
-  if(total<=0)throw Error('UNCOVERED_BIN');for(let k=0;k<bands;k++)result[k]/=total;return result;
+  if(total<=0)throw Error('UNCOVERED_BIN');return result;
  });
 }
