@@ -23,7 +23,14 @@ export function makeAsrProvider({endpoint,model,allowExternal=false,secretProvid
   const abort=()=>{reason='CANCELLED';controller.abort();};signal.addEventListener('abort',abort,{once:true});
   const timer=setTimeout(()=>{reason='ASR_TIMEOUT';controller.abort();},timeoutMs);
   try{
-   const key=secretProvider?await secretProvider():null;if(signal.aborted)throw Error('CANCELLED');
+   let key=null;
+   if(secretProvider){
+    const pending=Promise.resolve().then(()=>secretProvider({signal:controller.signal}));
+    let onAbort;
+    const interrupted=new Promise((_,reject)=>{onAbort=()=>reject(Error(reason??'CANCELLED'));controller.signal.addEventListener('abort',onAbort,{once:true});if(controller.signal.aborted)onAbort();});
+    try{key=await Promise.race([pending,interrupted]);}finally{controller.signal.removeEventListener('abort',onAbort);}
+   }
+   if(signal.aborted)throw Error('CANCELLED');
    const form=new FormData();form.append('file',new Blob([encoded.bytes],{type:'audio/wav'}),'audio.wav');form.append('model',model);form.append('response_format','verbose_json');
    let response;try{response=await fetch(url,{method:'POST',body:form,headers:key?{Authorization:`Bearer ${key}`}:{},signal:controller.signal,redirect:'error'});}catch{throw Error('ASR_NETWORK_FAILED');}
    if(!response.ok){await response.body?.cancel();throw Error(`ASR_HTTP_${response.status}`);}
