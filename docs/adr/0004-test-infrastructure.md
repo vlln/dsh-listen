@@ -30,4 +30,4 @@ CI：GitHub Actions声明Node22/Linux/macOS合成信号与契约检查；远程�
 依赖锁版本/完整性，npm安装禁lifecycle脚本、缓存位于工作区。新DSH_HOME隔离、随机端口仅为验证所需且须遵守不替换用户GUI的约束；boot成功之外必须实际工具调用，先负控。工具面工厂可共用，但真实注入/权限/附件不能用mock ctx替代。
 
 ## 验证状态
-Node内置test runner已在spike真实运行；fft/png与FFmpeg/API loopback边界有记录。正式CI/coverage门禁、负控、pack/安装与DSH独立实例尚未搭建；本ADR不能accepted直过。先审查契约与基础设施，再执行ci分支。
+正式ci分支已搭：Node测试入口、依赖锁、静态/体积门禁、coverage源码清单/真实事件正负控、自清理loopback/WAV fixture、真实pack与隔离目录安装；实证见[基建报告](../plans/0002-test-infra/01-report.md)。远程CI未推送，DSH独立实例属后续系统验收。用户出口确认前仍proposed；不能把骨架包安装当功能通过。

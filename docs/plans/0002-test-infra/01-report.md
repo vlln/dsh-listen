@@ -20,4 +20,5 @@ CI yaml声明ubuntu/macos Node22同样入口，未推送、未验证远程，不
 独立审查指出上述无事件/源码遗漏与副作用import绕门禁，已修并在npm run gate中10/10 PASS。远程CI仍未运行。
 
 # 尚未通过
-fake服务fixture助手、包实际临时安装烟测、基建出口确认及合并未齐；不标ADR accepted、不推进DEVELOP。源码/插件为空，工程验收/效果验收均未完成。
+fixture助手已补并3/3 PASS：PCM16 WAV头/载荷一致，loopback响应结束后连接关闭，服务/客户端异常均传播且server清理。真实npm pack得2183字节，隔离目录ignore-scripts安装3包exit0，包identity/固定两依赖/无install脚本核验通过；不是功能可用证据。
+基建出口确认及合并未齐；不标ADR accepted、不推进DEVELOP。远程CI未运行。源码/插件为空，工程验收/效果验收均未完成。
