@@ -16,5 +16,8 @@ created: 2026-11-04T03:50:00Z
 - @tensorflow/tfjs4.22.0，标Apache-2.0，unpacked147474474字节且多个TF子依赖。
 这些是单包registry元数据，不是平台定向精简制品/实际安装闭包。不能因为WASM/JS名字就称轻量；三个都不放默认5MiB闭包，不自动安装或执行脚本。
 
+# 官方轻量制品独立核实
+独立研究者取得[MediaPipe官方模型页](https://ai.google.dev/edge/mediapipe/solutions/audio/audio_classifier)，推荐YAMNet并链接[固定v1 TFLite](https://storage.googleapis.com/mediapipe-models/audio_classifier/yamnet/float32/1/yamnet.tflite)。仅HEAD200，Content-Length4126810字节、ETag d02e1b838813107817b755d09d6b56b3；未下载权重。页面给输入1×15600/float32；TF官方README确认16k mono、521类。完整TF export输出不能直接冒充MediaPipe专用制品实检结果。代码Apache-2.0已读，但具体权重许可、最小arm64运行时、输出tensor/SHA256尚未核实；不据HEAD认定可安装/可分发。
+
 # 当前判断
 优先核实可选独立推理组件或已有本地服务；不为追求默认完整能力破坏用户轻安装约束。用户若批准可选运行时/模型需给明细和许可证；没有真实模型前events仍unavailable。MMAU及主Agent效果必须后测，Goal保持active。
