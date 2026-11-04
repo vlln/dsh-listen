@@ -9,8 +9,10 @@ export function makeAudioTools({defineTool,inspect,caller,saveImage,mode='aggreg
   return [{type:'text',text:JSON.stringify(text)},...(image_attachment?[{type:'image',attachment:image_attachment}]:[])];
  }},async execute(args,exec){
   const context=await caller(exec),result=await inspect(args,context,feature);
-  const {png,...report}=result;
+  if(context.signal?.aborted)throw Error('CANCELLED');
+   const {png,...report}=result;
   const image_attachment=png?await saveImage({data:png,mediaType:'image/png',name:'audio-evidence.png'},exec):undefined;
-  return JSON.parse(JSON.stringify({...report,...(image_attachment?{image_attachment}:{})}));
+  if(context.signal?.aborted)throw Error('CANCELLED');
+   return JSON.parse(JSON.stringify({...report,...(image_attachment?{image_attachment}:{})}));
  }}));
 }

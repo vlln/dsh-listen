@@ -1,4 +1,4 @@
-export function makeHostBridge({fs,workingDirectory,scratch,resolveAttachment}={}){
+export function makeHostBridge({fs,workingDirectory,scratch,resolveAttachment,localExecution=false}={}){
  if(!fs||['resolve','contains','processPath'].some(name=>typeof fs[name]!=='function')||typeof workingDirectory?.ensure!=='function'||typeof scratch!=='string'||!scratch)throw Error('INVALID_HOST_SERVICES');
  const contexts=new WeakSet();
  async function caller(exec){
@@ -6,10 +6,11 @@ export function makeHostBridge({fs,workingDirectory,scratch,resolveAttachment}={
   if(exec.signal.aborted)throw Error('CANCELLED');
   const cwd=await workingDirectory.ensure(exec.agent,exec.signal);
   if(exec.signal.aborted)throw Error('CANCELLED');
-  const context={owner:String(exec.agent.session.id),cwd,signal:exec.signal,agent:exec.agent};contexts.add(context);return context;
+  const context=Object.freeze({owner:String(exec.agent.session.id),cwd,signal:exec.signal,agent:exec.agent});contexts.add(context);return context;
  }
  async function authorize(source,context){
   if(!contexts.has(context))throw Error('INVALID_CALLER_CONTEXT');
+  if(!localExecution)throw Error('UNSUPPORTED_EXECUTION_WORLD');
   if(context.signal.aborted)throw Error('CANCELLED');
   if(source.kind==='attachment'){
    if(typeof resolveAttachment!=='function')throw Error('ATTACHMENT_AUTHORIZATION_UNAVAILABLE');
