@@ -4,7 +4,7 @@ const INK=[25,35,45],BLUE=[35,95,175],GRAY=[205,210,215];
 function color(value){return [Math.round(18+230*value),Math.round(20+170*value*value),Math.round(55+50*(1-value))];}
 function validatePlot(plot){
  if(!plot||!Array.isArray(plot.channels)||plot.channels.length<1||plot.channels.length>2||!Array.isArray(plot.frequency_hz)||!plot.frequency_hz.length||!Number.isFinite(plot.reference_power)||plot.reference_power<0||!Number.isFinite(plot.coverage?.from)||!Number.isFinite(plot.coverage?.to)||plot.coverage.to<=plot.coverage.from)throw Error('INVALID_PLOT');
- for(const ch of plot.channels){if(!Array.isArray(ch.mel)||!ch.mel.length||!Array.isArray(ch.wave)||!ch.wave.length)throw Error('INVALID_PLOT');for(const row of ch.mel){if(row.length!==plot.frequency_hz.length||[...row].some(v=>!Number.isFinite(v)||v<0))throw Error('INVALID_POWER');}}
+ for(const ch of plot.channels){if(!Array.isArray(ch.mel)||!ch.mel.length||!Array.isArray(ch.wave)||!ch.wave.length)throw Error('INVALID_PLOT');for(const bucket of ch.wave)if(!bucket||[bucket.from,bucket.to,bucket.min,bucket.max].some(v=>!Number.isFinite(v))||bucket.to<=bucket.from||bucket.min>bucket.max)throw Error('INVALID_WAVE_BUCKET');for(const row of ch.mel){if(row.length!==plot.frequency_hz.length||[...row].some(v=>!Number.isFinite(v)||v<0))throw Error('INVALID_POWER');}}
 }
 export function renderPlot(plot){
  validatePlot(plot);
@@ -14,7 +14,7 @@ export function renderPlot(plot){
  for(let c=0;c<plot.channels.length;c++){
   const channel=plot.channels[c],top=116+c*360,waveY=top+50,melY=top+125,melH=170;
   raster.text(channel.name,left,top);raster.line(left,waveY,right,waveY,GRAY);raster.text('1',55,waveY-35);raster.text('-1',43,waveY+28);
-  for(const bucket of channel.wave){const x=left+((bucket.from+bucket.to)/2-plot.coverage.from)/duration*span;raster.line(x,waveY-32*Math.min(1,bucket.max),x,waveY-32*Math.max(-1,bucket.min),BLUE);}
+  for(const bucket of channel.wave){const x=left+((bucket.from+bucket.to)/2-plot.coverage.from)/duration*span;raster.line(x,waveY-32*Math.max(-1,Math.min(1,bucket.max)),x,waveY-32*Math.max(-1,Math.min(1,bucket.min)),BLUE);}
   raster.text('HZ',8,melY-24);
   for(let x=0;x<span;x++){
    const row=channel.mel[Math.min(channel.mel.length-1,Math.floor(x/span*channel.mel.length))];
