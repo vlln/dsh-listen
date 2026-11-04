@@ -13,7 +13,6 @@ export function normalizeRequest(args,onlyFeature){
  if(('from'in args&&args.from===null)||('to'in args&&args.to===null)||('features'in args&&args.features===null))throw Error('INVALID_NULL_PARAMETER');
  const from=args.from??0,to=args.to??null;
  if(!Number.isFinite(from)||from<0||(to!==null&&(!Number.isFinite(to)||to<=from)))throw Error('INVALID_RANGE');
- if(to!==null&&to-from>60)throw Error('RANGE_TOO_LARGE');
  if(!features.includes('signal')&&DISPLAY.some(k=>k in args))throw Error('PARAMETER_NOT_APPLICABLE');
  const detail=args.spectral_detail??'balanced',view=args.channel_view??'separate',band=args.frequency_range_hz??null;
  if(!['transient','balanced','tonal'].includes(detail)||!['separate','power_mean'].includes(view))throw Error('INVALID_DISPLAY_PARAMETERS');

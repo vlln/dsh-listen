@@ -14,8 +14,11 @@ export async function decodeAudio(file,{root,scratch,from=0,to,signal,ffmpeg='ff
  try{
   const bytes=await runProcess(ffprobe,['-v','error','-protocol_whitelist','file,pipe','-format_whitelist',FORMATS,'-show_streams','-show_format','-of','json',snapshot.path],{signal});
   let report;try{report=JSON.parse(bytes.toString('utf8'));}catch{throw Error('INVALID_PROBE_RESPONSE');}
-  const media=parseMediaInfo(report),defaultEnd=to===undefined;to??=media.duration;
-  if(!Number.isFinite(from)||!Number.isFinite(to)||from<0||to<=from||to>media.duration){const error=Error(`INVALID_RANGE: requested from=${from}, to=${to}; duration_seconds=${media.duration} (probe metadata). Require 0 <= from < to <= duration and at most 60 seconds. For an initial overview, omit from/to when the file is at most 60 seconds; otherwise choose a valid interval.`);error.code='INVALID_RANGE';error.details={from,to,duration_seconds:media.duration,max_interval_seconds:60};throw error;}
+  const media=parseMediaInfo(report);to??=media.duration;
+  if(!Number.isFinite(from)||!Number.isFinite(to)||from<0||(to<=from&&from<media.duration))throw Error('INVALID_RANGE');
+  from=Math.min(from,media.duration);to=Math.min(to,media.duration);
+  if(to<=from)throw Error(`EMPTY_RANGE: clamped interval is empty; duration_seconds=${media.duration}. Choose from before the audio end.`);
+  const defaultEnd=to===media.duration;
   if(to-from>60)throw Error('RANGE_TOO_LARGE');
   const start=Math.ceil(from*media.sampleRate),end=Math.ceil(to*media.sampleRate),count=end-start;
   if(count<1||count>60*media.sampleRate)throw Error('INVALID_SAMPLE_RANGE');
