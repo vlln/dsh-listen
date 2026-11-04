@@ -3,7 +3,7 @@
 按用户“先工程、不扩量”执行，本轮无新增真实主模型请求。独立只读审查未运行攻击或测试；下列是条件性风险，不称已发生事故。
 
 ## 已修生命周期
-原插件disable只注销工具，不abort在途任务。现createTaskLifecycle维护插件AbortController和pending集合，整个execute（caller/analysis/image save）合成signal，disable先注销再abort并await allSettled。纯lifecycle2项及plugin4项PASS，实际SDK Cordis成功/拒绝路径+plugin共6项PASS。真实宿主disable期间长任务仍需专项验证，不能只凭注册表清空当通过。
+原插件disable只注销工具，不abort在途任务。现createTaskLifecycle维护插件AbortController和pending集合，整个execute（caller/analysis/image save）合成signal，disable先注销再abort并await allSettled。纯lifecycle2项及plugin4项PASS，实际SDK Cordis成功/拒绝路径+plugin共6项PASS。后续真实Cordis专项test/system/disable-active.test.mjs1/1 PASS：in-flight cwd等待收到lifetime取消、dispose等待settle、零图片、工具注销、旧句柄PLUGIN_DISABLED，补足该具体生命周期链证据；仍不把它外推为所有子进程后代回收保证。
 
 ## 仍未关闭的两项
 1. root包含/localExecution只证明静态准入与路径执行世界，source realpath/open父目录race仍依赖同权限并发参与者。需宿主强制sandbox或稳定文件身份读取闭环；不以快照/fstat声称完全关闭。
