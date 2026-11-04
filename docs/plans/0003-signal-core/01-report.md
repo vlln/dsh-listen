@@ -18,5 +18,8 @@ npm run check
 
 已实现PCM/采样率/范围有限输入校验、RMS/峰值/DC/near-full-scale、0值null-dB、25ms/10ms真实尾帧与100ms功率桶、低能量等值容差、逐声道/联合统计、Pearson反相风险和静音声道缺失语义、源offset/单位/限制。
 
+# 独立审查修正
+发现并修正3项：常量双声道浮点残差可伪造相关→显式常量检测；极端Float64有限幅值可平方溢出→明确限制为解码float32可表示非零幅度范围（不把此范围外当静音）；公开quantile容器/元素增加有限数值验证。回归新增后`npm run gate:feature`10/10 PASS，source line100%、branch97.75%。package4586字节，依赖不变。新增幅度域是技术输入限制，非clip，后续契约须明确传达。
+
 # 未完成
 同feature尚需频谱/mel数据和正式制图/worker等按计划推进、独立review。没有解码/权限/ASR/events/插件，未跑完整系统或MMAU。Goal保持active，不提前合并或标Plan done。
