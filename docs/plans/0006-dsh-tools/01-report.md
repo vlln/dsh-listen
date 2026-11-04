@@ -19,5 +19,9 @@ TDD实现makeHostBridge，Agent.session.id提供owner，workingDirectory.ensure�
 # 真实SDK与Cordis验证
 引入test-only Node register loader解析已安装SDK，完整gate104/104 PASS、index line/branch100%，包18634字节。随后新增真实Cordis Context/plugin/dispose测试暴露Invalid effect：entry.apply返回installAudioPlugin的任意对象，Cordis把它当effect拒绝；改为await不返回对象后真实mount/一次fail-closed工具调用/dispose通过。测试服务仍为替身，真实严格依赖牵线已验证但不是完整DSH应用/附件送达。未改真实profile，未新增服务器。
 
+# 实际成功调用与包清单
+真实Cordis+实际defineTool调用本项目生成WAV，正式decode/worker/Pipeline输出complete、800样本、实际PNG字节及ImageBlock引用；2项Cordis测试（成功/默认拒绝）通过。fs/附件服务仍为隔离替身，不能当实际文件沙箱/附件持久化已验证。
+包新增main/exports/icon/locale，pack清单23项、19186字节，index/icon/en/zh均包含，test/.work未泄漏；无SDK依赖闭包。图标仅SVG已创建，尚未真实Plugins视觉验收；不称完整交付。
+
 # 尚缺
 真实调用Agent cwd/附件白名单/沙箱执行身份，Cordis注册清理、实际图像投影、独立DSH_HOME测试、插件manifest/icon/locale和用户设置均待完成。无ASR/events真实路径及MMAU结果，Goal保持active。
