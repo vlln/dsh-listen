@@ -21,9 +21,11 @@ export async function createSourceSnapshot(file,{root,scratch,signal,maxBytes=25
    position+=bytesRead;if(position>maxBytes)throw Error('SOURCE_SIZE_LIMIT');
    const data=chunk.subarray(0,bytesRead);hash.update(data);await output.writeFile(data);
   }
+  if(signal?.aborted)throw Error('CANCELLED');
   const after=await input.stat();
   if(before.size!==position||after.size!==before.size||after.mtimeMs!==before.mtimeMs||after.ctimeMs!==before.ctimeMs)throw Error('SOURCE_CHANGED');
   await output.close();output=null;
+  if(signal?.aborted)throw Error('CANCELLED');
   let disposed=false;
   return {path:destination,sha256:hash.digest('hex'),bytes:position,source:target,async dispose(){if(disposed)return;await unlink(destination);await rmdir(directory);disposed=true;}};
  }catch(error){
