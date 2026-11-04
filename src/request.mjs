@@ -9,6 +9,8 @@ export function normalizeRequest(args,onlyFeature){
  if(pathSet===attachmentSet||('source_path'in args&&!pathSet)||('attachment_id'in args&&!attachmentSet))throw Error('INVALID_SOURCE');
  const features=onlyFeature?[onlyFeature]:(args.features??FEATURES);
  if(!Array.isArray(features)||!features.length||features.some(x=>!FEATURES.includes(x))||new Set(features).size!==features.length)throw Error('INVALID_FEATURES');
+ if(DISPLAY.some(k=>k in args&&args[k]===null))throw Error('INVALID_NULL_PARAMETER');
+ if(('from'in args&&args.from===null)||('to'in args&&args.to===null)||('features'in args&&args.features===null))throw Error('INVALID_NULL_PARAMETER');
  const from=args.from??0,to=args.to??null;
  if(!Number.isFinite(from)||from<0||(to!==null&&(!Number.isFinite(to)||to<=from)))throw Error('INVALID_RANGE');
  if(to!==null&&to-from>60)throw Error('RANGE_TOO_LARGE');
