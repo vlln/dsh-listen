@@ -9,7 +9,7 @@ macOS say→本机FFmpeg转16k mono fixture，时长4.781875秒。已有mlx-whis
 
 ## 可选适配
 新增local-asr provider/独立Python runner，仅已有用户环境/模型路径；检查目录/权重存在，不自动fetch；用本工具编码WAV、runProcess超时取消、parseAsrResponse恢复源offset、finally清理临时输入。三项Node测试通过（配置/取消/运行时不存在清理），Python AST语法检查通过。
-当前完整feature coverage尚需真实provider成功/失败样例纳入，不把直接Python成功等同Node provider已贯通。Python仅可选依赖，默认Node包不安装MLX或权重。
+后续正式Node provider真实成功：decode合成fixture→encodeWav→runProcess(-B, offline runner)→JSON解析→source offset10秒→清理，集成测试1/1 PASS，耗时约2.95秒，归一词序仍精确一致。支持通过显式环境路径启用该可选测试，默认不要求模型；完整feature coverage仍需最后gate，不把可选skip当真实成功。Python仅可选依赖，默认Node包不安装MLX或权重。
 
 ## 未完成
 本地配置接插件、模型hash/许可、长音频/噪声/语言泛化/冷启动与内存、MMAU真实对照仍未验收。只有ASR真实样例，不代表音乐/环境理解。

@@ -19,5 +19,8 @@ TDD实现makeAsrProvider：配置endpoint/model/授权（部署非工具参数�
 # 配置接入
 configureExtractors/Config接Plugin→Pipeline，默认disabled无key/权重；启用错误endpoint/未授权外发/要求key却无resolver构造时拒绝。loopback真实multipart经Pipeline映射source offset并cache一次，提取器设置4项通过。完整SDK gate121/121 PASS，extractors line/branch100%，包21426字节。凭据resolver只能由部署注入，当前官方entry尚无已验证的凭据服务绑定：requiresKey启用会fail-closed，不能宣称BYOK用户路径完整。
 
+# 本地模式与实际模型
+prepareExtractors异步选择api/local，Config新增asrMode/asrPython/asrModelDirectory，无默认下载或绝对路径。配置测试2项PASS，静态/包预算通过（22715字节、673215闭包）。用户已有MLX权重路径真实Node provider转写1/1 PASS，详见[本地记录](02-local-verification.md)。独立review进行中，尚不宣称完整feature gate通过。
+
 # 未完成
 API endpoint/授权/限额/响应/offset/取消、用户配置接Plugin和真实能力验收仍待；Goal active。真实API外发与付费需要单独授权。
