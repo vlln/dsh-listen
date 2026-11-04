@@ -6,11 +6,13 @@
 
 ## 后续主模型
 
-用户指定后续使用 `deepseek-flash`。模型选择覆盖见[model.patch.yml](model.patch.yml)，使用宿主内置 `deepseek-official/deepseek-flash`；认证仍由DSH服务处理，首次真实运行前核验可用性，不静默回退其他模型。旧gpt-6.1-sol批次和配置不改写；切换主模型后需要重新建立参考结果，不与旧模型分数直接归因为工具差异。当前只固定配置，未发起flash请求。
+用户指定后续使用 `deepseek-flash`。模型选择覆盖见[model.patch.yml](model.patch.yml)，使用宿主内置 `deepseek-official/deepseek-flash`；认证仍由DSH服务处理，首次真实运行前核验可用性，不静默回退其他模型。旧gpt-6.1-sol批次和配置不改写；切换主模型后需要重新建立参考结果，不与旧模型分数直接归因为工具差异。历史Flash60题批次见[报告](../docs/plans/0016-flash-sixty/02-report.md)，该批仍使用旧拦截配置，不与修复后preset结果混用。
+
+原生preset配置与验证见[使用说明](preset-usage.md)，入口为[preset.patch.yml](preset.patch.yml)。安装版minimal含bash/read_image，不把minimal误称无工具模式。headless通过原生registry绑定，新会话才使用新代际。
 
 ## 题目与批处理
 
-`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；工具上限仍由运行时执行（每题 3 次），不混入题面，音频/任务按题隔离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
+`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；后续使用原生audio-evaluation preset（安装版minimal + 音频工具），不做评测工具拦截、没有3次音频调用限额；仅保留10分钟会话截止及独立主模型请求预算。音频/任务按题分离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
 
 用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和预算，记录 JSON 工具轨迹。执行仍须已有批次授权及请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。准备产物记录 plain-text 协议版本和 task SHA256；runner 在任何配置写入或调用前核验全部题面，旧 manifest 或被改动题面直接拒绝。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
 

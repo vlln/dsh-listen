@@ -13,7 +13,7 @@ created: 2026-11-03T14:30:00Z
 ## 输入与工具面
 聚合listen，拆分audio_signal/audio_transcript/audio_events，共用执行器；配置选择一种面，不同时暴露对照两面。
 - source_path/attachment_id恰好一个。路径基于调用Agent cwd，附件只从当前有权会话解析；无执行Agent上下文则fail closed。生产解析必须走宿主文件身份/工作目录/附件能力，不能照搬spike传root就认为权限已检查。
-- from/to均可省略，分别默认0/文件末尾；都省略为整个音频。有限非负边界超过音频时长则截至末尾；实际非空区间须≤60秒，资源上限在截取后检查。返回source.duration_seconds说明完整音频时长，coverage说明实际样本区间，requested_parameters保留请求。截取后为空返回EMPTY_RANGE，负数/倒序/非有限仍拒绝（用户于2026-11-04明确修订）；size≤256MiB、8–192kHz、1–2声道、单音轨。首版格式目标WAV/FLAC/MP3/M4A/OGG，但实际每种格式需验证才列支持，不声称WAV-only spike覆盖全部。
+- from/to均可省略，分别默认0/文件末尾；都省略为整个音频。有限非负边界超过音频时长则截至末尾；实际非空区间须≤60秒，资源上限在截取后检查。返回source.duration_seconds说明完整音频时长，coverage说明实际样本区间，requested_parameters保留请求。截取后为空返回EMPTY_RANGE，负数/倒序/非有限仍拒绝（用户于2026-11-04明确修订）；size≤256MiB、8–192kHz、1–8声道、单音轨；总标量样本≤23040000（保留原立体声192kHz/60秒上限，多声道高采样率需选更短区间），原生各声道保留，只有ASR/事件分支显式算术平均单声道。首版格式目标WAV/FLAC/MP3/M4A/OGG，但实际每种格式需验证才列支持，不声称WAV-only spike覆盖全部。
 - features默认signal/transcript/events，非空且不重复。拆分工具固定其唯一feature；signal含元数据/波形/能量/mel/统计。
 - spectral_detail transient/balanced/tonal对应1024/2048/4096，hop=N/4。frequency_range_hz仅裁图，不变全带统计；channel_view separate/power_mean仅显示。未用到图像的请求传显示参数拒绝PARAMETER_NOT_APPLICABLE，不静默忽略。
 - 未声明字段一律UNKNOWN_PARAMETER，特别拒绝question/prompt/自由shell/供应商/授权字段；宿主implicit参数根开放不等于工具应接受额外字段。
@@ -27,6 +27,7 @@ created: 2026-11-03T14:30:00Z
 ## 输出和错误
 返回recipe_version/analysis_id/source_hash、requested/effective_parameters、requested/available/missing_features、各feature status/coverage/limitations、方法/单位/版本、实际调用与缓存命中、紧凑文本和正式图像附件。
 - complete：本次明确请求项均可用并完成；partial：至少一个可用证据但部分请求缺失/失败；failed：无可用证据。不可用原因分未配置/不适用/缺模型/失败。不把空ASR等同无人声。
+- 组件失败附安全白名单error.code与recovery，未知异常不回显原消息；输入错误包含具体可恢复说明。多声道不支持时明确实际声道/采样率和支持范围，不能只返回裸UNSUPPORTED_AUDIO。
 - typed错误INVALID_SOURCE/ACCESS_DENIED/INVALID_RANGE/RANGE_TOO_LARGE/DECODE_FAILED/PARAMETER_NOT_APPLICABLE/EXTERNAL_PROCESSING_NOT_AUTHORIZED/BACKEND_UNAVAILABLE/TIMEOUT/CANCELLED，失败不伪装静音。
 - 不返回正在运行的任务，首版先用有界同步等待的异步execute；内部worker不阻塞宿主。若之后接jobs，需要另行核验真实取回/取消契约，不预造running状态。
 - source数据未知允许null；图片未实际发送给主模型必须注明，文件路径不等于图像内容。
