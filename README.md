@@ -25,7 +25,7 @@ npm pack --ignore-scripts
 # 使用独立测试DSH_HOME，不覆盖正在使用的profile
 DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-listen-0.0.0-dev.tgz" --ignore-scripts
 ```
-包是纯Cordis：CLI安装为依赖**不会自动启用**。当前需在隔离profile组合中显式加载该插件并填写scratch；自动启用分发体验尚待完善。不要将测试说明当成生产一键安装承诺。
+包已带默认组合层：官方CLI安装会自动加入profile bundle，无需手写insert；默认scratch位于该DSH_HOME数据目录。为避免猜测文件执行世界，localExecution默认false，需部署确认本机路径后启用；ASR/events默认关闭，用户显式选择已有环境/模型。旧的纯Cordis手写insert应先移除，避免重复条目。
 
 必须：Node22+、已有FFmpeg/FFprobe。默认npm闭包不包含Python/MLX/LiteRT或模型，不自动下载。localExecution默认false，只有确认文件执行世界就是宿主本地时才由部署启用；不是让Agent自行绕过沙箱。
 
@@ -63,7 +63,7 @@ DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-l
 [验收基线](docs/acceptance.md) · [研究导航](docs/README.md) · [headless评测](evaluation/README.md)。无MMAU成绩，不保证10个百分点增益已达到。
 
 ## 插件管理
-装卸启停使用官方CLI与侧边栏Plugins页；当前纯Cordis开发包安装与组合启用是两步。升级先验证新tarball，再替换隔离实例；卸载使用`dsh plugin --profile <name> remove dsh-listen`，同时移除对应组合条目。不要改正在使用的profile做未完成版本验收。
+装卸启停使用官方CLI与侧边栏Plugins页；当前开发包安装自动组合，运行准入和可选提取器仍需显式配置。升级先验证新tarball，再替换隔离实例；卸载使用`dsh plugin --profile <name> remove dsh-listen`，同时移除对应组合条目。不要改正在使用的profile做未完成版本验收。
 
 ## 许可
 代码MIT；可选运行时、权重、数据分别遵守各自许可，不随本代码许可自动变更。
