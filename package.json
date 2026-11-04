@@ -6,11 +6,14 @@
   "description": "Question-independent audio evidence extraction for DSH agents",
   "license": "MIT",
   "engines": { "node": ">=22" },
-  "files": ["src", "LICENSE", "README.md"],
+  "main": "./src/index.mjs",
+  "exports": { ".": "./src/index.mjs", "./package.json": "./package.json", "./locale/*.json": "./locale/*.json" },
+  "icon": "./icon.svg",
+  "files": ["src", "icon.svg", "locale", "LICENSE", "README.md"],
   "scripts": {
     "test:infra": "node --test test/infra/*.test.mjs",
     "test:unit": "node --test test/unit/*.test.mjs",
-    "test:coverage": "node --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/coverage.mjs --test-reporter-destination=stdout test/unit/*.test.mjs",
+    "test:coverage": "node --import ./test/helpers/register-runtime.mjs --test --experimental-test-coverage --test-reporter=spec --test-reporter-destination=stdout --test-reporter=./scripts/coverage.mjs --test-reporter-destination=stdout test/unit/*.test.mjs",
     "gate:feature": "npm run check && npm run test:coverage",
     "check": "node scripts/check.mjs",
     "gate": "npm run check && npm run test:infra"
