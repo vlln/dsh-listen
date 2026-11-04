@@ -2,7 +2,7 @@
 title: 正式ASR API开发记录
 description: 原生采样率PCM16序列化首单元通过，尚未请求真实后端。
 type: report
-status: draft
+status: complete
 created: 2026-11-04T03:06:00Z
 ---
 
@@ -21,6 +21,9 @@ configureExtractors/Config接Plugin→Pipeline，默认disabled无key/权重；�
 
 # 本地模式与实际模型
 prepareExtractors异步选择api/local，Config新增asrMode/asrPython/asrModelDirectory，无默认下载或绝对路径。配置测试2项PASS，静态/包预算通过（22715字节、673215闭包）。用户已有MLX权重路径真实Node provider转写1/1 PASS，详见[本地记录](02-local-verification.md)。独立review进行中，尚不宣称完整feature gate通过。
+
+# 最终feature门禁
+实际已授权本地环境+真实SDK gate129/129 PASS，ASR/local-ASR line100%、branch86.11%/86.67%，pipeline96.43%；包22868字节。provider变更校验发生在缓存查找前，回归确认旧结果不返回。可合并本feature，默认不安装Python/MLX/权重，真实本地ASR已有受控样例证据；不宣称音乐/环境或benchmark效果已过。
 
 # 未完成
 API endpoint/授权/限额/响应/offset/取消、用户配置接Plugin和真实能力验收仍待；Goal active。真实API外发与付费需要单独授权。

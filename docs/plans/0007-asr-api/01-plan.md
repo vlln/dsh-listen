@@ -2,7 +2,7 @@
 title: 可配置ASR API提取器
 description: 有界multipart转写、PCM WAV编码、时间映射和外发准入。
 type: plan
-status: pending
+status: done
 created: 2026-11-04T03:02:00Z
 ---
 
