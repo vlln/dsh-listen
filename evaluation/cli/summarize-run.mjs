@@ -2,7 +2,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {scorePredictions} from './protocol.mjs';
+import {scorePredictions} from '../lib/protocol.mjs';
 
 const statuses=['complete','timeout','failed','not_run'];
 function fail(message){throw Error(message);}
@@ -89,7 +89,7 @@ function summaryMarkdown(summary){
  lines.push('## Measured operations','','Missing measurements are unknown, not zero. Token counters remain separate; no billing estimate.','','```json',JSON.stringify({duration_ms:summary.duration_ms,model_requests:summary.model_requests,tools:summary.tools,tokens:summary.tokens},null,2),'```','');return lines.join('\n');
 }
 async function main(args){
- if(args.length!==2)fail('Usage: node evaluation/summarize-run.mjs RUN_DIRECTORY EXTERNAL_KEYS_PATH');
+ if(args.length!==2)fail('Usage: node evaluation/cli/summarize-run.mjs RUN_DIRECTORY EXTERNAL_KEYS_PATH');
  const runDirectory=await fs.realpath(path.resolve(args[0])),keysPath=await fs.realpath(path.resolve(args[1]));
  const relative=path.relative(runDirectory,keysPath);
  if(relative===''||(!relative.startsWith(`..${path.sep}`)&&relative!=='..'&&!path.isAbsolute(relative)))fail('KEYS_MUST_BE_EXTERNAL_TO_RUN');

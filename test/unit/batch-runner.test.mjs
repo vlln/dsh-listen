@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {runSession,runBatch} from '../../evaluation/run-batch.mjs';
+import {runSession,runBatch} from '../../evaluation/cli/run-batch.mjs';
 
 const root=path.resolve('.work/batch-runner-tests');
 async function fixture(t){await fs.mkdir(root,{recursive:true});const dir=await fs.mkdtemp(path.join(root,'case-'));t.after(async()=>{assert.equal(path.dirname(dir),root);assert.ok(path.basename(dir).startsWith('case-'));await fs.rm(dir,{recursive:true,force:true});});return dir;}
@@ -138,7 +138,7 @@ let task='';process.stdin.on('data',chunk=>task+=chunk);process.stdin.on('end',(
     const old=Object.fromEntries(Object.keys(overrides).map(key=>[key,process.env[key]]));Object.assign(process.env,overrides);
     try{await runBatch(dir);}finally{for(const [key,value] of Object.entries(old)){if(value===undefined)delete process.env[key];else process.env[key]=value;}}
     const observed=(await fs.readFile(calls,'utf8')).trim().split('\n').map(JSON.parse);assert.equal(observed.length,7);
-    const preset=fileURLToPath(new URL('../../evaluation/preset.patch.yml',import.meta.url));
+    const preset=fileURLToPath(new URL('../../evaluation/config/preset.patch.yml',import.meta.url));
     for(const call of observed){
       assert.deepEqual(call.args,['--profile','headless','--patch',preset,'--patch',path.join(dir,'overlay.yml'),'--json','-']);
       assert.deepEqual(call.budgetEnv,[]);assert.equal(call.home,path.join(dir,run.dsh_home));assert.equal(call.cwd,path.join(dir,'shared'));

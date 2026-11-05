@@ -5,8 +5,8 @@ import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
-import {formatTask,predictionFromEvents,assertPreparedTask,taskProtocol} from '../../evaluation/headless-adapter.mjs';
-import {prepareEvaluation,scorePredictions} from '../../evaluation/protocol.mjs';
+import {formatTask,predictionFromEvents,assertPreparedTask,taskProtocol} from '../../evaluation/lib/headless-adapter.mjs';
+import {prepareEvaluation,scorePredictions} from '../../evaluation/lib/protocol.mjs';
 const row={id:'synthetic',audio_id:'synthetic.wav',task:'sound',question:'Which sound is heard?',choices:['Water flowing.','Engine running.'],answer:'Water flowing.',difficulty:'easy','sub-category':'synthetic'};
 test('adapter keeps question and choice text/order without an index or JSON grammar',()=>{
  const prompt=formatTask(row);assert.ok(prompt.startsWith(`${row.question}\n\nChoices:\n${row.choices.join('\n')}`));

@@ -1,5 +1,5 @@
 // Executes only the user-approved nine development tasks; never reads answer keys.
-import fs from 'node:fs/promises';import path from 'node:path';import {spawn} from 'node:child_process';import {assertPreparedTask} from './headless-adapter.mjs';
+import fs from 'node:fs/promises';import path from 'node:path';import {spawn} from 'node:child_process';import {assertPreparedTask} from '../lib/headless-adapter.mjs';
 const root=process.cwd(),manifest=JSON.parse(await fs.readFile('.work/headless-preview/manifest.json'));
 // Validate every task before profile writes or any model dispatch; legacy manifests fail closed.
 const tasks=await Promise.all(manifest.map(async sample=>{const text=await fs.readFile(path.join(sample.directory,'task.txt'),'utf8');assertPreparedTask(sample,text);return text;}));

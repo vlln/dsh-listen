@@ -1,5 +1,5 @@
 // Authorized 10-case development batch preparation only. No model requests.
-import fs from 'node:fs/promises';import path from 'node:path';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import {createHash,randomUUID} from 'node:crypto';import {execFileSync} from 'node:child_process';import {formatTask,taskProtocol} from './headless-adapter.mjs';
+import fs from 'node:fs/promises';import path from 'node:path';import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import {createHash,randomUUID} from 'node:crypto';import {execFileSync} from 'node:child_process';import {formatTask,taskProtocol} from '../lib/headless-adapter.mjs';
 const root=process.cwd(),revision='ccd9696c0111ea7060827598f310558df0b71b0a',base=path.resolve('.work/evaluation'),dataset=path.join(base,'datasets/mmau',revision);
 const json=async p=>JSON.parse(await fs.readFile(p,'utf8')),hash=b=>createHash('sha256').update(b).digest('hex');
 const split=await json('.work/mmau-prepared/split.json'),dev=new Set(split.development_ids),old=new Set((await json('.work/mmau-preview/manifest.json')).map(r=>r.id));

@@ -4,8 +4,8 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {parseArgs} from 'node:util';
-import {runSession} from './run-session.mjs';
-export {runSession} from './run-session.mjs';
+import {runSession} from '../lib/run-session.mjs';
+export {runSession} from '../lib/run-session.mjs';
 
 async function json(file){return JSON.parse(await fs.readFile(file,'utf8'));}
 async function save(file,value){const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(value,null,2)+'\n',{flag:'wx',mode:0o600});await fs.rename(temp,file);}
@@ -33,7 +33,7 @@ export async function runBatch(runDirectory,options={}){
   }
   if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000)throw Error('INVALID_BATCH_RUN_CONFIG');
   const overlay=path.resolve(directory,run.overlay_path);
-  const preset=fileURLToPath(new URL('./preset.patch.yml',import.meta.url));
+  const preset=fileURLToPath(new URL('../config/preset.patch.yml',import.meta.url));
   const env={...process.env,NODE_USE_ENV_PROXY:'0'};
   for(const key of ['DSH_EVALUATION_BUDGET_FILE','DSH_EVALUATION_SESSION_BUDGET_FILE','DSH_EVALUATION_MAX_REQUESTS'])delete env[key];
   // Directory exclusivity is the execution lock: interrupted batches never resume.
@@ -61,7 +61,7 @@ export async function runBatch(runDirectory,options={}){
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   try{
     const {positionals,values}=parseArgs({allowPositionals:true,options:{concurrency:{type:'string'},'worker-home':{type:'string',multiple:true}}});
-    if(positionals.length!==1)throw Error('Usage: node evaluation/run-batch.mjs RUN_DIRECTORY [--concurrency N] [--worker-home HOME ...]');
+    if(positionals.length!==1)throw Error('Usage: node evaluation/cli/run-batch.mjs RUN_DIRECTORY [--concurrency N] [--worker-home HOME ...]');
     await runBatch(positionals[0],{...(values.concurrency!==undefined?{concurrency:Number(values.concurrency)}:{}),...(values['worker-home']?{workerHomes:values['worker-home']}:{})});
   }catch(error){console.error(error.message);process.exitCode=1;}
 }

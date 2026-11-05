@@ -4,7 +4,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {createRun} from '../../evaluation/create-run.mjs';
+import {createRun} from '../../evaluation/cli/create-run.mjs';
 
 test('creating a run references existing home and inputs without copying media or installing',async()=>{
   const base=path.resolve('.work/create-run-tests');await fs.mkdir(base,{recursive:true});const root=await fs.mkdtemp(path.join(base,'case-'));
@@ -16,7 +16,7 @@ test('creating a run references existing home and inputs without copying media o
     assert.equal(r.dsh_home,home);assert.equal(Object.hasOwn(r,'max_model_requests'),false);assert.equal(r.session_timeout_ms,600000);
     assert.deepEqual(JSON.parse(await fs.readFile(path.join(run,'manifest.json'))),manifest);
     assert.deepEqual((await fs.readdir(run)).sort(),['manifest.json','run.json']);assert.deepEqual(await fs.readdir(home),[]);assert.notEqual(await createRun(input),run);
-    const cli=fileURLToPath(new URL('../../evaluation/create-run.mjs',import.meta.url));
+    const cli=fileURLToPath(new URL('../../evaluation/cli/create-run.mjs',import.meta.url));
     const cliRun=execFileSync(process.execPath,[cli,manifestPath,home,overlayPath],{encoding:'utf8'}).trim();
     assert.equal(JSON.parse(await fs.readFile(path.join(cliRun,'run.json'),'utf8')).status,'prepared');
     assert.deepEqual((await fs.readdir(cliRun)).sort(),['manifest.json','run.json']);

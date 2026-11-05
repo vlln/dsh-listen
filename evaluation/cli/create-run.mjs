@@ -15,7 +15,7 @@ export async function createRun({manifestPath,dshHome,overlayPath,concurrency=1,
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
  try{const {positionals,values}=parseArgs({allowPositionals:true,options:{concurrency:{type:'string'},'worker-home':{type:'string',multiple:true}}});
- const [manifestPath,dshHome,overlayPath]=positionals;if(positionals.length!==3)throw Error('Usage: node evaluation/create-run.mjs MANIFEST DSH_HOME OVERLAY [--concurrency N] [--worker-home HOME ...]');
+ const [manifestPath,dshHome,overlayPath]=positionals;if(positionals.length!==3)throw Error('Usage: node evaluation/cli/create-run.mjs MANIFEST DSH_HOME OVERLAY [--concurrency N] [--worker-home HOME ...]');
  console.log(await createRun({manifestPath,dshHome,overlayPath,concurrency:values.concurrency===undefined?1:Number(values.concurrency),workerHomes:values['worker-home']}));
  }catch(error){console.error(error.message);process.exitCode=1;}
 }

@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises';import path from 'node:path';import {createHash} from 'node:crypto';import {formatTask,taskProtocol} from './headless-adapter.mjs';
+import fs from 'node:fs/promises';import path from 'node:path';import {createHash} from 'node:crypto';import {formatTask,taskProtocol} from '../lib/headless-adapter.mjs';
 const selection=JSON.parse(await fs.readFile('.work/mmau-preview/manifest.json')),agent=new Map(JSON.parse(await fs.readFile('.work/mmau-prepared/agent.json')).map(r=>[r.id,r]));
 const manifest=[];
 for(const sample of selection){

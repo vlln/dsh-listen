@@ -1,5 +1,5 @@
 // Post-run external scorer only. Never imported by the headless Agent/plugin.
-import fs from 'node:fs/promises';import {scorePredictions} from './protocol.mjs';import {predictionFromEvents} from './headless-adapter.mjs';
+import fs from 'node:fs/promises';import {scorePredictions} from '../lib/protocol.mjs';import {predictionFromEvents} from '../lib/headless-adapter.mjs';
 const runs=JSON.parse(await fs.readFile('.work/preview-runs.json')),manifest=JSON.parse(await fs.readFile('.work/headless-preview/manifest.json')),keys=JSON.parse(await fs.readFile('.work/mmau-prepared/keys.json')).filter(k=>manifest.some(s=>s.id===k.id));
 const summary={};
 for(const mode of ['baseline','aggregate','split']){

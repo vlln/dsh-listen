@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {summarizeRun} from '../../evaluation/summarize-run.mjs';
+import {summarizeRun} from '../../evaluation/cli/summarize-run.mjs';
 const key=(id,extra={})=>({id,task:'sound',difficulty:'easy','sub-category':'synthetic',answer:'Water flowing.',choices:['Water flowing.','Engine running.'],...extra});
 const result=(id,extra={})=>({id,status:'complete',model_output:'Water flowing.',...extra});
 const manifest={samples:[{id:'a'},{id:'b'},{id:'c'},{id:'d'},{id:'e'}]};
@@ -57,7 +57,7 @@ test('measurements keep unknown distinct from explicit zero and never double cou
  assert.equal(summarizeRun(['a'],[result('a',{usage:{input_tokens:null}})],[key('a')]).summary.tokens.input_tokens.total,null);
  assert.equal(absent.duration_ms.total,null);assert.equal(absent.duration_ms.median,null);assert.equal(absent.model_requests.total,null);assert.equal(absent.tokens.input_tokens.total,null);
 });
-const cli=fileURLToPath(new URL('../../evaluation/summarize-run.mjs',import.meta.url));
+const cli=fileURLToPath(new URL('../../evaluation/cli/summarize-run.mjs',import.meta.url));
 test('CLI uses only synthetic explicit external keys and refuses overwrite and unsafe paths',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'dsh-summary-'));
  try{

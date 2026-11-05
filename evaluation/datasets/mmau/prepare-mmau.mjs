@@ -1,4 +1,4 @@
-import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import path from 'node:path';import fs from 'node:fs/promises';import {prepareEvaluation} from './protocol.mjs';
+import {createRequire} from 'node:module';import {pathToFileURL} from 'node:url';import path from 'node:path';import fs from 'node:fs/promises';import {prepareEvaluation} from '../../lib/protocol.mjs';
 const require=createRequire(path.resolve('.work/evaluation-reader/package.json'));const {asyncBufferFromFile,parquetReadObjects}=await import(pathToFileURL(require.resolve('hyparquet')));const {compressors}=await import(pathToFileURL(require.resolve('hyparquet-compressors')));
 const file=await asyncBufferFromFile('.work/mmau-media/test_mini.parquet.partial');
 const rows=await parquetReadObjects({file,columns:['instruction','choices','answer','other_attributes'],compressors});
