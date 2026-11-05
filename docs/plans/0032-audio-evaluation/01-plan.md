@@ -2,7 +2,7 @@
 title: 当前音频工具真实评测
 description: 用户授权的三域三题工程预检与固定六十题单条件基线。
 type: plan
-status: pending
+status: done
 created: 2026-11-05T12:56:00Z
 ---
 
