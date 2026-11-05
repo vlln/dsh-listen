@@ -2,7 +2,7 @@
 title: 无新模型测量摘要
 description: 复用signal统计及稀疏pitch窗口补能量低能量区间和信号诊断
 type: plan
-status: pending
+status: done
 created: 2026-11-05T07:30:00Z
 ---
 
