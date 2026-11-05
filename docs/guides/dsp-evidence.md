@@ -1,29 +1,29 @@
 # 数值DSP证据
 
-通过listen的features显式选择`dsp`；默认仍为signal/transcript/events。split模式增加audio_dsp，无新增npm/Python运行时依赖或模型下载。
+通过listen的必填features显式选择所需特征，无默认捆绑。split的audio_dsp也要求选择数值features；无新增依赖或模型下载。
 
 ```json
-{"source_path":"audio.wav","features":["dsp"],"from":0,"to":10,"dsp_band_hz":[400,600]}
+{"source_path":"audio.wav","features":["spectral_peaks","band_energy"],"from":0,"to":10,"dsp_band_hz":[400,600]}
 ```
 
 ## 返回结构与用途
 
-- `evidence.dsp.spectral.peaks`：最多12个局部谱峰的Hz及相对最大谱bin的dB功率，不是dBFS、音源或确定基频。
-- `spectral.band_energy`：可选dsp_band_hz范围内bin功率占全部正频率功率的比例（DC去除）。不是waveform滤波，不改变其他特征；frequency_range_hz仍只负责signal绘图裁剪。
-- `spectral.chroma`：A440十二平均律最近半音的音级能量汇总；不是和弦/调性标签。暂不做调音偏移估计。
-- `temporal.pitch.frames`：有界抽样帧的单声部音高候选及周期性；原采样率计算，不降采样。明确选用去DC后能量最高的通道，不对多声部/其他通道作完整代表。
-- `temporal.rhythm.onsets`：全频功率变化起音证据，不是频谱通量；软起音可能漏检。tempo_candidates提供实测周期性及明确标记的节拍倍/半速假设，不直接输出拍号或beat grid。
+- `evidence.spectral_peaks.peaks`：最多12个局部谱峰的Hz及相对最大谱bin的dB功率，不是dBFS、音源或确定基频。
+- `evidence.band_energy`：可选dsp_band_hz范围内bin功率占全部正频率功率的比例（DC去除）。不是waveform滤波，不改变其他特征；frequency_range_hz只负责signal_image绘图裁剪。
+- `evidence.chroma`：A440十二平均律最近半音的音级能量汇总；不是和弦/调性标签。暂不做调音偏移估计。
+- `evidence.pitch_frames.frames`：有界抽样帧的单声部音高候选及周期性；原采样率计算，不降采样。明确选用去DC后能量最高的通道，不对多声部/其他通道作完整代表。
+- `evidence.onsets.onsets`：全频功率变化起音证据，不是频谱通量；软起音可能漏检。evidence.tempo.candidates提供实测周期性及明确标记的节拍倍/半速假设，不直接输出拍号或beat grid。
 
 ## 无新模型测量摘要
 
-`evidence.dsp.measurements`随显式`dsp`返回，不增加工具或默认组件，不隐式调用ASR。统一呈现本次请求计算出的数据，不另作摘要裁剪；用from/to和features控制范围。DSP方法/缓存版本为`dsp-v2`。
+能量、电平、音高统计各自独立：features选择energy、levels、pitch，不再返回嵌套dsp/measurements大礼包。只返回所选key；每个数值特征独立缓存，内部计算依赖不形成额外可见特征。
 
-- `energy.rms_quantiles`和`dynamic_range_db`：既有100ms展示bin的RMS分位数，以及20log10(p90/p10)。零分母返回null与原因；不是LUFS或标准响度动态范围。
-- `energy.low_energy`：bin RMS低于0.001（-60dBFS）的源时间区间、完整区间数/总时长/占比。最多返回100段，截断有显式标记，不合并中间非低能量部分。它不是VAD、语音停顿或静音语义标签。
-- `diagnostics`：复用每声道RMS、峰值、DC、近满刻度样本比例及立体声关系；近满刻度不证明削波，声道差不代表录音质量差。
-- `pitch`：每个稀疏采样窗的首个候选参与Hz分位数及p90/p10半音跨度。首项是周期性达到最佳值98%的候选中最短强周期（最高频），不保证最大分数或真实F0。可用窗比例只描述抽样窗，不是有声语音占比或置信度；没有候选时返回null与原因。候选有倍/半频歧义，不推断完整语调、情绪或自然度。
+- `evidence.energy.rms_quantiles`和`dynamic_range_db`：既有100ms展示bin的RMS分位数，以及20log10(p90/p10)。零分母返回null与原因；不是LUFS或标准响度动态范围。
+- `evidence.energy.low_energy`：bin RMS低于0.001（-60dBFS）的源时间区间、完整区间数/总时长/占比。最多返回100段，截断有显式标记，不合并中间非低能量部分。它不是VAD、语音停顿或静音语义标签。
+- `evidence.levels`：复用每声道RMS、峰值、DC、近满刻度样本比例及立体声关系；近满刻度不证明削波，声道差不代表录音质量差。
+- `evidence.pitch`：每个稀疏采样窗的首个候选参与Hz分位数及p90/p10半音跨度。首项是周期性达到最佳值98%的候选中最短强周期（最高频），不保证最大分数或真实F0。可用窗比例只描述抽样窗，不是有声语音占比或置信度；没有候选时返回null与原因。候选有倍/半频歧义，不推断完整语调、情绪或自然度。
 
-能量bin复用signal：25ms向前窗口/10ms hop，窗口功率按该hop拥有的样本加权聚合为100ms展示bin，末尾窗口/bin可以不足长度。因此这些不是独立100ms矩形窗RMS；区间边界有窗前视和bin量化误差，阈值结果对增益和DC敏感；沿用signal阈值功率1e-6及相对1e-12容差，避免等值浮点舍入被标为低能量。diagnostics的dBFS字段沿用既有-240dBFS报告下限，数字零为null，原线性值不夹断。单位和参数随结果返回。纯摘要复用已有算法，未新增依赖；signal与dsp是独立缓存组件，同时请求会各算一次统计，不引入跨worker耦合。ASR时间/文本统计本轮未实现。
+能量bin复用signal：25ms向前窗口/10ms hop，窗口功率按该hop拥有的样本加权聚合为100ms展示bin，末尾窗口/bin可以不足长度。因此这些不是独立100ms矩形窗RMS；区间边界有窗前视和bin量化误差，阈值结果对增益和DC敏感；沿用signal阈值功率1e-6及相对1e-12容差，避免等值浮点舍入被标为低能量。diagnostics的dBFS字段沿用既有-240dBFS报告下限，数字零为null，原线性值不夹断。单位和参数随结果返回。纯摘要复用已有算法，未新增依赖；每个所选特征独立缓存；多个相关特征可能重复公共数值计算，不计算未选中的独立特征。ASR时间/文本统计本轮未实现。
 
 ## 方法及边界
 
@@ -33,6 +33,6 @@
 
 起音和节拍使用通道功率均值而非波形平均，避免相消；保留完整区间时间轴。至少3秒、4个起音才尝试40..240BPM候选。周期性不保证音乐节拍正确，持续音、噪声、多声部与弱攻击都可能失败。
 
-所有计算在现有受管worker内，继承PCM1..8通道、8..192kHz、实际区间60秒和23040000标量样本上限；可取消、默认20秒组件截止。数字结果无图像附件；时间用源文件绝对秒。返回method/parameters/coverage/limitations，缓存按来源hash、会话owner、实际区间和数值band区分。
+所有计算在现有受管worker内，继承PCM1..8通道、8..192kHz、实际区间60秒和23040000标量样本上限；可取消、默认20秒组件截止。数字结果无图像附件；时间用源文件绝对秒。返回method/parameters/coverage及数值结果，缓存按来源hash、会话owner、实际区间和数值band区分。
 
 这些特征仅提供问题无关测量，不输出题目答案，不替代ASR、歌声检测、说话人分离或情绪模型。尚未证明其带来MMAU增益；真实主模型评测需单独启动。

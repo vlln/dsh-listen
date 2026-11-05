@@ -42,4 +42,6 @@
 
 | [0029 单一工具输出](./0029-single-output/README.md) | done / complete | 删除summary/full及关联实验条件 |
 
+| [0030 按需特征](./0030-selective-features/README.md) | done / complete | 细粒度必填features、选择性计算和工具描述 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

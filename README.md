@@ -13,10 +13,10 @@
 
 | 工具面 | 工具 |
 |---|---|
-| 聚合 | `listen`，通过features选signal/transcript/events，显式增加dsp |
+| 聚合 | `listen`，features必填，只计算并返回所选证据 |
 | 正交拆分 | `audio_signal` / `audio_transcript` / `audio_events` / `audio_dsp` |
 
-两种面共用实现，最终选择待对照评测。无音频模态但有视觉能力的主Agent可看图；纯文本Agent只直接消费文本和统计。主模型能力与提取方法必须区分。
+拆分面中audio_signal固定signal_image，audio_transcript/events固定对应特征，audio_dsp要求显式选择数值features；两种面共用实现。无音频模态但有视觉能力的主Agent可看图；纯文本Agent只直接消费文本和统计。主模型能力与提取方法必须区分。
 
 ## 安装与配置
 目前仅验证本地tarball安装，尚无可用公开npm/Git发布源。正式分发前不要照未知仓库地址安装。
@@ -43,8 +43,19 @@ DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-l
 模型不存在或组件未配置，返回missing/unavailable；不假装已听懂或自动切云端。API需要key时必须部署提供受信凭据resolver，当前通用entry尚未绑定交互式凭据服务，不声称BYOK设置完整。
 
 ## 使用方式
-让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view。工具不接受question/prompt，语义判断留在主Agent。
-示例：`listen({source_path:"recording.wav",features:["signal"],from:0,to:10})`；随后可缩到1–2秒、改transient，不必自己转码/裁文件。数值特征用`features:["dsp"]`，可加`dsp_band_hz:[400,600]`计算频带功率比例；默认特征不变，方法与局限见[DSP证据](./docs/guides/dsp-evidence.md)。
+让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view（仅适用于signal_image）。工具不接受question/prompt，语义判断留在主Agent。
+示例：`listen({source_path:"recording.wav",features:["transcript"],from:0,to:10})`只取转写；`features:["tempo","onsets"]`只取节奏；`features:["band_energy"],dsp_band_hz:[400,600]`只取指定频带能量比例。旧signal/dsp捆绑特征不再接受，不提供默认大礼包。方法见[DSP证据](./docs/guides/dsp-evidence.md)。
+
+| features值 | 返回 |
+|---|---|
+| transcript / events | 转写 / 声音标签候选，各自独立 |
+| signal_image | 波形与mel图及制图参数，不附带电平和能量数组 |
+| levels | 逐声道电平、DC、峰值、过量程计数及立体声关系 |
+| energy | 分bin RMS、分位数、动态范围和低能量区间 |
+| spectral_peaks / band_energy / chroma | 频谱峰 / 指定频带能量比例 / 12音级功率，各自独立 |
+| pitch / pitch_frames | 音高分位数与跨度 / 稀疏逐窗候选，各自独立 |
+| onsets / tempo | 起音候选 / BPM候选，各自独立 |
+
 工具只有一种返回结构：呈现本次请求的证据数据和图片，不另做摘要裁剪，不提供输出模式参数。固定限制声明和解释性引导不返回；保留单位、方法参数、实际缺失/错误与提取层截断状态。非整数呈现为5位有效数字，选择较短的小数或科学计数写法，整数保持原值；底层计算和缓存保持原始精度。数据范围由features、from/to等参数控制，每次调用仍重新鉴权和解码。
 支持1–8声道，信号分析保留原采样率和各声道；ASR/事件分支显式混为单声道，可能发生相位抵消。实际区间总标量样本限23040000，多声道高采样率时需缩短区间。
 from/to均可不填，分别默认开头/结尾；都不填分析整个音频。超过源时长的边界截至结尾，返回source.duration_seconds为完整时长、coverage为实际分析区间；截取后空区间拒绝，实际分析仍限60秒。结果包含覆盖、有效参数、方法/单位和图像附件。`complete`仅针对本次请求项；不会证明所有声音均识别。候选标签/ASR都可能错误，静音或无转写不是“无人声”。

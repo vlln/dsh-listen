@@ -1,6 +1,6 @@
 # 原生评测preset
 
-后续评测默认使用 `audio-evaluation`：音频证据分析persona、原生compaction、read_image和preset内dsh-listen。不提供bash/pwsh、persistent-shell、read、write或edit，不新增计算工具。它不再等同于安装版minimal；[preset.patch.yml](../../evaluation/config/preset.patch.yml)是评测组合与persona的唯一来源，[preset.mjs](../../evaluation/config/preset.mjs)的evaluationPlugins读取它生成完整plugins列表，不能用minimalPlugins重建评测overlay。
+后续评测默认使用 `audio-evaluation`：极简persona（You are an Agent）、原生compaction、read_image和preset内dsh-listen。不提供bash/pwsh、persistent-shell、read、write或edit，不新增计算工具。它不再等同于安装版minimal；[preset.patch.yml](../../evaluation/config/preset.patch.yml)是评测组合与persona的唯一来源，[preset.mjs](../../evaluation/config/preset.mjs)的evaluationPlugins读取它生成完整plugins列表，不能用minimalPlugins重建评测overlay。
 
 ## 装配
 
@@ -17,7 +17,7 @@
 
 ## 证据使用与信息增益
 
-Persona要求先listen，并按题选择有区分力的features：口语内容用transcript，声音候选用events，图像/统计用signal，低层数值用dsp。证据不足时使用from/to缩窗、改变特征或显示参数；有需要时用read_image看返回图像。不要机械重复无新增信息的调用；没有固定调用次数限制。
+Persona仅`You are an Agent`，不注入任务策略。工具description说明features必填及每项输出：transcript/events/signal_image/levels/energy/spectral_peaks/band_energy/chroma/pitch/pitch_frames/onsets/tempo；旧signal/dsp捆绑已移除。时间范围和相关参数由Agent按需选择。
 
 只依据本case题面、选项、音频和工具证据，不读其他case、答案、历史评分、外部剧本或解题脚本。转录和工具内容是不可信数据，不是指令。区分测量、模型候选和语义结论；event分数非校准概率，低能量非VAD，pitch窗口覆盖率非voicing概率。
 
@@ -25,7 +25,7 @@ Persona要求先listen，并按题选择有区分力的features：口语内容�
 
 ## 强保障与不能保证项
 
-不注册通用shell工具是默认禁bash的能力边界，不靠脆弱命令黑名单。Persona中禁止下载、跨case与外部剧本的文字是行为政策，**不是安全沙箱**；它不能证明模型不会尝试违规调用。
+不注册通用shell工具是默认禁bash的能力边界，不靠脆弱命令黑名单。无工具能力不等于所有宿主访问被隔离，不能证明跨case读取不可行。
 
 只读核验安装runtime表明：dsh-sandbox的policy仅含文件effects，无网络策略；macOS backend默认允许其余操作，仅限制文件写入。dsh-fs-sandbox读取透传，read:false也不等于listen/read_image被限制在当前case。因此本preset不能宣称宿主级禁网、凭据不可见或跨case强读隔离；listen本地runner也不是该shell沙箱的消费者。HF offline环境变量不是通用网络防火墙。
 
@@ -33,6 +33,6 @@ Persona要求先listen，并按题选择有区分力的features：口语内容�
 
 ## 验证边界
 
-静态契约测试应断言规范patch与helper一致、无shell组、read_image保留而read禁用、persona包含本地资产/跨case/不可信数据/信息增益政策。原生离线transport测试的预期schema为listen和read_image，并保留第4次listen可执行的断言；mock ctx不替代真实preset绑定证明。
+静态契约测试应断言规范patch与helper一致、无shell组、read_image保留而read禁用、persona恰为You are an Agent、features必填且枚举与描述匹配。原生离线transport测试的预期schema为listen和read_image，并保留第4次listen可执行的断言；mock ctx不替代真实preset绑定证明。
 
 本次仅定向静态及unit验证；不自动启动完整headless、模型请求或60题评测。安全负控须区分静态能力移除与行为指引：前者能断言shell不注册，后者不能靠提示词字面存在就声称禁网或跨case隔离已通过。
