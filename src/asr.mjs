@@ -1,13 +1,22 @@
 import {createHash} from 'node:crypto';
 import {encodeAsrWav} from './wav.mjs';
 export function parseAsrResponse(data,coverage){
- if(!data||typeof data.text!=='string'||data.text.length>100000)throw Error('ASR_INVALID_SCHEMA');
- const segments=[];
+ if(!data||Array.isArray(data)||typeof data.text!=='string'||data.text.length>100000)throw Error('ASR_INVALID_SCHEMA');
+ const segments=[],timing_adjustments={adjusted_segments:0,discarded_segments:0},duration=coverage.to-coverage.from;
  if(data.segments!==undefined){
   if(!Array.isArray(data.segments)||data.segments.length>10000)throw Error('ASR_INVALID_SEGMENTS');
-  for(const s of data.segments){if(typeof s.text!=='string'||!Number.isFinite(s.start)||!Number.isFinite(s.end)||s.start<0||s.end<s.start||s.end>coverage.to-coverage.from+1e-3)throw Error('ASR_INVALID_TIMESTAMPS');segments.push({text:s.text,from:coverage.from+s.start,to:coverage.from+s.end,timing:'estimated'});}
+  for(const s of data.segments){
+   // Optional provider alignment must not invalidate an otherwise usable transcript.
+   if(!s||typeof s!=='object'||Array.isArray(s)||typeof s.text!=='string'||!Number.isFinite(s.start)||!Number.isFinite(s.end)||s.end<=s.start){timing_adjustments.discarded_segments++;continue;}
+   const start=Math.max(0,s.start),end=Math.min(duration,s.end);
+   if(end<=start){timing_adjustments.discarded_segments++;continue;}
+   if(start!==s.start||end!==s.end)timing_adjustments.adjusted_segments++;
+   segments.push({text:s.text,from:coverage.from+start,to:coverage.from+end,timing:'estimated'});
+  }
  }
- return {status:'ready',text:data.text,language:typeof data.language==='string'?data.language:null,segments,timing:segments.length?'estimated':'unavailable',coverage,limitations:['ASR text may hallucinate in music or noise; absence of text is not absence of speech.','Segment timestamps are estimated, not forced alignment.']};
+ const limitations=['ASR text may hallucinate in music or noise; absence of text is not absence of speech.','Segment timestamps are estimated, not forced alignment.'];
+ if(timing_adjustments.adjusted_segments||timing_adjustments.discarded_segments)limitations.push('Optional segment timing was clamped or discarded against audio coverage; full transcript text is retained, but segment alignment may be incomplete.');
+ return {status:'ready',text:data.text,language:typeof data.language==='string'?data.language:null,segments,timing:segments.length?'estimated':'unavailable',timing_adjustments,coverage,limitations};
 }
 export function makeAsrProvider({endpoint,model,allowExternal=false,secretProvider,timeoutMs=20000,maxResponseBytes=1024*1024}={}){
  let url;try{url=new URL(endpoint);}catch{throw Error('ASR_INVALID_ENDPOINT');}
