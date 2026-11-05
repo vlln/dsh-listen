@@ -38,13 +38,14 @@ function toolText(message){
   return typeof message.content==='string'?message.content:message.content.filter(block=>block.type==='text').map(block=>block.text).join('\n');
 }
 
-for(const condition of ['summary','no-audio','full']){
-  test(`installed runtime experiment ${condition}: exact persona, tools and implicit detail`,{skip:!runtime,timeout:60000},async t=>{
+{
+  const condition='audio';
+  test('installed runtime audio experiment: exact persona, tools, schema and unified evidence',{skip:!runtime,timeout:60000},async t=>{
     const directory=await workspace(t),seen=[];
     const server=http.createServer(async(req,res)=>{
       const chunks=[];for await(const chunk of req)chunks.push(chunk);
       const body=JSON.parse(Buffer.concat(chunks));seen.push(body);
-      response(res,condition==='no-audio'||body.messages.some(message=>message.role==='tool'));
+      response(res,body.messages.some(message=>message.role==='tool'));
     });
     await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
     t.after(()=>{server.closeAllConnections();server.close();});
@@ -62,15 +63,14 @@ for(const condition of ['summary','no-audio','full']){
     await fs.writeFile(modelPatch,`- id: agent-default-model\n  config: {provider: experiment-local-fixture, model: fixture}\n- id: llm-pi-ai\n  config:\n    providers:\n      experiment-local-fixture:\n        api: openai-completions\n        baseURL: http://127.0.0.1:${server.address().port}/v1\n        apiKeyEnv: DSH_LISTEN_FIXTURE_KEY\n        models:\n          - id: fixture\n            name: Offline experiment fixture\n            contextWindow: 128000\n            input: [text, image]\n`);
     const task=formatExperimentTask(row,condition);
     assert.ok(!task.includes(answerKey));
-    if(condition==='no-audio')assert.doesNotMatch(task,/audio\.wav|Audio path:|source_path/);
-    else assert.match(task,/audio\.wav/);
+    assert.match(task,/audio\.wav/);
     const result=await runSession({command:'dsh',args:['--profile','headless','--patch',localPreset,'--patch',modelPatch,'--json','-'],cwd:directory,env:{...process.env,DSH_HOME:path.join(directory,'home'),DSH_LISTEN_FIXTURE_KEY:'synthetic-not-a-secret',NODE_OPTIONS:`--import ${fileURLToPath(new URL('../helpers/register-runtime.mjs',import.meta.url))}`,NODE_USE_ENV_PROXY:'0'},task,outputDirectory:directory,timeoutMs:45000});
     assert.equal(result.status,'complete',await fs.readFile(path.join(directory,'stderr.log'),'utf8'));
     assert.equal(result.model_output,'LOCAL_EXPERIMENT_COMPLETE');
     // Headless also sends a session-title request. Identify agent turns by the
     // exact task user message, not the persona/tools whose correctness we test.
     const turns=seen.filter(request=>request.messages.some(message=>message.role==='user'&&toolText(message)===task));
-    assert.equal(turns.length,condition==='no-audio'?1:2);
+    assert.equal(turns.length,2);
     for(const request of seen){
       assert.ok(!JSON.stringify(request).includes(answerKey),'answer key must never enter any transport request');
       if(!turns.includes(request)){
@@ -79,27 +79,23 @@ for(const condition of ['summary','no-audio','full']){
       }
     }
     for(const request of turns){
-      assert.deepEqual((request.tools??[]).map(tool=>tool.function.name).sort(),condition==='no-audio'?[]:['listen','read_image']);
+      assert.deepEqual((request.tools??[]).map(tool=>tool.function.name).sort(),['listen','read_image']);
+      const schema=request.tools.find(tool=>tool.function.name==='listen').function.parameters;
+      assert.equal(Object.hasOwn(schema.properties,'evidence_detail'),false,'actual transported schema must not expose a detail selector');
+      assert.doesNotMatch(JSON.stringify(request.tools),/evidence_detail|defaultEvidenceDetail/);
       const persona=request.messages.filter(message=>message.role==='system').map(message=>toolText(message)).join('\n');
       assert.equal(persona,'You are an Agent');
       assert.ok(!JSON.stringify(request).includes(answerKey),'answer key must never enter an actual transport request');
     }
-    if(condition==='no-audio'){
-      assert.ok(!JSON.stringify(seen).includes('audio.wav'));
-      assert.equal((result.tool_calls??[]).length,0);
-    }else{
-      assert.equal(result.tool_calls.length,1);
-      assert.equal(result.tool_calls[0].name,'listen');
-      assert.equal(result.tool_calls[0].status,'completed');
-      const output=toolText(turns[1].messages.find(message=>message.role==='tool'));
-      assert.doesNotMatch(output,/limitations|detail_guidance/);
-      assert.match(output,new RegExp(`"presentation"\\s*:\\s*"${condition}"`));
-      if(condition==='full')assert.match(output,/"energy"\s*:\s*\[/);
-      else assert.doesNotMatch(output,/"energy"\s*:\s*\[/);
-      const call=turns[1].messages.find(message=>message.role==='assistant'&&message.tool_calls)?.tool_calls[0];
-      assert.ok(call,'captured second request must include the original tool call');
-      assert.ok(!Object.hasOwn(JSON.parse(call.function.arguments),'evidence_detail'),'fixture must exercise the configured implicit default');
-    }
+    assert.equal(result.tool_calls.length,1);
+    assert.equal(result.tool_calls[0].name,'listen');
+    assert.equal(result.tool_calls[0].status,'completed');
+    const output=toolText(turns[1].messages.find(message=>message.role==='tool'));
+    assert.doesNotMatch(output,/limitations|detail_guidance|evidence_detail|"presentation"/);
+    assert.match(output,/"energy"\s*:\s*\[/,'unified output must retain requested frame evidence');
+    const call=turns[1].messages.find(message=>message.role==='assistant'&&message.tool_calls)?.tool_calls[0];
+    assert.ok(call,'captured second request must include the original tool call');
+    assert.deepEqual(JSON.parse(call.function.arguments),{source_path:'audio.wav',features:['signal']});
   });
 }
 

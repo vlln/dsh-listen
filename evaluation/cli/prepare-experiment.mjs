@@ -39,14 +39,14 @@ export async function prepareExperiment({manifestPath,outputDirectory,workerHome
  const runs={};
  for(const condition of conditions){
   const dir=path.join(root,condition);await fs.mkdir(dir,{mode:0o700});const samples=[];
-  for(const item of cases){const workspace=path.join(dir,item.id);await fs.mkdir(workspace,{mode:0o700});const task=condition==='no-audio'?item.task.replace('\n\nAudio path: audio.wav\n','\n\nAudio is not available in this condition.\n'):item.task;await fs.writeFile(path.join(workspace,'task.txt'),task,{flag:'wx',mode:0o600});if(condition!=='no-audio')await fs.writeFile(path.join(workspace,'audio.wav'),item.audio,{flag:'wx',mode:0o600});samples.push({id:item.id,workspace,task_protocol:'mmau-plain-text-v1',task_sha256:hash(task),audio_sha256:item.audio_sha256,audio_available:condition!=='no-audio'});}
+  for(const item of cases){const workspace=path.join(dir,item.id);await fs.mkdir(workspace,{mode:0o700});const task=item.task;await fs.writeFile(path.join(workspace,'task.txt'),task,{flag:'wx',mode:0o600});await fs.writeFile(path.join(workspace,'audio.wav'),item.audio,{flag:'wx',mode:0o600});samples.push({id:item.id,workspace,task_protocol:'mmau-plain-text-v1',task_sha256:hash(task),audio_sha256:item.audio_sha256,audio_available:true});}
   const plugins=experimentPlugins(import.meta.url,{condition,config:audioConfig});
   const overlay=model+'\n- id: preset-audio-evaluation\n  name: "@deepseek-ai/dsh-agent-preset"\n  config: '+JSON.stringify({id:'audio-evaluation',plugins})+'\n';
   const overlayPath=path.join(dir,'overlay.yml');await fs.writeFile(overlayPath,overlay,{flag:'wx',mode:0o600});
   const manifest=path.join(dir,'manifest.json');await save(manifest,{samples});
   const run=await createRun({manifestPath:manifest,dshHome:homes[0],workerHomes:homes,concurrency:10,overlayPath,runsDirectory:path.join(dir,'runs')});
   const runPath=path.join(run,'run.json'),metadata=JSON.parse(await fs.readFile(runPath,'utf8'));
-  metadata.experiment={schema_version:experimentMatrix.schema_version,condition,allowed_tools:experimentMatrix.conditions.find(x=>x.id===condition).allowed_tools,persona:experimentMatrix.persona,baseline_audio_available:condition!=='no-audio'};
+  metadata.experiment={schema_version:experimentMatrix.schema_version,condition,allowed_tools:experimentMatrix.conditions.find(x=>x.id===condition).allowed_tools,persona:experimentMatrix.persona};
   metadata.preset_path=path.join(root,'preset.patch.yml');metadata.frozen_files=Object.fromEntries([...Object.entries(artifacts).map(([file,digest])=>[path.join(root,file),digest]),[overlayPath,hash(overlay)],[path.join(run,'manifest.json'),hash(await fs.readFile(path.join(run,'manifest.json')))]]);
   async function freezeTree(dir){for(const item of await fs.readdir(dir,{withFileTypes:true})){const file=path.join(dir,item.name);if(item.isDirectory())await freezeTree(file);else if(item.isFile())metadata.frozen_files[file]=hash(await fs.readFile(file));}}
   for(const home of homes){for(const file of ['package.json','cordis.patch.yml'].map(x=>path.join(home,'profiles/headless',x))){try{metadata.frozen_files[file]=hash(await fs.readFile(file));}catch(error){if(error.code!=='ENOENT')throw error;}}try{await freezeTree(path.join(home,'profiles/headless/node_modules/dsh-listen'));}catch(error){if(error.code!=='ENOENT')throw error;}}

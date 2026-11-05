@@ -4,7 +4,7 @@ const DISPLAY=['spectral_detail','frequency_range_hz','channel_view'];
 export function normalizeRequest(args,onlyFeature){
  if(!args||typeof args!=='object'||Array.isArray(args))throw Error('INVALID_REQUEST');
  if(onlyFeature!==undefined&&!FEATURES.includes(onlyFeature))throw Error('INVALID_TOOL_FEATURE');
- const allowed=new Set(['source_path','attachment_id','from','to',...DISPLAY,'dsp_band_hz','evidence_detail',...(onlyFeature?[]:['features'])]);
+ const allowed=new Set(['source_path','attachment_id','from','to',...DISPLAY,'dsp_band_hz',...(onlyFeature?[]:['features'])]);
  for(const name of Object.keys(args))if(!allowed.has(name))throw Error(`UNKNOWN_PARAMETER: ${name}`);
  const pathSet=typeof args.source_path==='string'&&args.source_path.length>0,attachmentSet=typeof args.attachment_id==='string'&&args.attachment_id.length>0;
  if(pathSet===attachmentSet||('source_path'in args&&!pathSet)||('attachment_id'in args&&!attachmentSet))throw Error('INVALID_SOURCE: provide exactly one nonempty source_path or attachment_id; use the supplied audio path for local files.');
@@ -19,10 +19,8 @@ export function normalizeRequest(args,onlyFeature){
   if(!features.includes('dsp'))throw Error('PARAMETER_NOT_APPLICABLE: dsp_band_hz requires dsp in features.');
   if(!Array.isArray(args.dsp_band_hz)||args.dsp_band_hz.length!==2||args.dsp_band_hz.some(x=>!Number.isFinite(x))||args.dsp_band_hz[0]<0||args.dsp_band_hz[1]<=args.dsp_band_hz[0])throw Error('INVALID_FREQUENCY_RANGE');
  }
- const evidenceDetail=args.evidence_detail===undefined?'summary':args.evidence_detail;
-  if(!['summary','full'].includes(evidenceDetail))throw Error('INVALID_EVIDENCE_DETAIL');
   const detail=args.spectral_detail??'balanced',view=args.channel_view??'separate',band=args.frequency_range_hz??null;
  if(!['transient','balanced','tonal'].includes(detail)||!['separate','power_mean'].includes(view))throw Error('INVALID_DISPLAY_PARAMETERS');
  if(band!==null&&(!Array.isArray(band)||band.length!==2||band.some(x=>!Number.isFinite(x))||band[0]<0||band[1]<=band[0]))throw Error('INVALID_FREQUENCY_RANGE');
- return {source:pathSet?{kind:'path',value:args.source_path}:{kind:'attachment',value:args.attachment_id},from,to,features:[...features],evidence_detail:evidenceDetail,...('dsp_band_hz'in args?{dsp_band_hz:[...args.dsp_band_hz]}:{}),spectral_detail:detail,frequency_range_hz:band===null?null:[...band],channel_view:view};
+ return {source:pathSet?{kind:'path',value:args.source_path}:{kind:'attachment',value:args.attachment_id},from,to,features:[...features],...('dsp_band_hz'in args?{dsp_band_hz:[...args.dsp_band_hz]}:{}),spectral_detail:detail,frequency_range_hz:band===null?null:[...band],channel_view:view};
 }

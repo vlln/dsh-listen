@@ -15,10 +15,10 @@ test('numbers use five significant digits, shortest notation, exact integers and
  assert.equal(out.hz,837.23);assert.equal(out.rms,.098331);assert.equal(out.dc,-.000016441);assert.equal(out.tiny,1.2346e-30);assert.equal(out.large,data.large);assert.equal(out.count,data.count);assert.equal(out.zero,0);assert.equal(out.negativeZero,0);assert.equal(out.missing,null);assert.equal(out.min,Number.MIN_VALUE);assert.equal(out.max,Number.MAX_VALUE);assert.match(text,/-1.6441e-5/);assert.equal(JSON.parse(stringifyEvidence({x:.999999999})).x,1);
 });
 
-test('summary and full render remove declarations, shorten numbers and preserve attachment and canonical data',()=>{
+test('single output render remove declarations, shorten numbers and preserve attachment and canonical data',()=>{
  const [tool]=makeAudioTools({defineTool:x=>x,inspect:()=>{},caller:()=>{},saveImage:()=>{}});
  const value={status:'complete',coverage:{from:0,to:1},evidence:{signal:{status:'ready',statistics:{channels:[{rms:.123456789}],limitations:['fixed']}}},image_attachment:{attachmentId:'sha256:abc',bytes:146866}};
  const before=structuredClone(value);
- for(const detail of ['summary','full']){const blocks=tool.output.render({evidence_detail:detail},value),out=JSON.parse(blocks[0].text);assert.equal(out.evidence.signal.statistics.channels[0].rms,.12346);assert.equal(out.evidence.signal.statistics.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.deepEqual(blocks[1],{type:'image',attachment:value.image_attachment});}
+ {const blocks=tool.output.render({},value),out=JSON.parse(blocks[0].text);assert.equal(out.evidence.signal.statistics.channels[0].rms,.12346);assert.equal(out.evidence.signal.statistics.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.deepEqual(blocks[1],{type:'image',attachment:value.image_attachment});}
  assert.deepEqual(value,before);
 });

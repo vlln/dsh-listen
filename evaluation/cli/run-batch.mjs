@@ -12,6 +12,7 @@ async function save(file,value){const temp=file+'.tmp';await fs.writeFile(temp,J
 
 export async function runBatch(runDirectory,options={}){
   const directory=path.resolve(runDirectory),run=await json(path.join(directory,'run.json')),manifest=await json(path.join(directory,'manifest.json'));
+  if(run.experiment&&run.experiment.condition!=='audio')throw Error('RETIRED_EXPERIMENT_CONDITION');
   const concurrency=options.concurrency??run.concurrency??1;
   if(!Number.isSafeInteger(concurrency)||concurrency<1)throw Error('INVALID_CONCURRENCY');
   const configuredHomes=options.workerHomes??run.worker_homes??[run.dsh_home];
@@ -28,10 +29,7 @@ export async function runBatch(runDirectory,options={}){
     if(row.task_protocol!=='mmau-plain-text-v1')throw Error('BATCH_TASK_PROTOCOL_MISMATCH');
     const workspace=path.resolve(run.project_root??directory,row.workspace),task=await fs.readFile(path.join(workspace,'task.txt'),'utf8');
     if(createHash('sha256').update(task).digest('hex')!==row.task_sha256)throw Error('BATCH_TASK_HASH_MISMATCH');
-    if(run.experiment?.condition==='no-audio'){
-     if(row.audio_available!==false||task.includes('Audio path:')||!task.includes('Audio is not available in this condition.'))throw Error('BASELINE_AUDIO_EXPOSED');
-     try{await fs.access(path.join(workspace,'audio.wav'));throw Error('BASELINE_AUDIO_EXPOSED');}catch(error){if(error.code!=='ENOENT')throw error;}
-    }else if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
+    if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
     tasks.push({workspace,task});
   }
   if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000)throw Error('INVALID_BATCH_RUN_CONFIG');
