@@ -36,4 +36,6 @@
 
 | [0026 目录结构重组](./0026-directory-layout/README.md) | 执行记录 | 物理迁移与引用/运行验证 |
 
+| [0027 工具输出精简](./0027-tool-presentation/README.md) | done / complete | 删除固定限制声明与短数字呈现 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。
