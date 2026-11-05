@@ -6,6 +6,7 @@
 | [preset.mjs](preset.mjs) | 从规范YAML取得evaluationPlugins，minimalPlugins仅参考 |
 | [headless-preset.mjs](headless-preset.mjs) | 原生registry绑定会话preset |
 | [model.patch.yml](model.patch.yml) | deepseek-official/deepseek-flash路由 |
+| [experiment.mjs](experiment.mjs) | 极简persona三臂矩阵、工具面与任务格式 |
 
 创建run不自动合并模型patch，实际overlay需显式固定路由和已批准本地extractor配置；认证由DSH处理，不读凭据正文、不静默回退。旧overlay完整plugins可能恢复旧shell/persona，不能原样作新默认。动态嵌套plugins表达式不作为支持路径。
 

@@ -38,4 +38,6 @@
 
 | [0027 工具输出精简](./0027-tool-presentation/README.md) | done / complete | 删除固定限制声明与短数字呈现 |
 
+| [0028 实验准备](./0028-experiment-preparation/README.md) | done / complete | 三臂冻结批次、本地fixture与离线配对分析 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。
