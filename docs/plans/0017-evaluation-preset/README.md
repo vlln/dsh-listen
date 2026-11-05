@@ -1,5 +1,9 @@
 # 原生评测preset、多声道与错误反馈
 
+> 历史实现记录：本阶段minimal含shell和全局请求预算，非现默认。默认工具面及证据输出由[0024](../0024-evidence-guidance/README.md)记录，取消请求数量限制由[0020](../0020-remove-request-limits/README.md)记录；保留本阶段实测，不改旧批次。项目状态见[文档导航](../../README.md)。
+
+- [验证报告](02-report.md)：complete，原生headless装配及真实六声道本地复放。
+
 用户明确采用宿主minimal+音频工具的专用preset，不做评测工具拦截，删除3次调用限制，仅保留会话10分钟及独立全局模型请求预算。本轮修复与离线/本地提取验证，不自动重跑60题或更改3187。
 
 - preset按安装版minimal定义快照构造并以测试逐项核对，不把“minimal”误解为无shell；其原生工具包括read_image和persistent bash，均不在评测层拦截。音频工具只在该preset注册，避免宿主重复。

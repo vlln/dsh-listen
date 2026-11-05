@@ -63,7 +63,7 @@ from/to均可不填，分别默认开头/结尾；都不填分析整个音频。
 | Linux / Windows / 其他版本 | 未完成实测；Windows子进程明确不支持 |
 
 ## 验收与开发入口
-[验收基线](docs/acceptance.md) · [研究导航](docs/README.md) · [headless评测](evaluation/README.md)。无MMAU成绩，不保证10个百分点增益已达到。
+[验收基线](docs/acceptance.md) · [文档导航](docs/README.md) · [headless评测](evaluation/README.md) · [开发子集成绩与限制](docs/evaluation-results.md)。已有固定60题开发结果，但不是官方全量榜单；尚未证明原验收的受控10个百分点增益。
 
 ## 插件管理
 装卸启停使用官方CLI与侧边栏Plugins页；当前开发包安装自动组合，运行准入和可选提取器仍需显式配置。升级先验证新tarball，再替换隔离实例；卸载使用`dsh plugin --profile <name> remove dsh-listen`，同时移除对应组合条目。不要改正在使用的profile做未完成版本验收。

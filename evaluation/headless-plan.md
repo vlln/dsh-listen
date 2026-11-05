@@ -1,5 +1,7 @@
 # DSH headless测试装配
 
+> **状态：历史记录。** 以下保留当时设计、授权或实测（不改分数）；“当前/本轮/下一轮”仅指原记录时点，不作为当前命令或新增任务授权。当前执行与默认配置见[评测入口](README.md)，各批次成绩与未评测边界见[评测结果](../docs/evaluation-results.md)。
+
 按用户纠正执行：本插件装入隔离DSH headless测试profile/preset，主Agent就是DSH已有路由，不新建外部Agent服务；ASR继续已有本地MLX，events项目本地LiteRT。
 
 ## 已核运行时事实

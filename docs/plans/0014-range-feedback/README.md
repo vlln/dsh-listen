@@ -1,5 +1,7 @@
 # 范围反馈修复与后续模型切换
 
+> 历史诊断记录：本次严格越界拒绝随后被用户修订的[0015结尾截取](../0015-clamp-audio-range/README.md)替代；不追溯改写本次测试。当前边界见[执行契约](../../interface/0002-executable-v1.md)，项目状态见[文档导航](../../README.md)。
+
 分支 `fix/0014-range-feedback`，用户要求先修复两次INVALID_RANGE，后续用deepseek-flash。本轮不运行新评测、不修改旧批次或3187实例。
 
 ## 诊断与修复

@@ -1,20 +1,24 @@
-# Goal运行收尾与续接入口
+# 续接入口
 
-本轮自动60/60上限到达，不是完成证明。Goal保持active，不能complete：工程权限/进程残余及GUI手动验收未关闭，效果B未达且用户明确暂停进一步扩量。不要将轮数上限当blocked或擅自修改目标。
+先读[文档导航](README.md)、[工程状态](engineering-acceptance-status.md)与[评测结果](evaluation-results.md)。本页不保存动态Goal状态、后台任务/服务状态；续接时用运行时工具与Git现场核对，不能从历史文档推断。
 
-## 当前分支
-fix/0008-install-bundle，来自test/0010-evaluation-protocol（包含开发评测/报告）；尚未合并develop。develop已含核心/解码/Pipeline/DSH适配/可选ASR/events/附件修复。当前分支新增自组合bundle和lifetime取消、README更新以及验收矩阵；请审查后按最窄文档/代码提交合并，不把spike带入。
+## 代码与分支
 
-## 最后实证
-在当前代码运行实际SDK+用户既有本地Whisper+项目LiteRT feature gate：144/144 PASS，lifecycle line/branch100%、plugin line100% branch96%；npm包28476字节、默认npm闭包673215。真实Cordis在途disable系统1/1 PASS。日志在忽略.work可现场查，结论已落盘，不靠临时/tmp路径。
+- 已有正式插件：信号/图像、原采样率多声道解码、Pipeline/缓存、DSH适配、可选ASR/events、显式数值DSP及测量摘要。
+- 增量证据以[执行索引](plans/README.md)为入口；0021修ASR时间戳容错，0022–0023加无模型数值证据，0024修persona/默认无shell和summary/full。
+- 0024代码`447890e`、文档`8a792df`为整理前锚点；分支包含未统一合并develop的增量链。运行`git status`/`git log`核实，不直接merge到main，不将spike一并带入。
 
-## 真实预检与授权
-9任务已用完，16主请求，baseline2/3、aggregate3/3、split3/3；不是正式门槛通过。用户随后明确先不扩量/优先工程，不得拿40余额继续调用。凭据仅DSH自身请求读取，Agent未read/export；真实profile未修改。所有测试服务已停止、相关后台任务已collect，无需要保留的server。
+## 已证实与未证实
 
-## 下一步（不再加特征）
-1. 修复/证明[安全残余](plans/0009-system/04-security-residuals.md)：稳定授权路径读取/宿主sandbox，以及直接子退出后同组后代回收。不得靠README降低硬门槛。
-2. 独立Web实例/用户手动Plugins/图标/配置验证；不替换真实3080、不生产安装。需要新managed job时记ID并结束清理。
-3. 制品/依赖完整许可、卸载/资源专项与工程矩阵逐项关闭。
-4. 只有用户重新批准效果扩量时才跑更多开发A/B和封存测评，门槛不变。
+- 工程门禁及本地真实headless合成传输见[0024报告](plans/0024-evidence-guidance/02-report.md)；不是主模型效果复跑。
+- 固定60题对照只有去bash是单变量：保留2734c86旧persona/输出时得50/60；后续新persona/summary尚无主模型成绩。不能把83.33%写成修复后全量MMAU分数。
+- HF问题修复指默认移除Agent任意shell下载路径，不是解除离线限制；通用宿主无网络/跨case读取强隔离，旧overlay可覆盖新preset。
 
-阅读：[工程矩阵](engineering-acceptance-status.md)、[预检结果](../evaluation/preview-results.md)、[用户暂停扩量](../evaluation/next-stage.md)、[冻结验收](acceptance.md)。
+## 续接策略
+
+1. 文档/代码工作复用现有依赖与测试，不下载新模型；当前任务不自动授权追加评测。
+2. 新批次从[评测入口](../evaluation/README.md)与新helper配置开始，不能复用旧完整plugins覆盖无shell/persona；manifest与媒体hash先验后跑。
+3. 效果验收仍缺有效同模型无音频证据baseline和受控增益证明；固定子集开发成绩不替代验收。
+4. GUI/跨平台/进程与资源/依赖许可等欠账见[工程矩阵](engineering-acceptance-status.md)，不因文档整理降低要求。
+
+历史9题预检及暂停记录仍保留在[evaluation历史说明](../evaluation/preview-results.md)中，其授权、预算和模型不是后续批次默认配置。PTY由用户处理；不调整主GUI/部署，不删除历史模型或评测目录。

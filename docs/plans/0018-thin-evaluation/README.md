@@ -1,5 +1,7 @@
 # 精简评测适配器
 
+> 历史重构记录：下面请求上限/计费patch及bash可见面属于本次验证，非当前默认；后续变更见[0020](../0020-remove-request-limits/README.md)和[0024](../0024-evidence-guidance/README.md)。当前使用见[薄适配器](../../../evaluation/thin-adapter.md)，项目状态见[文档导航](../../README.md)。
+
 用户批准回归DSH+preset作为执行核心。分支refactor/0018-thin-evaluation；只重构/离线验证，不运行新模型、不变旧产物或3187。
 
 ## 删减

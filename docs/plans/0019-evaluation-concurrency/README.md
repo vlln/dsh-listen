@@ -1,5 +1,7 @@
 # 固定并发适配器
 
+> 历史并发实现记录：请求上限/预算锁是本次验证条件，随后由[0020](../0020-remove-request-limits/README.md)移除，不追溯修改原实证。当前使用见[薄适配器](../../../evaluation/thin-adapter.md)，项目状态见[文档导航](../../README.md)。
+
 - 分支：feat/0019-evaluation-concurrency，接续尚未合并的薄适配器分支；不合并、不部署、不调用真实provider。
 - 用户要求：适配器允许传并发数参数，保留薄编排形态。
 - 实现：create-run/run-batch支持`--concurrency N`和重复`--worker-home HOME`；默认1，显式独立home，不自动安装。共享显式请求上限与每题600000ms不变。

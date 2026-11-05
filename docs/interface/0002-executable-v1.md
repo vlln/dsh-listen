@@ -8,6 +8,8 @@ created: 2026-11-03T14:30:00Z
 
 # 第一版执行契约
 
+> 已确认基线：状态以frontmatter的active为准，正文“正式冻结前”及“尚未验收”保留形成时点语境，不借本次导航修改冻结语义。项目入口见[文档导航](../README.md)；后续DSP、ASR容错与summary/full等实现增量见[执行容器](../plans/README.md)，规范参数及返回投影见[请求校验](../../src/request.mjs)与[工具实现](../../src/tools.mjs)。实现差异不自动成为本契约新冻结条款。
+
 本稿汇总用户已确认[基线](../v1-baseline.md)与[验收](../acceptance.md)，不改变范围。细节参数沿用[配方](../spec/0002-feature-recipe.md)及[可调Pipeline](../adr/0003-portable-configurable-pipeline.md)。这不是效果通过声明；正式冻结前需独立审查与人类确认。
 
 ## 输入与工具面

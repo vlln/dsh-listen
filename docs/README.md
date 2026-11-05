@@ -1,22 +1,36 @@
-# 研究导航
+# 文档导航
 
-当前阶段：DEVELOP（基建本地自证已获用户出口批准；远程CI未推送、完整系统/效果仍待验收）。[第一版基线](v1-baseline.md)不再发散；进展见[正式基建容器](plans/0002-test-infra/README.md)。
-当前推进方向：[轻量 benchmark → 最小功能 → 一轮测评](direction.md)。此前多路线实验保留作储备，不是开发前置条件。
-当前架构：无question的可调特征Pipeline，输出文本、图像/音频特征、统计，由主Agent多轮推理。数学参考见[特征配方](spec/0002-feature-recipe.md)，当前部署与参数以[ADR-0003](adr/0003-portable-configurable-pipeline.md)为准；ADR-0002不是默认安装方案。
-当前交付：正式信号/解码/Pipeline/DSH适配/可选本地及API ASR/本地事件feature已合并develop，当前安装/lifecycle修复分支最后完整门禁144项通过，包28476字节/依赖673215；9任务真实headless开发预检已完成，后续效果扩量由用户暂停。续接见[当前状态](continuation.md)，工程判定见[验收矩阵](engineering-acceptance-status.md)。完整DSH系统、权限/附件、安装和benchmark效果尚未验收；spike代码未合并。[审查与开工前待核](feature-design-review.md)列出尚不能省略的核验。
+阶段：**DEVELOP**。插件已有实现与本地工程证据；完整工程/效果验收未闭环，未发布。入口以本页和[续接说明](continuation.md)为准，历史计划/实验中的“当前”只代表各自记录时点。
 
-## 阅读顺序
-1. [愿景](vision.md)：目标、用户和非目标。
-2. [待办](backlog.md)：范围内候选。
-3. [Spec](spec/README.md)：能力草案。
-4. [AC](ac/README.md)：验收草案。
-5. [ADR](adr/README.md)：当前固定提取技术栈提案与历史路线比较。
-6. [实验](experiments/README.md)：对照实验、语料与评估方法。
-7. [接口](interface/README.md)：候选接口，不作为实现承诺。
-8. [计划](plans/README.md)：后续执行容器与报告。
+## 当前实现与证据
 
-## 授权与门禁
-- 已授权：按Goal推进实现、工程验证及公开benchmark评测准备；以[用户批准验收基线](acceptance.md)为准。
-- 需另批：付费调用、音频外发、沙箱外安装；禁止读取凭据/私人录音及生产安装/发布。
-- 技术方案须有真实音频验证才能形成已验证结论；未跑即写“未执行”。
-- 人类批量确认前，不把 draft/proposed 升为 active/accepted。
+| 入口 | 用途 |
+|---|---|
+| [用户说明](../README.md) | 安装、安全、listen参数与summary/full |
+| [工程验收状态](engineering-acceptance-status.md) | 通过范围、未完成门槛，不冒称整体PASS |
+| [评测结果](evaluation-results.md) | 固定60题各版本、禁bash配对结论及局限 |
+| [评测入口](../evaluation/README.md) | 准备、执行、评分、无shell默认与历史命令区分 |
+| [DSP方法](dsp-evidence.md) | 数值、稀疏采样、单位及不可推断结论 |
+| [待办](backlog.md) | 已完成增量、未验收与待授权事项 |
+
+架构仍为问题无关特征Pipeline：保留原采样率/声道，主Agent解读文本、图像与数值。默认signal/transcript/events，dsp显式选择；summary/full是呈现选项，不是新模型。评测默认使用音频persona、listen/read_image，无bash；不设请求次数上限。模型与评测协议不等同于插件能力。
+
+## 直接子目录
+
+| 目录 | 状态 | 说明 |
+|---|---|---|
+| [Spec](spec/README.md) | 历史契约 | 设计基线与实现差异入口 |
+| [AC](ac/README.md) | 验收基线 | 不因整理而降低验收标准 |
+| [ADR](adr/README.md) | 决策记录 | 保留历史提案与固定状态 |
+| [Interface](interface/README.md) | 接口记录 | 设计文本与可执行工具入口 |
+| [Experiments](experiments/README.md) | 实验记录 | 历史协议、来源与对照设计 |
+| [Plans](plans/README.md) | 执行索引 | 各增量计划及报告 |
+
+[愿景](vision.md)、[第一版基线](v1-baseline.md)、[早期方向](direction.md)、[设计审查](feature-design-review.md)保留为设计与历史依据，不替代实现参数或最新一次运行记录。
+
+## 授权与边界
+
+- [验收基线](acceptance.md)不变；设计文档未因此promote，系统阶段未自动推进到RELEASE。
+- 真实评测仅按用户逐批授权；历史已授权60题不构成持续调用额度。评分离线，答案不进入Agent工作区。
+- 禁止读取凭据/私人录音，禁止擅自下载模型、外发音频或付费/生产安装发布。无shell关闭已观察的HF下载路径，但不是宿主全局禁网/跨case强隔离。
+- `.work`是本机忽略证据，不随Git分发；本页关联的可分发报告包含结论，不能只靠本机日志恢复事实。不得整理时删除/搬动历史证据或已有模型。

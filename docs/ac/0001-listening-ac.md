@@ -7,6 +7,8 @@ created: 2026-11-03T11:45:00Z
 ---
 
 # AC-0001
+
+> 历史验收场景草案（保持draft）：范围/费用等早期场景不覆盖后续用户修订，本文“未执行”不代表整个项目。当前门槛见[验收基线](../acceptance.md)，接口见[执行契约](../interface/0002-executable-v1.md)，实现见[请求校验](../../src/request.mjs)和[解码](../../src/decode.mjs)，进展见[文档导航](../README.md)；本次不修改场景或验收结论。
 上游：[Spec](../spec/0001-listening-capability.md)、[固定配方](../spec/0002-feature-recipe.md)。当前以轻量benchmark驱动固定提取，功能完成后评测；早期实验数值门槛不自动继承，benchmark选定后冻结评分。工具不接收问题，最终回答由Agent生成。
 
 | 场景 | 输入/动作 | 可验证预期 |

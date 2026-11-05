@@ -9,6 +9,8 @@ created: 2026-11-03T12:33:53Z
 
 # 固定证据配方 v0（设计值，未实测）
 
+> 历史数学参考（保持draft）：本文的声道、范围、运行时、暂缓特征与产物设计不是全部当前实现规格。项目入口见[文档导航](../README.md)，已确认边界见[执行契约](../interface/0002-executable-v1.md)，规范实现见[信号](../../src/signal.mjs)、[频谱](../../src/spectrum.mjs)与[请求校验](../../src/request.mjs)，DSP增量见[说明](../dsp-evidence.md)。保留原设计值和未实测表述，不追溯改为实验结论。
+
 上游：[工具面](../interface/0001-agent-tool-surface.md)、[推进方向](../direction.md)。本稿是数学/单位与balanced默认参数参考；[可调轻量Pipeline](../adr/0003-portable-configurable-pipeline.md)新增Agent有界参数并取代默认依赖/必装模型/完成条件。数值是设计建议，非验证结果；Python库仅为参考实现，不要求用户默认安装。只有审核冻结后才可实施。
 
 ## A. 统一信号与时间契约

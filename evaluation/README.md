@@ -1,37 +1,52 @@
-# MMAU 评测适配器（本轮未真实跑分）
+# MMAU 评测入口
 
-`protocol.mjs` 固定分层 dev/test、隔离题干/答案，并把所有预定题（含失败）纳入分母。Agent 输入仅 id/audio_id/question/choices；task/answer/difficulty/sub-category 仅在外部评分器，工具提取不读题目或选项。keys 及评分导出不得放入 Agent 工作区。
+当前执行入口是[薄批量适配器](thin-adapter.md)，产物布局与截止见[批次约定](batch-layout.md)，原生装配见[preset 使用说明](preset-usage.md)。这里只整理运行方法，不授权新增模型调用、下载、安装或数据外发。
 
-批量执行入口与最小职责见[薄适配器](thin-adapter.md)。正常运行复用已安装DSH_HOME与固定题单，不每批安装或重复导入数据。
+## 当前配置与成绩边界
 
-新批次的项目内目录、逐题10分钟总截止与失败留档见[批次约定](batch-layout.md)；旧preview runner不作为新10题批次入口。
+- 主模型选择为 `deepseek-official/deepseek-flash`，见[模型 patch](model.patch.yml)；认证由 DSH 服务处理，不读取凭据正文，不静默回退。创建 run 不会自动合并该 patch，需在实际 runtime overlay 显式固定同一路由。
+- `audio-evaluation` 默认是音频证据 persona、原生 compaction、read_image 和 listen，**没有通用 shell/read/write/edit**。安装版 minimal 含 bash/read_image，但不是当前评测默认。规范来源为[preset.patch.yml](preset.patch.yml)；[evaluationPlugins helper](preset.mjs)从该 YAML 生成完整列表，不从 minimal 重建。
+- 旧 runtime overlay 的完整 plugins 列表可能覆盖新默认；新批次必须核对实际装配，不直接复用旧 overlay。历史 run 与 `.work` 配置不迁移、不改写、不自动复跑。
+- 模型请求和音频调用均无次数上限；每题总截止固定 `600000ms`。不加载历史请求预算/工具拦截，旧 3/40/240 限额不是当前语义。
+- listen 默认 `evidence_detail: "summary"`，可按需用 `"full"` 取更细证据；这是模型可见证据呈现，不是[离线运行汇总](summary-format.md)。persona/summary 后续变更尚无效果评测，不能沿用旧成绩。
 
-## 后续主模型
+已完成批次的权威成绩、代码/配置条件与未评测边界见[评测结果](../docs/evaluation-results.md)。历史预检和早期 Flash 批次不等于当前默认已验收，不以私有 `.work` 路径作为唯一可分发成绩入口。
 
-用户指定后续使用 `deepseek-flash`。模型选择覆盖见[model.patch.yml](model.patch.yml)，使用宿主内置 `deepseek-official/deepseek-flash`；认证仍由DSH服务处理，首次真实运行前核验可用性，不静默回退其他模型。旧gpt-6.1-sol批次和配置不改写；切换主模型后需要重新建立参考结果，不与旧模型分数直接归因为工具差异。历史Flash60题批次见[报告](../docs/plans/0016-flash-sixty/02-report.md)，该批仍使用旧拦截配置，不与修复后preset结果混用。
+## 题面、执行与评分
 
-原生preset配置与验证见[使用说明](preset-usage.md)，入口为[preset.patch.yml](preset.patch.yml)。安装版minimal含bash/read_image，不把minimal误称无工具模式。headless通过原生registry绑定，新会话才使用新代际。
+[protocol.mjs](protocol.mjs)固定分层 dev/test、隔离题干/答案，把所有预定题（含失败）纳入分母。Agent 输入仅 id/audio_id/question/choices；task/answer/difficulty/sub-category 仅供外部评分器，工具提取不读问题或选项。keys 和评分导出不得放入 Agent 工作区。
 
-## 题目与批处理
+[headless-adapter.mjs](headless-adapter.mjs)保持官方 question/choices 的原文和顺序，不加零基索引或 JSON 回答要求，只要求最终返回完整选项文本。headless `final.text` 原样记为 `model_output`；不反解字母/数字/JSON，不清洗解释或矛盾内容。此指令是项目适配，不是官方唯一推理 prompt。
 
-`headless-adapter.mjs` 保持官方 question 和 choices 的原文与顺序，不添加零基索引，不要求模型返回 JSON。要求最终回答为完整选项文本；从 headless `final.text` 原样记录为 `model_output`，不把字母/数字/JSON 反解为答案，不清洗解释或矛盾内容。题面仅含问题、选项、音频路径与完整选项文本回答指令；后续使用原生audio-evaluation preset（安装版minimal + 音频工具），不做评测工具拦截、没有3次音频调用限额；保留10分钟会话截止，不限制主模型请求次数。音频/任务按题分离。该回答指令是本项目适配，并非官方发布的唯一推理 prompt。
+每题独立 DSH 会话，复用已安装的隔离 DSH_HOME 和固定题单，不另建主模型服务。baseline/aggregate/split 对照须显式保持同模型、设置和截止，并记录工具轨迹。runner 在启动前核验全部题面的 plain-text 协议及 task/audio SHA256；旧 manifest 或变动资产会拒绝执行。不能把旧 JSON 协议轨迹与当前协议混算。
 
-用户指定入口为隔离 DSH headless profile/preset，复用 DSH 既有模型路由；不另建主模型服务。baseline/aggregate/split 使用相同模型、设置和截止，记录 JSON 工具轨迹。执行仍须已有批次授权，不设请求硬预算，不因协议修改追加任何真实调用。本轮没有运行准备脚本、runner、数据下载或真实模型；旧开发运行使用旧 JSON 协议，不与新协议混用，也不自动重用首个历史运行。准备产物记录 plain-text 协议版本和 task SHA256；runner 在任何配置写入或调用前核验全部题面，旧 manifest 或被改动题面直接拒绝。改动不刷新已生成的本地工作区或 keys；后续获准运行前需重建准备产物（旧 keys 未保留 difficulty）。
+[离线汇总 CLI](summarize-run.mjs)只读已落盘 run 与外部 keys，不发起模型请求：
 
-## 每次运行的汇总
+```sh
+node evaluation/summarize-run.mjs RUN_DIRECTORY EXTERNAL_KEYS_PATH
+```
 
-入口：[summarize-run.mjs](summarize-run.mjs)，字段和命令见[汇总格式](summary-format.md)。命令：`node evaluation/summarize-run.mjs RUN_DIRECTORY EXTERNAL_KEYS_PATH`。它只读取已落盘结果和外部标注，不发起模型请求。
+汇总覆盖总体、域、难度、子类及完成/超时/失败/缺失、时延、观测请求数、工具、token；保留测量缺失，不伪造零。详见[汇总格式](summary-format.md)。所有预定 ID 均导出给官方 scorer，失败回答为空串；本地字符串匹配与官方 CLI 输出分开标记。
 
-离线汇总以固定manifest为分母，读取run内逐题result和共享数据集外部keys；不依赖模型，不修改原始回答。MMAU维度包括总体micro accuracy、sound/music/speech、easy/medium/hard及sub-category，均同时报告correct/total；没有样本的组不写伪0%成绩。工程指标包括完成/超时/失败/未运行、耗时分布、模型请求、工具调用及token，并报告缺测覆盖。官方scorer输入始终包含每个预定ID，失败model_output为空串。本地摘要与官方CLI输出分开标记。
+## 历史资料索引（非当前命令/授权）
+
+- [headless 装配提案](headless-plan.md)：早期认证与隔离设计。
+- [媒体准入](dataset-admission.md)、[获取记录](acquisition-status.md)、[输入准备](preparation-report.md)：来源、hash 与版本差异证据。
+- [preview 授权](preview-authorization.md)、[前置记录](preview-setup-report.md)、[三样本结果](preview-results.md)、[阶段选择](next-stage.md)：原 9 任务预检及当时授权，不据余额追加任务。
+- [早期 Flash60 报告](../docs/plans/0016-flash-sixty/02-report.md)：旧拦截配置的留档，不是修复后 preset 或新 persona/summary 的效果证据。
+
+这些文件保留原分数与历史实测，不搬动或删除；其中的“本轮/下一轮/当前”和命令按其历史上下文理解。
+
+## 文档核对记录
+
+2026-11-05 整理时先读完本目录全部13份Markdown，核对其中52个本地Markdown链接目标与6处Node命令脚本路径，未发现目标缺失；仅核文件存在，不代表外部URL可达或锚点/私有产物在其他机器可用。命令参数按create-run/run-batch/summarize-run源码核对，未执行runner、下载或模型请求。发现并澄清：create-run不自动合并模型patch、不自动保存overlay/dirty/包版本快照；旧prepare脚本仍含历史预算及runtime路径；旧overlay可能覆盖新preset。上述实现限制保留，不以文档整理冒称已修复。
 
 ## 外部评分与官方依据
 
-缓存官方源码对应 [Sakshi113/MMAU@110127f54c0dfba3faa5ec9feee4a7e4148679c5](https://github.com/Sakshi113/MMAU/tree/110127f54c0dfba3faa5ec9feee4a7e4148679c5)。已读官方 README、scorer 与缓存 schema；未展开封存题目/答案。
+固定官方源码：[Sakshi113/MMAU@110127f54c0dfba3faa5ec9feee4a7e4148679c5](https://github.com/Sakshi113/MMAU/tree/110127f54c0dfba3faa5ec9feee4a7e4148679c5)。
 
 - [官方 README](https://github.com/Sakshi113/MMAU/blob/110127f54c0dfba3faa5ec9feee4a7e4148679c5/README.md)：“additional key named 'model_prediction'”。
-- [实际 scorer](https://github.com/Sakshi113/MMAU/blob/110127f54c0dfba3faa5ec9feee4a7e4148679c5/evaluation.py#L55)：“output_key = 'model_output'”；以可执行脚本字段为准。脚本要求 answer/task/difficulty/choices，可选 sub-category；缺少 model_output 会跳过该题。
-- [官方媒体来源](https://huggingface.co/datasets/gamma-lab-umd/MMAU-test-mini)：已缓存 schema 有 instruction/choices/answer/other_attributes；准备阶段维持官方 GitHub question/choices，并按 id 核对媒体。未追加下载。
+- [实际 scorer](https://github.com/Sakshi113/MMAU/blob/110127f54c0dfba3faa5ec9feee4a7e4148679c5/evaluation.py#L55)：“output_key = 'model_output'”；按可执行字段，要求 answer/task/difficulty/choices，可选 sub-category，缺少 model_output 会跳题。
+- [官方媒体](https://huggingface.co/datasets/gamma-lab-umd/MMAU-test-mini)：媒体按 id 对应，题干与选项以已核 GitHub 标注为准，不按物理行序混用版本。
 
-`score-preview.mjs` 向工作区外的受限文件导出每个 mode 的 scorer 行，保留评分必需元数据，每道预定题都写 model_output；失败/缺失为 `''`，防止官方脚本跳过失败。JS 匹配仅为本地摘要；离线合成用例可与缓存 Python string_match 对照，不 vendor 官方文件、不引入 Python 依赖。
-
-不宣称官方完全等价：目前仅有限合成用例，未在全数据上对照官方 CLI、Unicode/tokenization 全边界或官方榜单；原始标注的其他非评分字段未完整保留。完整榜单/正式效果、不同媒体版本等价性及既有开发污染仍须单独核验；970 封存子集不冒称官方 1000 题榜。
+[score-preview.mjs](score-preview.mjs)是历史 preview 的外部导出器，新批次用上述 summarize-run CLI。不宣称本地匹配已在全数据、Unicode/tokenization 全边界与官方完全等价；官方榜单、媒体版本等价性及开发污染仍须单独核验，970 封存子集不是官方 1000 题榜。

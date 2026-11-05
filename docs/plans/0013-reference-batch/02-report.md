@@ -28,10 +28,12 @@ reference-v1完整listen，本地Whisper large-v3-turbo + YAMNet + signal，主�
 
 ## 证据入口
 
-- [本批清单](../../../.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/manifest.json)：共享输入ID/hash引用，无答案。
-- [本地结构化汇总](../../../.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/summary.json)：本地匹配official=false标识保留，不改成伪官方输出。
-- [官方评分原文](../../../.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/official-report.txt)：固定版本CLI实际输出。
-- [工具错误审计](../../../.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/tool-audit.json)：原事件derived，不修改预测。
+以下为本机忽略证据路径（相对项目根，不随Git分发），不是干净克隆可访问的文档链接：
+
+- 本批清单：`.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/manifest.json`，共享输入ID/hash引用，无答案。
+- 本地结构化汇总：`.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/summary.json`，本地匹配official=false标识保留，不改成伪官方输出。
+- 官方评分原文：`.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/official-report.txt`，固定版本CLI实际输出。
+- 工具错误审计：`.work/evaluation/runs/2026-11-04T10-22-28-860Z-reference-v1-b6d68e17/scoring/tool-audit.json`，原事件derived，不修改预测。
 
 ## 下一步建议（未执行）
 

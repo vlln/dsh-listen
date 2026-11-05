@@ -23,8 +23,8 @@
 - 权重/依赖/音频下载、外发、付费都必须另获授权；secret 不能进入请求日志、git、报告。
 
 ## 测试与评估基础设施
-- Node22内置node:test/assert；`npm run gate`运行静态/依赖检查及test/infra负控，源码尚空不等于业务测试通过。
-- 单元入口`npm run test:unit`将在首个feature补用例后启用；当前无test/unit，不能报告该命令已通过。
+- Node22内置node:test/assert；`npm run gate`运行静态/依赖检查及test/infra负控，不替代业务验证。
+- `npm run gate:feature`运行check与单元/开发集成覆盖门禁；`npm run test:unit`为定向入口。真实DSH/可选本地extractor验证需已有运行时路径，配置及实际命令见[0024验证报告](docs/plans/0024-evidence-guidance/02-report.md)；未配置造成skip不能冒称实跑。
 - `npm ci --ignore-scripts --no-audit --no-fund`复现依赖，不运行install脚本。
 - CI声明Linux/macOS Node22；没有推送/远程运行证据前不称CI已绿。
 - 各层测试不重复计数；正式全链路/安装/DSH隔离验证在SYSTEM_TEST，付费benchmark不进CI。

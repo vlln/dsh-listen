@@ -22,7 +22,7 @@ signal与dsp仍独立worker/cache，同时请求会重复计算统计；这是�
 
 ## 已缓存公开音频复放
 
-脚本与实际输出保留在[复放脚本](../../../.work/dsp-validation/measurements-replay.mjs)、[结果](../../../.work/dsp-validation/measurements-replay.json)。不复制/修改音频，三条均取首10秒，本地FFmpeg解码至真实worker，无ASR调用。以下为阈值修正后的单次观测，不是严格性能基准；不含解码时间，也不代表增量耗时。
+脚本与实际输出保留在本机忽略证据路径（相对项目根，不随Git分发）：`.work/dsp-validation/measurements-replay.mjs`、`.work/dsp-validation/measurements-replay.json`。不复制/修改音频，三条均取首10秒，本地FFmpeg解码至真实worker，无ASR调用。以下为阈值修正后的单次观测，不是严格性能基准；不含解码时间，也不代表增量耗时。
 
 | case | 原采样率/通道 | worker毫秒 | 全DSP JSON字节 | 可用音高窗/总窗 |
 |---|---|---:|---:|---:|

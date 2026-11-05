@@ -8,6 +8,8 @@ created: 2026-11-03T12:33:53Z
 
 # ADR-0002 固定证据，而非后端问答
 
+> 历史技术栈候选（保持draft）：保留当时官方正文获取失败、依赖建议和未验证结论，不据此安装或替换当前后端。项目入口见[文档导航](../README.md)，边界见[执行契约](../interface/0002-executable-v1.md)，规范接入见[提取器配置](../../src/configure.mjs)及[提取器](../../src/extractors.mjs)。
+
 ## 已被修订的默认部署
 [ADR-0003](0003-portable-configurable-pipeline.md)取代本稿默认运行时/必装模型要求：易安装和总体积优先，轻核心＋可选本地/API提取器。本稿模型/信号细节保留为候选参考，不据此安装Python/TF或非量化small。
 

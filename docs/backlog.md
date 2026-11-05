@@ -1,11 +1,20 @@
-# 候选需求
+# 候选与增量需求
 
-| 编号 | 状态 | 需求 | 来源 |
+执行与历史记录见[计划索引](plans/README.md)，未验收项见[工程矩阵](engineering-acceptance-status.md)。`done`仅指条目范围已交付，不等于整体工程/效果验收或已发布。
+
+| 编号 | 状态 | 范围 | 依据 |
 |---|---|---|---|
-| BL-0001 | planned | 研究独立声音理解能力，覆盖音乐/人声/其他声及混合输入 | 用户直接请求；本轮仅设计 |
-| BL-0002 | planned | 选择轻量现成benchmark，核实覆盖、许可和评分成本 | 用户指定前期方向，见[方向](direction.md)；未选定数据集 |
-| BL-0003 | candidate | 基于benchmark任务搭建最小声音理解功能与DSH安全接入 | 在BL-0002后，未授权实现 |
-| BL-0004 | candidate | 功能完成后按锁定配置跑一轮测评并分析分域错例 | 在BL-0003后，未授权执行 |
-| BL-0005 | deferred | 多路线/多模型/预处理消融的大规模对照 | 原研究建议，按需再启用，不作第一版前置 |
+| BL-0001 | done | 研究音乐/人声/环境声问题无关证据路线 | [愿景](vision.md)、[ADR索引](adr/README.md) |
+| BL-0002 | done | 选择轻量benchmark、核对数据与评分 | MMAU固定开发子集；[评测入口](../evaluation/README.md) |
+| BL-0003 | done | 最小声音证据功能与DSH接入 | [实现执行记录](plans/README.md)；安全残余另列 |
+| BL-0004 | done | 批量评测与分域/工具轨迹分析 | [评测结果](evaluation-results.md)；不是效果验收PASS |
+| BL-0005 | deferred | 多模型/多路线/预处理大规模消融 | 需另行选择与授权，不作开发前置 |
+| BL-0006 | done | ASR时间戳容错 | [0021](plans/0021-asr-timestamp-tolerance/README.md) |
+| BL-0007 | done | 零新依赖DSP与测量摘要 | [0022](plans/0022-dsp-evidence/README.md)、[0023](plans/0023-model-free-measurements/README.md) |
+| BL-0008 | done | 禁bash对照、persona/HF路径/summary引导修复 | [0024](plans/0024-evidence-guidance/README.md) |
+| BL-0009 | candidate | 有效同模型无音频baseline及受控增益验收 | [验收基线](acceptance.md)；需逐批授权 |
+| BL-0010 | candidate | 修复后persona/summary的主模型效果验证 | 未执行，不挪用旧版50/60 |
+| BL-0011 | candidate | 强读取/网络隔离、资源/进程/GUI/许可门槛 | [工程矩阵](engineering-acceptance-status.md) |
+| BL-0012 | deferred | ASR派生语速/对齐和模型质量评分 | 不下载新模型；不把现有稀疏F0称自然度/语速 |
 
-未来发布形态、预算、云端外发和语料选择由人类确认；未将任何商业模型定为默认。
+新真实评测、下载、外发、付费和部署不因条目存在自动授权。主模型选择是评测设置，不是插件默认模型；验收门槛不随单次分数调整。

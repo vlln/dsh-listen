@@ -1,5 +1,7 @@
 # 真实headless预检前置状态
 
+> **状态：历史记录。** 以下保留当时设计、授权或实测（不改分数）；“当前/本轮/下一轮”仅指原记录时点，不作为当前命令或新增任务授权。当前执行与默认配置见[评测入口](README.md)，各批次成绩与未评测边界见[评测结果](../docs/evaluation-results.md)。
+
 用户批准≤9任务/每任务3音频工具/总40主请求。已从既有web非秘密配置核对默认路由deepapi/gpt-6.1-sol、OpenAI completions endpoint及key引用名（未读取key）。隔离overlay恢复DSH credentials服务指既有store、watch=false，不拷贝/导出凭据，Agent不触正文。dump-config-schema exit0，不代表认证调用已成功。
 
 新增persistent budget file锁和先reserve再llm/stream、scope-local非音频工具拒绝及每Agent3次计数，budget/restriction两项测试通过。实际overlay引入时还需headless负控/真实第一任务验证，不能以单元证明所有retry已计费覆盖。

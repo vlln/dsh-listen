@@ -30,10 +30,12 @@ token累计：input804892、output256609、cache_read4059520，43/60会话有完
 
 ## 证据与结论
 
-- [运行清单](../../../.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/manifest.json)
-- [官方评分原文](../../../.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/official-report.txt)
-- [结构化汇总](../../../.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/summary.json)
-- [工具审计](../../../.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/tool-audit.json)
-- [音频证据覆盖审计](../../../.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/coverage-audit.json)
+以下为本机忽略证据路径（相对项目根，不随Git分发），不是干净克隆可访问的文档链接：
+
+- 运行清单：`.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/manifest.json`
+- 官方评分原文：`.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/official-report.txt`
+- 结构化汇总：`.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/summary.json`
+- 工具审计：`.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/tool-audit.json`
+- 音频证据覆盖审计：`.work/evaluation/runs/2026-11-04T10-55-37-135Z-flash-reference60-9ebfa91e/scoring/coverage-audit.json`
 
 本次按预设预算执行并停止，但未完成用户期望的全60题实答。禁止自动追加16题或重跑1题，需用户明确授权新的预算。后续优先隐藏不可用工具schema、明确3调用预算及停止策略、处理6声道输入，并用分域轮转避免预算耗尽只伤最后领域；这些改变不得追溯修改本次成绩。没有与同题同模型无工具对照，不证明增益或整体验收达标。

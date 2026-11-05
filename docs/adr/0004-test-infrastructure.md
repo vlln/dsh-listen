@@ -8,6 +8,8 @@ created: 2026-11-03T14:30:00Z
 
 # 提案
 
+> 冻结状态以frontmatter的accepted为准；正文proposed和初建状态保留为批准/自证过程记录，不是状态回退。项目入口见[文档导航](../README.md)，实施证据见[基建报告](../plans/0002-test-infra/01-report.md)，门禁实现见[覆盖检查](../../scripts/coverage.mjs)；本次仅补导航，不调整预算、测试归属或历史结果。
+
 用户已在集中确认中批准体积预算及按本方案搭建正式基建。当前保持proposed：须基建搭建和自证完成后再通过相应门禁，不把开建批准等同accepted。
 基于[执行契约](../interface/0002-executable-v1.md)，初版采用Node内置node:test/assert，无测试框架npm依赖，覆盖使用Node --experimental-test-coverage。正式基建在ci/0001-test-infra分支搭建，不在spike安装一套生产系统。
 

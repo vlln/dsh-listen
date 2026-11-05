@@ -1,5 +1,7 @@
 # 媒体获取执行记录
 
+> **状态：历史记录。** 以下保留当时设计、授权或实测（不改分数）；“当前/本轮/下一轮”仅指原记录时点，不作为当前命令或新增任务授权。当前执行与默认配置见[评测入口](README.md)，各批次成绩与未评测边界见[评测结果](../docs/evaluation-results.md)。
+
 用户批准额外≤1.3GB本地非商业评测下载，固定revision/长度/hash见dataset-admission。
 本轮开始stream download到忽略的.work/mmau-media/test_mini.parquet.partial，使用wx避免覆盖、逐块上限/最终SHA256核验；后台job bash-e5ec7d5818824c09已收集exit0，实际1213407227字节及SHA256 54b76f440db843546f9ad49a1518cc22371f63a266f034ba6bd4343b7b6fde86完全匹配。文件保留.partial后缀但已验证完整，不重复下载。
 

@@ -1,5 +1,7 @@
 # 特征设计审查与开工门禁
 
+> 历史静态审查：以下PASS、待核与网络获取失败只属于本次审查，不覆盖后续验证，也不是当前全部开工门禁。项目状态见[文档导航](README.md)，已确认边界见[执行契约](interface/0002-executable-v1.md)，后续实证见[执行容器](plans/README.md)；不改写原审查结果。
+
 日期：2026-11-03。审查范围：[配方](spec/0002-feature-recipe.md)、[栈提案](adr/0002-extraction-stack.md)、[工具面](interface/0001-agent-tool-surface.md)。
 
 ## 静态独立审查

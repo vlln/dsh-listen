@@ -8,6 +8,8 @@ created: 2026-11-03T12:16:44Z
 
 # Agent 工具可见面（修订草案）
 
+> 历史接口候选（保持draft）：早期running/jobs、严格范围及暂缓特征不作为当前API承诺。项目入口见[文档导航](../README.md)，已确认边界见[执行契约](0002-executable-v1.md)，规范参数与投影见[请求校验](../../src/request.mjs)和[工具实现](../../src/tools.mjs)；保留原草案，不借导航编辑冻结接口。
+
 上游：[推进方向](../direction.md)、[能力Spec](../spec/0001-listening-capability.md)。用户修订：不设question参数；工具是程序化证据提取，返回文本、图像/音频特征和统计特征，由Agent理解。不实现、不冻结。
 
 ## 当前修订优先级

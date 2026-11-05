@@ -1,5 +1,7 @@
 # 已批准的真实headless开发预检
 
+> **状态：历史记录。** 以下保留当时设计、授权或实测（不改分数）；“当前/本轮/下一轮”仅指原记录时点，不作为当前命令或新增任务授权。当前执行与默认配置见[评测入口](README.md)，各批次成绩与未评测边界见[评测结果](../docs/evaluation-results.md)。
+
 用户明确批准：复用DSH既有模型配置、DSH自身读取既有凭据（Agent不read/export）；3个固定开发样本×baseline/聚合/拆分，共≤9任务，每任务≤3音频工具调用，主模型请求总计≤40。ASR/events保持本地，原音频不上传；题干/转写/图像证据可进入既有主模型服务。遇配额/付费错误停止，无自动扩量。
 
 独立DSH_HOME/profile，真实profile不改；不将此批准扩大成1000题全量、公开音频再分发或任意凭据访问。需先实装请求硬计数guard再执行。3个工作区已生成，只有audio/task/AGENTS，keys在父项目不交Agent，工具guard拒绝bash/read/network等旁路。当前guard单元1/1 PASS，尚需真实headless负控验证。

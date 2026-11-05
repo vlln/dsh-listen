@@ -10,7 +10,7 @@ created: 2026-11-05T09:17:00Z
 
 2734c86源码/preset冻结至所有会话结束；只在独立overlay移除persistent-shell，保持原persona/题单/模型/并发10/600000ms截止/无限制请求。官方评分50/60（83.33%），sound16、speech16、music18；60完成0超时。前轮41/60且14超时；配对13改善4退化，净+9题。观测step610→253，耗时中位47.536→15.5545秒。工具轨迹只有listen（426完成55参数错误），无bash/read_image调用。
 
-证据及限制见[对照报告](../../../.work/evaluation/runs/2026-11-05T08-48-11-238Z-af7aa984/report.md)。反映整个bash工具面在此固定题单/截止下的净效果，不是纯数学计算价值，不是后续persona/summary修复效果。复用旧case/home但媒体/题面hash不变，历史环境产物未清理；上轮有新模型/剧本外援，未重复多seed或全MMAU。
+可分发结果及限制见[测评结果](../../evaluation-results.md)。原对照报告为本机忽略证据路径（相对项目根，不随Git分发）：`.work/evaluation/runs/2026-11-05T08-48-11-238Z-af7aa984/report.md`。反映整个bash工具面在此固定题单/截止下的净效果，不是纯数学计算价值，不是后续persona/summary修复效果。复用旧case/home但媒体/题面hash不变，历史环境产物未清理；上轮有新模型/剧本外援，未重复多seed或全MMAU。
 
 ## 实施
 

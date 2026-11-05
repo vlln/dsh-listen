@@ -8,6 +8,8 @@ created: 2026-11-03T11:45:00Z
 
 # ADR-0001：先比较能力，后确定后端
 
+> 历史路线草案（保持draft）：正文“当前”属于路线比较阶段，不将候选或未执行验证提升为已证实方案。项目入口见[文档导航](../README.md)，已确认边界见[执行契约](../interface/0002-executable-v1.md)，规范实现见[Pipeline](../../src/pipeline.mjs)；后续轻核心设计见[ADR-0003](0003-portable-configurable-pipeline.md)。
+
 ## 状态
 历史路线清单，不是当前实施计划。用户已指定固定证据提取、无question，由Agent推理；当前以[ADR-0002](0002-extraction-stack.md)和[特征配方](../spec/0002-feature-recipe.md)为准，A/D音频问答路线不纳入首版。未执行验证。此前对话里关于“Gemini 最好”“几十行足够”“一律 16k 单声道”“生态没有任何可用方案”的说法不是本项目证据；现成插件目录并不构成质量评估。
 
