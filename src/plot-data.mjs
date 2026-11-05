@@ -12,7 +12,7 @@ function meanChannelPower(channels){
  if(channels.length===1)return channels[0];
  return channels[0].map((row,i)=>Float64Array.from(row,(_,k)=>channels.reduce((sum,channel)=>sum+channel[i][k]/channels.length,0)));
 }
-export function preparePlot(channels,sampleRate,{offset=0,detail='balanced',frequencyRange=[0,sampleRate/2],channelView='separate',columns=990}={}){
+export function preparePlot(channels,sampleRate,{offset=0,detail='balanced',frequencyRange=[0,sampleRate/2],channelView='separate',columns=990,includeEnergy=true}={}){
  const count=validatePcm(channels,sampleRate);
  if(!['separate','power_mean'].includes(channelView))throw Error('INVALID_CHANNEL_VIEW');
  if(!Number.isInteger(columns)||columns<1||columns>1200)throw Error('INVALID_PLOT_COLUMNS');
@@ -25,7 +25,7 @@ export function preparePlot(channels,sampleRate,{offset=0,detail='balanced',freq
  const statistics=detail==='balanced'?spectrum:computeSpectrum(channels,sampleRate,{detail:'balanced',offset});
  const rows=spectrum.channels.map(c=>c.frames.map(f=>f.mel_power));
  const grouped=channelView==='power_mean'?[meanChannelPower(rows)]:rows;
- const energy=describeSignal(channels,sampleRate,{offset}).energy;
+ const energy=includeEnergy?describeSignal(channels,sampleRate,{offset}).energy:[];
  const plots=grouped.map((group,index)=>({
   name:channelView==='power_mean'?'POWER MEAN / WAVE ENVELOPE UNION':`CHANNEL ${index+1}`,
   wave:waveEnvelope(channelView==='power_mean'?channels:[channels[index]],count,columns,offset,sampleRate),

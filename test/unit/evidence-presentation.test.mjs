@@ -4,9 +4,9 @@ import {presentEvidence,stringifyEvidence} from '../../src/evidence-presentation
 import {makeAudioTools} from '../../src/tools.mjs';
 
 test('presentation removes fixed declarations recursively without changing results or source',()=>{
- const value={limitations:['fixed'],detail_guidance:'instructions',evidence:{events:{score_semantics:'not probability',status:'unavailable',reason:'not_configured'},transcript:{text:'limitations are spoken words',preprocessing:{limitations:['fixed'],downmix:'mean'},timing_adjustments:{discarded_segments:2}},signal:{channels:[{limitations:['fixed'],rms:.123456789}]}}};
+ const value={limitations:['fixed'],detail_guidance:'instructions',evidence:{events:{score_semantics:'not probability',status:'unavailable',reason:'not_configured'},transcript:{text:'limitations are spoken words',preprocessing:{limitations:['fixed'],downmix:'mean'},timing_adjustments:{discarded_segments:2}},signal_image:{channels:[{limitations:['fixed'],rms:.123456789}]}}};
  const before=structuredClone(value),out=presentEvidence(value);
- assert.deepEqual(value,before);assert.equal(out.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.equal(out.evidence.events.score_semantics,undefined);assert.equal(out.evidence.events.reason,'not_configured');assert.equal(out.evidence.transcript.text,value.evidence.transcript.text);assert.deepEqual(out.evidence.transcript.timing_adjustments,{discarded_segments:2});assert.deepEqual(out.evidence.signal.channels,[{rms:.123456789}]);
+ assert.deepEqual(value,before);assert.equal(out.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.equal(out.evidence.events.score_semantics,undefined);assert.equal(out.evidence.events.reason,'not_configured');assert.equal(out.evidence.transcript.text,value.evidence.transcript.text);assert.deepEqual(out.evidence.transcript.timing_adjustments,{discarded_segments:2});assert.deepEqual(out.evidence.signal_image.channels,[{rms:.123456789}]);
 });
 
 test('numbers use five significant digits, shortest notation, exact integers and preserved null/zero',()=>{
@@ -17,8 +17,8 @@ test('numbers use five significant digits, shortest notation, exact integers and
 
 test('single output render remove declarations, shorten numbers and preserve attachment and canonical data',()=>{
  const [tool]=makeAudioTools({defineTool:x=>x,inspect:()=>{},caller:()=>{},saveImage:()=>{}});
- const value={status:'complete',coverage:{from:0,to:1},evidence:{signal:{status:'ready',statistics:{channels:[{rms:.123456789}],limitations:['fixed']}}},image_attachment:{attachmentId:'sha256:abc',bytes:146866}};
+ const value={status:'complete',coverage:{from:0,to:1},evidence:{signal_image:{status:'ready',statistics:{channels:[{rms:.123456789}],limitations:['fixed']}}},image_attachment:{attachmentId:'sha256:abc',bytes:146866}};
  const before=structuredClone(value);
- {const blocks=tool.output.render({},value),out=JSON.parse(blocks[0].text);assert.equal(out.evidence.signal.statistics.channels[0].rms,.12346);assert.equal(out.evidence.signal.statistics.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.deepEqual(blocks[1],{type:'image',attachment:value.image_attachment});}
+ {const blocks=tool.output.render({},value),out=JSON.parse(blocks[0].text);assert.equal(out.evidence.signal_image.statistics.channels[0].rms,.12346);assert.equal(out.evidence.signal_image.statistics.limitations,undefined);assert.equal(out.detail_guidance,undefined);assert.deepEqual(blocks[1],{type:'image',attachment:value.image_attachment});}
  assert.deepEqual(value,before);
 });

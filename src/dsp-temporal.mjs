@@ -51,7 +51,7 @@ function pitchFrames(channel,sampleRate,count,offset){
  return frames;
 }
 
-function rhythmEvidence(power,hopSeconds,offset,duration){
+function rhythmEvidence(power,hopSeconds,offset,duration,wantTempo=true){
  // Five adjacent power blocks form trailing 50 ms overlapping windows.
  // Only complete windows participate: no zero-padding startup attack. This
  // suppresses carrier-phase power ripple before attack thresholding.
@@ -82,7 +82,8 @@ function rhythmEvidence(power,hopSeconds,offset,duration){
   'Autocorrelation-peak tempo scores measure novelty periodicity, not confidence; inferred half/double metrical alternatives have null scores. No beat grid or semantic labels are inferred.'
  ];
  const tempo=[];
- if(duration<3||onsets.length<4){limitations.push('Insufficient duration or onsets for tempo (requires at least 3 seconds and 4 detected onsets).');}
+ if(!wantTempo){}
+  else if(duration<3||onsets.length<4){limitations.push('Insufficient duration or onsets for tempo (requires at least 3 seconds and 4 detected onsets).');}
  else{
   const minLag=Math.ceil(60/240/hopSeconds),maxLag=Math.min(Math.floor(60/40/hopSeconds),Math.floor(power.length/3));
   const scores=new Float64Array(maxLag+2);
@@ -106,37 +107,39 @@ function rhythmEvidence(power,hopSeconds,offset,duration){
  return {onsets:onsets.map(({index,strength})=>({time:offset+index*hopSeconds,strength})),tempo_candidates:tempo.slice(0,6),limitations};
 }
 
-export function temporalEvidence(channels,sampleRate,{offset=0}={}){
+export function temporalEvidence(channels,sampleRate,{offset=0,features=['pitch','pitch_frames','onsets','tempo']}={}){
+ if(!Array.isArray(features)||features.some(f=>!['pitch','pitch_frames','onsets','tempo'].includes(f)))throw Error('INVALID_TEMPORAL_FEATURES');
+ const wantPitch=features.includes('pitch')||features.includes('pitch_frames'),wantRhythm=features.includes('onsets')||features.includes('tempo');
  const count=validatePcm(channels,sampleRate);
  if(!Number.isFinite(offset)||offset<0)throw Error('INVALID_OFFSET');
- const hop=Math.round(sampleRate*.01),power=new Float64Array(Math.ceil(count/hop));
+ const hop=Math.round(sampleRate*.01),power=wantRhythm?new Float64Array(Math.ceil(count/hop)):null;
  let selected=0,highest=-1;
- // O(total PCM): both channel selection and full-band rhythm power, without
- // allocating/downmixing an entire clip. validatePcm enforces the shared budget.
+ // Channel selection is needed only for pitch; power blocks only for rhythm.
  for(let c=0;c<channels.length;c++){
   let total=0,mean=0,seen=0;
   const anchor=channels[c][0];
-  for(let frame=0;frame<power.length;frame++){
-   const start=frame*hop,end=Math.min(count,start+hop);let square=0;
+  for(let start=0;start<count;start+=hop){
+   const end=Math.min(count,start+hop);let square=0;
    for(let i=start;i<end;i++){
-    const value=channels[c][i];square+=value**2;
-    const x=value-anchor,delta=x-mean;mean+=delta/++seen;total+=delta*(x-mean);
+    const value=channels[c][i];
+    if(wantRhythm)square+=value**2;
+    if(wantPitch){const x=value-anchor,delta=x-mean;mean+=delta/++seen;total+=delta*(x-mean);}
    }
-   power[frame]+=square/(end-start)/channels.length;
+   if(wantRhythm)power[start/hop]+=square/(end-start)/channels.length;
   }
-  if(total>highest){highest=total;selected=c;}
+  if(wantPitch&&total>highest){highest=total;selected=c;}
  }
- const frames=pitchFrames(channels[selected],sampleRate,count,offset);
+ const frames=wantPitch?pitchFrames(channels[selected],sampleRate,count,offset):[];
  return {
   method:'temporal-v1',
   parameters:{pitch_method:'original_rate_fft_overlap_normalized_autocorrelation',pitch_channel:selected,pitch_channel_selection:'highest_full_clip_dc_removed_energy_first_on_tie',pitch_channel_index_base:0,pitch_sample_rate_hz:sampleRate,pitch_window_seconds:PITCH_SECONDS,pitch_window:'rectangular_dc_removed',pitch_max_frames:MAX_PITCH_FRAMES,pitch_frame_selection:'uniform_full_window_starts_including_first_and_last',pitch_range_hz:[60,1000],pitch_min_periodicity:MIN_PERIODICITY,rhythm_method:'full_band_power_energy_onset',rhythm_hop_samples:hop,rhythm_hop_seconds:hop/sampleRate,rhythm_window_hops:5,rhythm_window_seconds:5*hop/sampleRate,rhythm_attack_min_peak_fraction:.1,rhythm_attack_min_local_fraction:.2,tempo_range_bpm:[40,240],tempo_min_seconds:3,tempo_min_onsets:4,tempo_min_cycles:3,tempo_alternative_score:null},
   coverage:{from:offset,to:offset+count/sampleRate,pitch_frames:frames.length,pitch_sampled_seconds:frames.length*Math.round(PITCH_SECONDS*sampleRate)/sampleRate},
-  pitch:{frames,limitations:[
+  ...(wantPitch?{pitch:{frames,limitations:[
    'Monophonic periodicity candidates from one explicitly selected highest DC-removed-energy channel; other channels and polyphonic fundamentals are not represented.',
    'At most 200 original-rate 64 ms windows are sampled uniformly; gaps can miss short events. No downsampling or anti-alias approximation is used.',
    'Periodicity is overlap-normalized autocorrelation, not calibrated confidence. Harmonic/subharmonic ambiguity and octave errors remain; candidates are not note or instrument labels.',
    ...(frames.length?[]:['Insufficient samples for a complete 64 ms pitch window.'])
-  ]},
-  rhythm:rhythmEvidence(power,hop/sampleRate,offset,count/sampleRate)
+  ]}}:{}),
+  ...(wantRhythm?{rhythm:rhythmEvidence(power,hop/sampleRate,offset,count/sampleRate,features.includes('tempo'))}:{})
  };
 }

@@ -5,10 +5,12 @@ const LABELS=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 
 // PCM has already passed validatePcm at the worker boundary. Do not scan it again.
 export function spectrumEvidence(channels,sampleRate,options={}){
- if(options===null||typeof options!=='object'||Array.isArray(options)||Object.keys(options).some(k=>!['offset','band'].includes(k)))throw Error('INVALID_SPECTRUM_OPTIONS');
- const {offset=0,band=null}=options;
+ if(options===null||typeof options!=='object'||Array.isArray(options)||Object.keys(options).some(k=>!['offset','band','features'].includes(k)))throw Error('INVALID_SPECTRUM_OPTIONS');
+ const {offset=0,band=null,features=['spectral_peaks','band_energy','chroma']}=options;
+ if(!Array.isArray(features)||features.some(f=>!['spectral_peaks','band_energy','chroma'].includes(f)))throw Error('INVALID_SPECTRUM_FEATURES');
+ const wantPeaks=features.includes('spectral_peaks'),wantBand=features.includes('band_energy'),wantChroma=features.includes('chroma');
  if(!Number.isFinite(offset)||offset<0)throw Error('INVALID_OFFSET');
- if(band!==null&&(!Array.isArray(band)||band.length!==2||!band.every(Number.isFinite)||band[0]<0||band[0]>=band[1]||band[1]>sampleRate/2))throw Error('INVALID_BAND');
+ if(wantBand&&band!==null&&(!Array.isArray(band)||band.length!==2||!band.every(Number.isFinite)||band[0]<0||band[0]>=band[1]||band[1]>sampleRate/2))throw Error('INVALID_BAND');
  const count=channels[0].length,size=Math.max(1024,Math.min(16384,2**Math.ceil(Math.log2(sampleRate*.09)))),hop=size/2;
  const available=Math.max(1,Math.ceil((count-size)/hop)+1),selected=Math.min(MAX_FRAMES,available);
  const indices=Array.from({length:selected},(_,i)=>selected===1?0:Math.round(i*(available-1)/(selected-1)));
@@ -37,14 +39,14 @@ export function spectrumEvidence(channels,sampleRate,options={}){
   }
  }
  for(let k=1;k<power.length;k++)power[k]/=weightSum;
- const binWidth=sampleRate/size,chroma=new Array(12).fill(0);let total=0,inBand=0,reference=0;
+ const binWidth=sampleRate/size,chroma=wantChroma?new Array(12).fill(0):null;let total=0,inBand=0,reference=0;
  for(let k=1;k<power.length;k++){
-  const hz=k*binWidth,p=power[k];total+=p;reference=Math.max(reference,p);
-  if(band&&hz>=band[0]&&hz<=band[1])inBand+=p;
-  if(hz>=40&&hz<=5000){const midi=Math.round(69+12*Math.log2(hz/440));chroma[((midi%12)+12)%12]+=p;}
+  const hz=k*binWidth,p=power[k];if(wantBand)total+=p;if(wantPeaks)reference=Math.max(reference,p);
+  if(wantBand&&band&&hz>=band[0]&&hz<=band[1])inBand+=p;
+  if(wantChroma&&hz>=40&&hz<=5000){const midi=Math.round(69+12*Math.log2(hz/440));chroma[((midi%12)+12)%12]+=p;}
  }
  const candidates=[];
- if(reference>0)for(let k=1;k<power.length;k++){
+ if(wantPeaks&&reference>0)for(let k=1;k<power.length;k++){
   const p=power[k];
   if(p<reference*1e-6||p<=power[k-1]||(k+1<power.length&&p<power[k+1]))continue;
   let delta=0;
@@ -56,14 +58,14 @@ export function spectrumEvidence(channels,sampleRate,options={}){
  }
  candidates.sort((a,b)=>b.relative_power_db-a.relative_power_db||a.bin-b.bin);
  const peaks=[];for(const p of candidates){if(peaks.every(q=>Math.abs(q.bin-p.bin)>=3))peaks.push(p);if(peaks.length===12)break;}
- const chromaSum=chroma.reduce((a,b)=>a+b,0);
+ const chromaSum=chroma?.reduce((a,b)=>a+b,0)??0;
  return {
   method:'dsp-spectrum-v1',
   parameters:{sample_rate_hz:sampleRate,channels:channels.length,channel_aggregation:'power_mean',fft_size:size,hop_samples:hop,window:'periodic_hann',bin_width_hz:binWidth,window_seconds:size/sampleRate,observed_window_seconds:Math.min(size,count)/sampleRate,power:'one_sided_squared_fft_window_energy_normalized',dc:'per_frame_channel_mean_removed',frame_weight:'valid_samples',max_frames:MAX_FRAMES,frame_selection:'uniform_rounded_hop_indices_including_endpoints',peak_min_separation_bins:3,peak_floor_db:-60,peak_interpolation:'log_power_parabolic',peak_reference:'maximum_non_dc_bin_power',chroma_range_hz:[40,Math.min(5000,sampleRate/2)],chroma_mapping:'nearest_equal_tempered_semitone'},
   coverage:{from:offset,to:offset+count/sampleRate,available_frames:available,sampled_frames:selected,frame_stride:available===1?1:(available-1)/(selected-1),frame_stride_min:selected===1?1:minStride,frame_stride_max:selected===1?1:maxStride,sampled_fraction:covered/count,sampled_seconds:covered/sampleRate,padded_frames:paddedFrames},
-  peaks:peaks.map(({frequency_hz,relative_power_db})=>({frequency_hz,relative_power_db})),
-  band_energy:band?{range_hz:[...band],power_fraction:total>0?Math.max(0,Math.min(1,inBand/total)):0}:null,
-  chroma:{labels:[...LABELS],values:chromaSum>0?chroma.map(x=>x/chromaSum):chroma,tuning_reference_hz:440},
+  ...(wantPeaks?{peaks:peaks.map(({frequency_hz,relative_power_db})=>({frequency_hz,relative_power_db}))}:{}),
+  ...(wantBand?{band_energy:band?{range_hz:[...band],power_fraction:total>0?Math.max(0,Math.min(1,inBand/total)):0}:null}:{}),
+  ...(wantChroma?{chroma:{labels:[...LABELS],values:chromaSum>0?chroma.map(x=>x/chromaSum):chroma,tuning_reference_hz:440}}:{}),
   limitations:[
    'Summary of sampled windowed channel powers, not a waveform downmix or a time-resolved event model; unselected intervals can contain missed events.',
    'FFT bin spacing is not resolving power: the Hann main lobe spans about four bins for full windows; zero padding short input adds no frequency information.',

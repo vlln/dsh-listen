@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {NUMERIC_FEATURES} from './features.mjs';
 import {normalizeRequest} from './request.mjs';
 import {EvidenceCache,evidenceKey} from './cache.mjs';
 import {decodeAudio} from './decode.mjs';
@@ -23,28 +24,28 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
   const evidence={},missing=[];let hits=0,computed=0,png;
   for(const feature of request.features){
    checkCancel();
-   const provider=feature==='signal'?{version:analyzeVersion}:feature==='dsp'?{version:'dsp-v2'}:extractors[feature];
+   const provider=NUMERIC_FEATURES.includes(feature)?{version:analyzeVersion+'-selective-v1'}:extractors[feature];
    if(!provider){evidence[feature]={status:'unavailable',reason:'not_configured'};missing.push(feature);continue;}
    try{if(provider.validate)await provider.validate();checkCancel();}catch(error){checkCancel();evidence[feature]={status:'unavailable',reason:'provider_changed'};missing.push(feature);continue;}
-   const parameters=feature==='signal'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:feature==='dsp'?{band:request.dsp_band_hz??null}:{};
+   const parameters=feature==='signal_image'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:feature==='band_energy'?{band:request.dsp_band_hz}:{};
    const key=evidenceKey({owner:context.owner,sourceHash:audio.source.sha256,range:[audio.coverage.from,audio.coverage.to],component:feature,version:provider.version,parameters});
    let result=cache.get(key);
    if(result){hits++;}else{
     try{
-     if(feature==='signal'){
-      const value=await analyze(audio.channels,audio.sampleRate,{signal:context.signal,offset:audio.coverage.from,detail:request.spectral_detail,...(request.frequency_range_hz?{frequencyRange:request.frequency_range_hz}:{}),channelView:request.channel_view});
-      result={status:'ready',statistics:value.statistics,plot:value.plot,image:value.image,png_base64:value.png.toString('base64')};
-     }else if(feature==='dsp')result=await analyzeSignal(audio.channels,audio.sampleRate,{signal:context.signal,offset:audio.coverage.from,kind:'dsp',band:request.dsp_band_hz??null});
-      else result=await provider.extract(audio,{signal:context.signal});
-     checkCancel();
+     if(NUMERIC_FEATURES.includes(feature)){
+       const value=await analyze(audio.channels,audio.sampleRate,{signal:context.signal,offset:audio.coverage.from,kind:'features',features:[feature],...(feature==='signal_image'?{detail:request.spectral_detail,...(request.frequency_range_hz?{frequencyRange:request.frequency_range_hz}:{}),channelView:request.channel_view}:{}),...(feature==='band_energy'?{band:request.dsp_band_hz}:{})});
+       result=value.evidence?.[feature];
+       if(feature==='signal_image'&&result&&value.png)result={...result,png_base64:value.png.toString('base64')};
+      }else result=await provider.extract(audio,{signal:context.signal});
+      checkCancel();
      if(!result||result.status!=='ready')throw Error('INVALID_EXTRACTOR_RESULT');
      computed++;cache.set(key,result);
     }catch(error){checkCancel();evidence[feature]={status:'failed',reason:'extraction_failed',error:extractionFailure(error)};missing.push(feature);continue;}
    }
-   if(feature==='signal'){png=Buffer.from(result.png_base64,'base64');const {png_base64,...visible}=result;evidence[feature]=visible;}else evidence[feature]=result;
+   if(feature==='signal_image'){png=Buffer.from(result.png_base64,'base64');const {png_base64,...visible}=result;evidence[feature]=visible;}else evidence[feature]=result;
   }
   checkCancel();
   const available=request.features.filter(f=>!missing.includes(f));
-  return {analysis_id:randomUUID(),recipe_version:'v1',status:available.length===request.features.length?'complete':available.length?'partial':'failed',source:audio.source,coverage:audio.coverage,requested_parameters:request,requested_features:request.features,available_features:available,missing_features:missing,evidence,execution:{cache_hits:hits,components_computed:computed},png};
+  return {analysis_id:randomUUID(),recipe_version:'v1',status:available.length===request.features.length?'complete':available.length?'partial':'failed',source:audio.source,coverage:audio.coverage,requested_features:request.features,available_features:available,missing_features:missing,evidence,execution:{cache_hits:hits,components_computed:computed},png};
  };
 }

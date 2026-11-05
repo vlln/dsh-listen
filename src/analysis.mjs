@@ -1,9 +1,12 @@
 import {Worker} from 'node:worker_threads';
 import {validatePcm} from './signal.mjs';
+import {validateFeatures} from './selective-analysis.mjs';
 export async function analyzeSignal(channels,sampleRate,options={}){
- const allowed=new Set(['signal','timeoutMs','offset','columns','detail','frequencyRange','channelView','kind','band']);
+ const allowed=new Set(['signal','timeoutMs','offset','columns','detail','frequencyRange','channelView','kind','band','features']);
  for(const key of Object.keys(options))if(!allowed.has(key))throw Error('UNKNOWN_ANALYSIS_PARAMETER');
- if(options.kind!==undefined&&!['signal','dsp'].includes(options.kind))throw Error('INVALID_ANALYSIS_KIND');
+ if(options.kind!==undefined&&!['signal','dsp','features'].includes(options.kind))throw Error('INVALID_ANALYSIS_KIND');
+ if(options.kind==='features')validateFeatures(options.features);
+ else if(options.features!==undefined)throw Error('INVALID_ANALYSIS_FEATURES');
  const {signal,timeoutMs=20000,...plotOptions}=options;
  if(signal!==undefined&&!(signal instanceof AbortSignal))throw Error('INVALID_ABORT_SIGNAL');
  if(signal?.aborted)throw Error('CANCELLED');

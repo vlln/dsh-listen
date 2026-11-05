@@ -3,7 +3,7 @@ import {linearQuantile} from './signal.mjs';
 const LOW_RMS=.001, MAX_INTERVALS=100;
 const quantiles=values=>({p10:linearQuantile(values,.1),p50:linearQuantile(values,.5),p90:linearQuantile(values,.9)});
 
-function energySummary(bins){
+export function energySummary(bins){
  const rms=quantiles(bins.map(bin=>bin.rms));
  const intervals=[];let intervalCount=0,binCount=0,duration=0,covered=0,previous=null;
  for(const bin of bins){
@@ -29,12 +29,17 @@ function energySummary(bins){
  };
 }
 
-/** Pure summary of validated describeSignal / temporalEvidence outputs; no PCM work. */
-export function measurementEvidence(statistics,temporal){
- const frames=temporal.pitch.frames;
+export function pitchSummary(frames){
  const frequencies=frames.filter(frame=>frame.candidates.length).map(frame=>frame.candidates[0].frequency_hz);
  const hz=quantiles(frequencies);
  const reason=!frames.length?'no_pitch_windows':!frequencies.length?'no_pitch_candidates':null;
+ return {frequency_hz_quantiles:hz,span_semitones:reason?null:12*Math.log2(hz.p90/hz.p10),
+  window_count:frames.length,available_window_count:frequencies.length,
+  available_window_fraction:frames.length?frequencies.length/frames.length:null,unavailable_reason:reason};
+}
+
+/** Pure summary of validated describeSignal / temporalEvidence outputs; no PCM work. */
+export function measurementEvidence(statistics,temporal){
  return {
   method:'measurements-v1',coverage:{...statistics.coverage},
   units:{amplitude:'full-scale linear RMS',dynamic_range:'dB (amplitude ratio)',time:'absolute source seconds',frequency:'Hz',pitch_span:'semitones',fraction:'0..1'},
@@ -49,9 +54,7 @@ export function measurementEvidence(statistics,temporal){
   energy:energySummary(statistics.energy),
   diagnostics:{digital_zero:statistics.digital_zero,channels:structuredClone(statistics.channels),
    stereo:structuredClone(statistics.stereo),stereo_unavailable_reason:statistics.stereo_unavailable_reason},
-  pitch:{frequency_hz_quantiles:hz,span_semitones:reason?null:12*Math.log2(hz.p90/hz.p10),
-   window_count:frames.length,available_window_count:frequencies.length,
-   available_window_fraction:frames.length?frequencies.length/frames.length:null,unavailable_reason:reason},
+  pitch:pitchSummary(temporal.pitch.frames),
   limitations:[
    'Energy quantiles and low-energy intervals approximate 100 ms display bins: 25 ms forward-window channel-mean powers are aggregated by owned 10 ms hops, not independent 100 ms RMS measurements.',
    'Low energy is not VAD or a true pause; bin coverage can smear boundaries. Tail bins have their actual duration; quantiles are not duration-weighted. RMS and its p90/p10 amplitude dB range are not LUFS or perceptual loudness.',
