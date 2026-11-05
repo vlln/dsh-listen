@@ -76,7 +76,7 @@ export function summarizeRun(manifest,results,keys){
   tools:{...measurement(rows,row=>row?.tool_calls?.length,{integer:true}),by_name_and_status:Object.fromEntries([...toolCounts].map(([name,group])=>[name,Object.fromEntries(group)]))},
   tokens:Object.fromEntries(['input_tokens','output_tokens','cache_read_tokens'].map(field=>[field,measurement(rows,row=>row?.usage?.[field],{integer:true})])),
   measurement_notes:{missing:'Unknown measurements are null totals when entirely absent, never inferred as zero; measured counts include explicit zero.',duration_percentiles:'median averages middle pair; p95 uses nearest rank; only explicit duration_ms included',tokens:'Provider-reported input, output, and cache-read counters are separate; cache-read is not added to input; no combined total or billing inference.'},
-  cases:ids.map((id,i)=>({id,status:predictions[i].status,result_present:rows[i]!==undefined,correct:scorePredictions([selected[i]],[predictions[i]]).correct===1}))
+  cases:ids.map((id,i)=>({id,domain:selected[i].task,status:predictions[i].status,result_present:rows[i]!==undefined,correct:scorePredictions([selected[i]],[predictions[i]]).correct===1}))
  };
  return {summary,officialRows:scored.officialRows};
 }

@@ -28,12 +28,22 @@ export async function runBatch(runDirectory,options={}){
     if(row.task_protocol!=='mmau-plain-text-v1')throw Error('BATCH_TASK_PROTOCOL_MISMATCH');
     const workspace=path.resolve(run.project_root??directory,row.workspace),task=await fs.readFile(path.join(workspace,'task.txt'),'utf8');
     if(createHash('sha256').update(task).digest('hex')!==row.task_sha256)throw Error('BATCH_TASK_HASH_MISMATCH');
-    if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
+    if(run.experiment?.condition==='no-audio'){
+     if(row.audio_available!==false||task.includes('Audio path:')||!task.includes('Audio is not available in this condition.'))throw Error('BASELINE_AUDIO_EXPOSED');
+     try{await fs.access(path.join(workspace,'audio.wav'));throw Error('BASELINE_AUDIO_EXPOSED');}catch(error){if(error.code!=='ENOENT')throw error;}
+    }else if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
     tasks.push({workspace,task});
   }
   if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000)throw Error('INVALID_BATCH_RUN_CONFIG');
   const overlay=path.resolve(directory,run.overlay_path);
-  const preset=fileURLToPath(new URL('../config/preset.patch.yml',import.meta.url));
+  const preset=run.preset_path?path.resolve(directory,run.preset_path):fileURLToPath(new URL('../config/preset.patch.yml',import.meta.url));
+  if(run.experiment){
+   const contract={experiment:run.experiment,preset_path:run.preset_path,overlay_path:run.overlay_path,worker_homes:run.worker_homes,concurrency:run.concurrency,session_timeout_ms:run.session_timeout_ms,frozen_files:run.frozen_files};
+   if(createHash('sha256').update(JSON.stringify(contract)).digest('hex')!==run.experiment_contract_sha256)throw Error('EXPERIMENT_CONTRACT_CHANGED');
+   for(const file of [preset,overlay,path.join(path.dirname(preset),'headless-preset.mjs'),path.join(directory,'manifest.json')])if(!Object.hasOwn(run.frozen_files??{},file))throw Error('UNBOUND_EXPERIMENT_FILE');
+   if(options.concurrency!==undefined||options.workerHomes!==undefined)throw Error('FROZEN_EXPERIMENT_OVERRIDE');
+  }
+  for(const [file,digest] of Object.entries(run.frozen_files??{}))if(createHash('sha256').update(await fs.readFile(file)).digest('hex')!==digest)throw Error('FROZEN_CONFIG_HASH_MISMATCH');
   const env={...process.env,NODE_USE_ENV_PROXY:'0'};
   for(const key of ['DSH_EVALUATION_BUDGET_FILE','DSH_EVALUATION_SESSION_BUDGET_FILE','DSH_EVALUATION_MAX_REQUESTS'])delete env[key];
   // Directory exclusivity is the execution lock: interrupted batches never resume.

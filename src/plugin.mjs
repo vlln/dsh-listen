@@ -12,7 +12,7 @@ export async function installAudioPlugin(ctx,config,{defineTool,secretProvider}=
  const bridge=makeHostBridge({fs:ctx.fs,workingDirectory:ctx.workingDirectory,scratch:config.scratch,localExecution:config.localExecution===true,...(typeof ctx.attachments.readFileStream==='function'?{resolveAttachment:makeAttachmentResolver({attachments:ctx.attachments,scratch:config.scratch})}:{})});
  const extractors=await prepareExtractors(config,{secretProvider});
  const inspect=createPipeline({authorize:bridge.authorize,extractors}),lifecycle=createTaskLifecycle();
- const tools=makeAudioTools({defineTool,inspect,caller:bridge.caller,saveImage:input=>ctx.attachments.saveImage(input),mode:config.mode??'aggregate'});
+ const tools=makeAudioTools({defineTool,inspect,caller:bridge.caller,saveImage:input=>ctx.attachments.saveImage(input),mode:config.mode??'aggregate',defaultEvidenceDetail:config.defaultEvidenceDetail??'summary'});
  for(const tool of tools){const execute=tool.execute;tool.execute=(args,exec)=>lifecycle.run(exec.signal,signal=>execute(args,{...exec,signal}));}
  const cleanups=[];
  try{for(const tool of tools)cleanups.push(ctx.tools.register(tool));}catch(error){for(const cleanup of cleanups.reverse())cleanup();throw error;}

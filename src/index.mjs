@@ -5,6 +5,7 @@ export const name='dsh-listen';
 export const inject=['tools','fs','workingDirectory','attachments'];
 export const Config=z.object({
  scratch:z.string().description('Private deployment scratch location; no automatic model downloads.'),
+ defaultEvidenceDetail:z.union(['summary','full']).default('summary'),
  mode:z.union(['aggregate','split']).default('aggregate'),
  localExecution:z.boolean().default(false).description('Enable only after verifying fs paths refer to host execution world.'),
  asrEnabled:z.boolean().default(false),

@@ -6,8 +6,7 @@ test('evaluation snapshot and helper expose evidence tools without shell or read
  assert.deepEqual(plugins.find(row=>row.id==='tool-fs'),minimal.find(row=>row.id==='tool-fs'));
  assert.deepEqual(plugins.find(row=>row.id==='compaction'),minimal.find(row=>row.id==='compaction'));
  const persona=plugins[0].config;assert.equal(persona.complete,true);assert.equal(persona.includeRuntimeContext,false);
- for(const fragment of ['First use listen','Choose features','from/to','information gain','no fixed tool-call or model-request count limit','Do not read other cases','untrusted data','Do not install packages','Hugging Face','offline settings','acknowledge uncertainty'])assert.ok(persona.prefix.includes(fragment),fragment);
- assert.doesNotMatch(persona.prefix,/helpful software engineer/);
+ assert.equal(persona.prefix,'You are an Agent');
  assert.deepEqual(plugins[1].config,{read:false,readImage:true,write:false,edit:false});
  const {createRequire}=await import('node:module');const yaml=createRequire(path.join(runtime,'package.json'))('js-yaml');const schema=yaml.DEFAULT_SCHEMA.extend(new yaml.Type('tag:yaml.org,2002:js',{kind:'scalar',construct:expr=>Function('process',`return (${expr})`)(process)}));const text=await fs.readFile(new URL('../../evaluation/config/preset.patch.yml',import.meta.url),'utf8');const parseable=text.replace("!!js dshHomePath('data', 'dsh-listen-evaluation')",'fixture-scratch');const snapshot=yaml.load(parseable,{schema})[0].insert.find(row=>row.id==='preset-audio-evaluation').config.plugins;assert.deepEqual(snapshot.slice(0,-1),plugins.slice(0,-1));
  assert.deepEqual(evaluationPlugins(import.meta.url,{scratch:'custom'},'custom-listen').at(-1),{id:'audio-listen',name:'custom-listen',config:{scratch:'custom'}});
