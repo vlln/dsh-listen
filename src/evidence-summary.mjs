@@ -1,3 +1,4 @@
+import {presentEvidence} from './evidence-presentation.mjs';
 const MAX_BYTES=16000;
 const has=(value,key)=>Object.prototype.hasOwnProperty.call(value,key);
 const size=value=>Buffer.byteLength(JSON.stringify(value),'utf8');
@@ -5,6 +6,7 @@ const size=value=>Buffer.byteLength(JSON.stringify(value),'utf8');
 /** A presentation-only projection: the canonical report and its numbers are untouched. */
 export function summarizeEvidence(report){
  if(!report||typeof report!=='object'||Array.isArray(report))throw Error('INVALID_EVIDENCE_REPORT');
+ report=presentEvidence(report);
  const omitted=[];
  const note=(path,total,shown,unit='items')=>{if(total>shown)omitted.push({path,total_count:total,shown_count:shown,omitted_count:total-shown,unit});};
  const text=(value,path,limit=240)=>{
@@ -91,7 +93,6 @@ export function summarizeEvidence(report){
   result.evidence[feature]=out;
  }
  result.fields_omitted=omitted;
- result.detail_guidance='This is a bounded presentation, not all evidence. Use the same source with evidence_detail:"full" for complete returned evidence, or select features and a shorter source-time from/to interval. If full output is too large, select fewer features and a shorter from/to interval. Scores are not calibrated probabilities; measurements do not establish semantic labels.';
  // Keep omission accounting itself bounded: compact long path lists, never silently drop them.
  if(omitted.length>32){
   result.omission_details={entry_count:omitted.length,shown_entry_count:0,recovery:'Use evidence_detail:"full"; detailed omitted-field inventory exceeded summary budget.'};
@@ -110,7 +111,7 @@ export function summarizeEvidence(report){
  }
  if(size(result)>MAX_BYTES){
   // Metadata is untrusted too. Preserve a minimal valid summary and explicit recovery.
-  return {summary_version:'v1',presentation:'summary',status:text(String(report.status??'unknown'),'status',80),coverage:select(report.coverage,['from','to'],'coverage'),evidence:{},fields_omitted:[{path:'report',total_count:Object.keys(report).length,shown_count:0,omitted_count:Object.keys(report).length,unit:'fields',reason:'summary_byte_budget'}],detail_guidance:result.detail_guidance};
+  return {summary_version:'v1',presentation:'summary',status:text(String(report.status??'unknown'),'status',80),coverage:select(report.coverage,['from','to'],'coverage'),evidence:{},fields_omitted:[{path:'report',total_count:Object.keys(report).length,shown_count:0,omitted_count:Object.keys(report).length,unit:'fields',reason:'summary_byte_budget'}]};
  }
  return result;
 }
