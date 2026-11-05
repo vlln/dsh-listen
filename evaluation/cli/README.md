@@ -5,7 +5,7 @@
 | 文件 | 用途 |
 |---|---|
 | [create-run.mjs](create-run.mjs) | 引用既有manifest/home/overlay创建独立run，不安装或推理 |
-| [run-batch.mjs](run-batch.mjs) | 校验输入后按固定worker pool执行，每题600000ms截止 |
+| [run-batch.mjs](run-batch.mjs) | 校验输入后按固定worker pool执行，新run每题300000ms截止；历史600000ms元数据显式保留 |
 | [summarize-run.mjs](summarize-run.mjs) | 仅读结果及外部keys，导出本地汇总与官方评分输入 |
 | [audit-run-tools.mjs](audit-run-tools.mjs) | 离线工具错误与投影截断审计 |
 | [prepare-experiment.mjs](prepare-experiment.mjs) | 单一音频条件及配置/工作区冻结，不执行模型 |

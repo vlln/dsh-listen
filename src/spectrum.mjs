@@ -34,7 +34,7 @@ function summarizeFrames(frames){
  const valid=frames.filter(f=>f.statistics);if(!valid.length)return null;
  return Object.fromEntries(['centroid_hz','rolloff_hz','flatness'].map(name=>{const values=valid.map(f=>f.statistics[name]);return [name,{p10:linearQuantile(values,.1),p50:linearQuantile(values,.5),p90:linearQuantile(values,.9)}];}));
 }
-export function computeSpectrum(channels,sampleRate,{detail='balanced',offset=0}={}){
+export function computeSpectrum(channels,sampleRate,{detail='balanced',offset=0,includeStatistics=true}={}){
  const count=validatePcm(channels,sampleRate);
  if(!Object.hasOwn(DETAILS,detail))throw Error('INVALID_DETAIL');
  if(!Number.isFinite(offset)||offset<0)throw Error('INVALID_OFFSET');
@@ -44,11 +44,11 @@ export function computeSpectrum(channels,sampleRate,{detail='balanced',offset=0}
   const frames=[];
   for(let j=0;j<frameCount;j++){
    const start=j*hop,valid=Math.min(size,count-start),input=new Float64Array(size),output=fft.createComplexArray();let square=0;
-   for(let i=0;i<valid;i++){input[i]=channel[start+i]*window[i];square+=channel[start+i]**2;}
+   for(let i=0;i<valid;i++){input[i]=channel[start+i]*window[i];if(includeStatistics)square+=channel[start+i]**2;}
    fft.realTransform(output,input);
    const power=Float64Array.from({length:size/2+1},(_,k)=>output[2*k]**2+output[2*k+1]**2),mel=applyMel(power,filters);
    for(const p of mel)reference=Math.max(reference,p);
-   const statistics=valid===size&&square/valid>1e-6?spectralStatistics(power,sampleRate,size):null;
+   const statistics=includeStatistics&&valid===size&&square/valid>1e-6?spectralStatistics(power,sampleRate,size):null;
    frames.push({from:offset+start/sampleRate,to:offset+(start+valid)/sampleRate,center:offset+(start+(size-1)/2)/sampleRate,timing:'window',padded_samples:size-valid,mel_power:mel,statistics});
   }
   return {frames,valid_fraction:frames.filter(f=>f.statistics).length/frames.length,summary:summarizeFrames(frames)};

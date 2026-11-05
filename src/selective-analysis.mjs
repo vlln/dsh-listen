@@ -70,7 +70,7 @@ export function selectiveAnalysis(channels,sampleRate,options={}){
  catch(error){fail(temporalFeatures,error);}}
  let png;
  if(wanted.has('signal_image')){try{
-  const plot=preparePlot(channels,sampleRate,{...options,includeEnergy:false});
+  const plot=preparePlot(channels,sampleRate,{...options,includeEnergy:false,includeStatistics:false});
   const image=renderPlot(plot);png=image.png;
   evidence.signal_image=ready('signal-image-v1',{coverage:plot.coverage,parameters:plot.parameters,frequency_hz:plot.frequency_hz,image:pick(image.metadata,['method','width','height','channels','source_from','source_to','frequency_min_hz','frequency_max_hz','reference_power','digital_zero'])});
  }

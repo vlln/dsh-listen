@@ -10,7 +10,7 @@ export async function createRun({manifestPath,dshHome,overlayPath,concurrency=1,
  if(!Array.isArray(manifest.samples)||!manifest.samples.length)throw Error('EMPTY_MANIFEST');
  const id=new Date().toISOString().replace(/[:.]/g,'-')+'-'+randomUUID().slice(0,8),run=path.join(runsDirectory,id);await fs.mkdir(runsDirectory,{recursive:true});await fs.mkdir(run,{mode:0o700});
  await fs.writeFile(path.join(run,'manifest.json'),JSON.stringify(manifest,null,2)+'\n',{flag:'wx',mode:0o600});
- const metadata={run_id:id,status:'prepared',project_root:process.cwd(),source_manifest:input,dsh_home:home,concurrency,worker_homes:homes,overlay_path:overlay,session_timeout_ms:600000,commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()};
+ const metadata={run_id:id,status:'prepared',project_root:process.cwd(),source_manifest:input,dsh_home:home,concurrency,worker_homes:homes,overlay_path:overlay,session_timeout_ms:300000,commit:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim()};
  await fs.writeFile(path.join(run,'run.json'),JSON.stringify(metadata,null,2)+'\n',{flag:'wx',mode:0o600});return run;
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

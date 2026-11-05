@@ -28,7 +28,7 @@ async function workspace(t){
 }
 
 function response(res,done){
-  const message=done?{role:'assistant',content:'LOCAL_EXPERIMENT_COMPLETE'}:{role:'assistant',tool_calls:[{id:'fixture-listen',type:'function',function:{name:'listen',arguments:JSON.stringify({source_path:'audio.wav',features:['signal_image']})}}]};
+  const message=done?{role:'assistant',content:'LOCAL_EXPERIMENT_COMPLETE'}:{role:'assistant',tool_calls:[{id:'fixture-listen',type:'function',function:{name:'listen',arguments:JSON.stringify({path:'audio.wav',features:['signal_image']})}}]};
   res.setHeader('Content-Type','text/event-stream');
   const chunk=(delta,finish_reason)=>JSON.stringify({id:'fixture',object:'chat.completion.chunk',created:0,model:'fixture',choices:[{index:0,delta,finish_reason}]});
   res.end(`data: ${chunk(message,null)}\n\ndata: ${chunk({},done?'stop':'tool_calls')}\n\ndata: [DONE]\n\n`);
@@ -95,7 +95,7 @@ function toolText(message){
     assert.doesNotMatch(output,/"energy"\s*:/,'signal_image must not leak unrequested energy');assert.match(output,/"signal_image"\s*:/);
     const call=turns[1].messages.find(message=>message.role==='assistant'&&message.tool_calls)?.tool_calls[0];
     assert.ok(call,'captured second request must include the original tool call');
-    assert.deepEqual(JSON.parse(call.function.arguments),{source_path:'audio.wav',features:['signal_image']});
+    assert.deepEqual(JSON.parse(call.function.arguments),{path:'audio.wav',features:['signal_image']});
   });
 }
 

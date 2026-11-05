@@ -9,8 +9,8 @@ test('real Cordis disable aborts and awaits an in-flight audio tool before retur
  ctx.provide('attachments',{saveImage:async()=>{images++;throw Error('SHOULD_NOT_SAVE');}});
  ctx.provide('tools',{register:tool=>{tools.set(tool.name,tool);return ()=>tools.delete(tool.name);}});
  const fiber=await ctx.plugin(entry,{scratch:path.resolve(`.work/disable-system-${process.pid}`),localExecution:true});
- const tool=tools.get('listen');const task=tool.execute({source_path:'never-read.wav',features:['signal_image']},{agent:{session:{id:'disable-fixture'}},signal:new AbortController().signal});
+ const tool=tools.get('listen');const task=tool.execute({path:'never-read.wav',features:['signal_image']},{agent:{session:{id:'disable-fixture'}},signal:new AbortController().signal});
  const rejected=assert.rejects(task,/CANCELLED/);await started;await fiber.dispose();await rejected;
  assert.equal(stopped,true);assert.equal(tools.size,0);assert.equal(images,0);
- await assert.rejects(tool.execute({source_path:'never-read.wav'},{agent:{session:{id:'disabled'}},signal:new AbortController().signal}),/PLUGIN_DISABLED/);
+ await assert.rejects(tool.execute({path:'never-read.wav'},{agent:{session:{id:'disabled'}},signal:new AbortController().signal}),/PLUGIN_DISABLED/);
 });

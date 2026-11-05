@@ -25,6 +25,15 @@ test('success preserves final text and observed counters, not missing counters',
   assert.match(await fs.readFile(path.join(dir,'stderr.log'),'utf8'),/synthetic stderr/);
 });
 
+test('session default schedules a five-minute total deadline without waiting for it',async t=>{
+  const dir=await fixture(t),delays=[],schedule=setTimeout;
+  t.mock.method(globalThis,'setTimeout',(callback,delay,...args)=>{delays.push(delay);return schedule(callback,delay,...args);});
+  const result=await session(dir,`console.log(JSON.stringify({type:'final',text:'synthetic answer'}));`);
+  assert.equal(result.status,'complete');
+  assert.equal(delays.filter(delay=>delay>10000).length,1);
+  assert.ok(delays[0]>299000&&delays[0]<=300000,`unexpected deadline ${delays[0]}`);
+});
+
 test('answer words about payment and authentication are not control-plane errors',async t=>{
   const dir=await fixture(t),text='The speaker discusses payment, authentication, and quota.';
   const result=await session(dir,`console.log(JSON.stringify({type:'final',text:${JSON.stringify(text)}}));`);
@@ -90,13 +99,39 @@ test('each log is bounded at 32 MiB and overflow cancels session',async t=>{
 async function batchFixture(t,count=3){
   const dir=await fixture(t),workspace=path.join(dir,'shared');await fs.mkdir(workspace);
   await fs.writeFile(path.join(workspace,'task.txt'),'synthetic');await fs.writeFile(path.join(workspace,'audio.wav'),'audio');
-  const run={project_root:dir,dsh_home:'home',overlay_path:'overlay.yml',session_timeout_ms:600000};
+  const run={project_root:dir,dsh_home:'home',overlay_path:'overlay.yml',session_timeout_ms:300000};
   const samples=Array.from({length:count},(_,i)=>({id:`case-${i}`,workspace:'shared',task_protocol:'mmau-plain-text-v1',task_sha256:createHash('sha256').update('synthetic').digest('hex'),audio_sha256:createHash('sha256').update('audio').digest('hex')}));
   await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));await fs.writeFile(path.join(dir,'manifest.json'),JSON.stringify({samples}));
   // Deliberately opaque to the runner; only DSH may interpret this trusted config.
   await fs.writeFile(path.join(dir,'overlay.yml'),'trusted configuration, not runner-parsed YAML');
   return {dir,run,samples};
 }
+
+test('batch forwards each explicit frozen deadline, including historical ten-minute metadata',async t=>{
+  for(const timeoutMs of [300000,600000]){
+    const {dir,run}=await batchFixture(t,1),bin=path.join(dir,'bin');await fs.mkdir(bin);
+    run.session_timeout_ms=timeoutMs;await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
+    await fs.writeFile(path.join(bin,'dsh'),`#!${process.execPath}\nconsole.log(JSON.stringify({type:'final',text:'synthetic answer'}));\n`,{mode:0o700});
+    const delays=[],schedule=setTimeout,oldPath=process.env.PATH;
+    const timerMock=t.mock.method(globalThis,'setTimeout',(callback,delay,...args)=>{delays.push(delay);return schedule(callback,delay,...args);});
+    process.env.PATH=bin+path.delimiter+(oldPath??'');
+    try{await runBatch(dir);}finally{timerMock.mock.restore();if(oldPath===undefined)delete process.env.PATH;else process.env.PATH=oldPath;}
+    const deadlines=delays.filter(delay=>delay>10000);assert.equal(deadlines.length,1);
+    assert.ok(deadlines[0]>timeoutMs-1000&&deadlines[0]<=timeoutMs,`expected ${timeoutMs}, scheduled ${deadlines[0]}`);
+    const metadata=JSON.parse(await fs.readFile(path.join(dir,'run.json'),'utf8'));
+    assert.equal(metadata.session_timeout_ms,timeoutMs);assert.equal(metadata.status,'finished');
+    assert.equal(JSON.parse(await fs.readFile(path.join(dir,'results/case-0/result.json'),'utf8')).status,'complete');
+  }
+});
+
+test('batch rejects missing, malformed or unsupported deadlines rather than guessing',async t=>{
+  for(const timeoutMs of [undefined,null,0,-1,300001,600001,'300000']){
+    const {dir,run}=await batchFixture(t,1);run.session_timeout_ms=timeoutMs;
+    await fs.writeFile(path.join(dir,'run.json'),JSON.stringify(run));
+    await assert.rejects(runBatch(dir),/INVALID_BATCH_RUN_CONFIG/);
+    await assert.rejects(fs.stat(path.join(dir,'results')),{code:'ENOENT'});
+  }
+});
 
 test('batch rejects empty, unsafe or duplicate ids before any dispatch',async t=>{
   for(const change of [rows=>rows.splice(0),rows=>rows[0].id='../escape',rows=>rows[0].id='.',rows=>rows[0].id='',rows=>rows[1].id=rows[0].id,rows=>rows[2]=null]){

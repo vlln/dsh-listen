@@ -8,7 +8,7 @@ test('single audio experiment preserves choices and excludes references and deta
  assert.ok(text.includes('a\nb'));assert.ok(!text.includes('SECRET'));assert.ok(text.includes('Audio path: audio.wav'));
  assert.deepEqual(conditions,['audio']);assert.deepEqual(experimentMatrix.conditions,[{id:'audio',audio:true,allowed_tools:['listen','read_image']}]);
  for(const cancelled of ['summary','full','no-audio','bad']){assert.throws(()=>formatExperimentTask(row,cancelled));assert.throws(()=>experimentPlugins(import.meta.url,{condition:cancelled}));}
- assert.equal(experimentMatrix.request_limits,null);assert.equal(experimentMatrix.session_timeout_ms,600000);assert.equal(experimentMatrix.persona,'You are an Agent');assert.doesNotMatch(JSON.stringify(experimentMatrix),/evidence_detail|defaultEvidenceDetail|baseline/);
+ assert.equal(experimentMatrix.request_limits,null);assert.equal(experimentMatrix.session_timeout_ms,300000);assert.equal(experimentMatrix.persona,'You are an Agent');assert.doesNotMatch(JSON.stringify(experimentMatrix),/evidence_detail|defaultEvidenceDetail|baseline/);
 });
 test('prepare frozen single-condition sixty-case experiment without inference or answer copies',{skip:!process.env.DSH_RUNTIME_ROOT},async t=>{
  const base=path.resolve('.work/experiment-preparation-tests');await fs.mkdir(base,{recursive:true});const root=await fs.mkdtemp(path.join(base,'case-'));t.after(async()=>{assert.equal(path.dirname(root),base);assert.match(path.basename(root),/^case-/);assert.equal(await fs.realpath(root),root);await fs.rm(root,{recursive:true,force:true});});
@@ -18,11 +18,14 @@ test('prepare frozen single-condition sixty-case experiment without inference or
  const manifestPath=path.join(root,'source.json');await fs.writeFile(manifestPath,JSON.stringify({samples}));const settings={manifestPath,outputDirectory:path.join(root,'experiment'),workerHomes:homes,modelPatchPath:path.resolve('evaluation/config/model.patch.yml')};
  const {runs}=await prepareExperiment(settings);assert.deepEqual(Object.keys(runs),['audio']);
  const run=runs.audio,metaPath=path.join(run,'run.json'),metadata=JSON.parse(await fs.readFile(metaPath)),manifest=JSON.parse(await fs.readFile(path.join(run,'manifest.json')));
- assert.equal(metadata.session_timeout_ms,600000);assert.equal(metadata.concurrency,10);assert.equal(metadata.experiment.condition,'audio');assert.equal(metadata.status,'prepared');assert.ok(metadata.frozen_files[metadata.preset_path]);assert.equal(manifest.samples.length,60);
+ assert.equal(metadata.session_timeout_ms,300000);assert.equal(metadata.concurrency,10);assert.equal(metadata.experiment.condition,'audio');assert.equal(metadata.status,'prepared');assert.ok(metadata.frozen_files[metadata.preset_path]);assert.equal(manifest.samples.length,60);
  assert.deepEqual((await fs.readdir(manifest.samples[0].workspace)).sort(),['audio.wav','task.txt']);assert.equal(await fs.readFile(path.join(manifest.samples[0].workspace,'task.txt'),'utf8'),task);assert.equal(manifest.samples[0].audio_available,true);
  const overlay=await fs.readFile(metadata.overlay_path,'utf8');assert.doesNotMatch(overlay,/DO_NOT_COPY_SECRET|evidence_detail|defaultEvidenceDetail|baseline/);assert.doesNotMatch(JSON.stringify(metadata.experiment),/evidence_detail|defaultEvidenceDetail|baseline/);
  const plugins=experimentPlugins(import.meta.url,{condition:'audio'});assert.equal(plugins[0].config.prefix,'You are an Agent');assert.deepEqual(plugins.at(-1).config,{});
- const experiment=JSON.parse(await fs.readFile(path.join(settings.outputDirectory,'experiment.json')));assert.deepEqual(Object.keys(experiment.runs),['audio']);assert.equal(experiment.approval,'preparation_only_not_authorized_to_execute');
+ const experiment=JSON.parse(await fs.readFile(path.join(settings.outputDirectory,'experiment.json')));assert.deepEqual(Object.keys(experiment.runs),['audio']);assert.equal(experiment.approval,'preparation_only_not_authorized_to_execute');assert.equal(experiment.session_timeout_ms,300000);
+  // Both deadlines are individually supported, but a prepared experiment cannot switch.
+  await fs.writeFile(metaPath,JSON.stringify({...metadata,session_timeout_ms:600000}));await assert.rejects(runBatch(run),/EXPERIMENT_CONTRACT_CHANGED/);
+  await assert.rejects(fs.stat(path.join(run,'results')),{code:'ENOENT'});await fs.writeFile(metaPath,JSON.stringify(metadata));
  const changed={...metadata,overlay_path:path.join(root,'alternate.yml')};await fs.writeFile(changed.overlay_path,'[]');await fs.writeFile(metaPath,JSON.stringify(changed));await assert.rejects(runBatch(run),/CONTRACT_CHANGED/);
  await fs.writeFile(metaPath,JSON.stringify(metadata));await fs.appendFile(metadata.overlay_path,'\n# changed');await assert.rejects(runBatch(run),/FROZEN_CONFIG_HASH/);
  await assert.rejects(prepareExperiment({...settings,audioConfig:{mode:'split'}}),/AGGREGATE/);await assert.rejects(prepareExperiment({...settings,audioConfig:{asrEnabled:true}}),/LOCAL_EXTRACTORS/);

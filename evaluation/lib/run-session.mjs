@@ -10,7 +10,7 @@ const LOG_LIMIT = 32 * 1024 * 1024;
 const STOP_PATTERN = /quota|insufficient|payment|HTTP.?40[129]|HTTP.?429|unauthori[sz]ed|authentication|MISSING_CREDENTIAL|no API key|MODEL_NOT_FOUND|not available|no[^\r\n]*model|HEADLESS_PREVIEW_REQUEST_LIMIT|BUDGET_LOCK_TIMEOUT|INVALID_BUDGET|EEXIST.*budget/i;
 
 /** Run one shell-free POSIX session. The caller assigns the manifest id. */
-export async function runSession({command,args=[],cwd,env,task,outputDirectory,timeoutMs=600000,graceMs=2000}) {
+export async function runSession({command,args=[],cwd,env,task,outputDirectory,timeoutMs=300000,graceMs=2000}) {
   if(process.platform==='win32')throw Error('POSIX_PROCESS_GROUP_REQUIRED');
   if(!Number.isFinite(timeoutMs)||timeoutMs<=0||!Number.isFinite(graceMs)||graceMs<=0)throw Error('INVALID_SESSION_DEADLINE');
   // Exclusive artifacts are acquired before spawning; never truncate an earlier run.

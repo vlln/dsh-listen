@@ -32,7 +32,9 @@ export async function runBatch(runDirectory,options={}){
     if(typeof row.audio_sha256!=='string'||createHash('sha256').update(await fs.readFile(path.join(workspace,'audio.wav'))).digest('hex')!==row.audio_sha256)throw Error('BATCH_AUDIO_HASH_MISMATCH');
     tasks.push({workspace,task});
   }
-  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||run.session_timeout_ms!==600000)throw Error('INVALID_BATCH_RUN_CONFIG');
+  // New runs use 300000 ms; explicit historical 600000 ms metadata remains replayable.
+  // Never infer a deadline for missing metadata or reinterpret an old run's value.
+  if(typeof run.dsh_home!=='string'||typeof run.overlay_path!=='string'||![300000,600000].includes(run.session_timeout_ms))throw Error('INVALID_BATCH_RUN_CONFIG');
   const overlay=path.resolve(directory,run.overlay_path);
   const preset=run.preset_path?path.resolve(directory,run.preset_path):fileURLToPath(new URL('../config/preset.patch.yml',import.meta.url));
   if(run.experiment){
@@ -53,7 +55,7 @@ export async function runBatch(runDirectory,options={}){
   async function worker(home){
     try{while(nextIndex<rows.length){
       const index=nextIndex++,row=rows[index],outputDirectory=path.join(results,row.id);await fs.mkdir(outputDirectory,{mode:0o700});
-      const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',preset,'--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...env,DSH_HOME:home},task:tasks[index].task,outputDirectory});
+      const result=stopped?{status:'not_run',model_output:''}:await runSession({command:'dsh',args:['--profile','headless','--patch',preset,'--patch',overlay,'--json','-'],cwd:tasks[index].workspace,env:{...env,DSH_HOME:home},task:tasks[index].task,outputDirectory,timeoutMs:run.session_timeout_ms});
       if(result.stop_batch)stopped=true;
       await save(path.join(outputDirectory,'result.json'),{id:row.id,...result});
       console.log(JSON.stringify({id:row.id,status:result.status,model_requests:result.model_requests??null,duration_ms:result.duration_ms??null}));
