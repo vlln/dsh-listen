@@ -12,11 +12,24 @@ export function makeMelFilters(sr,size,bands=128){
   return Math.max(0,Math.min(lower,upper))*2/(edges[m+2]-edges[m]);
  }));
 }
-function validPower(values){if(!(Array.isArray(values)||values instanceof Float64Array||values instanceof Float32Array)||!values.length||[...values].some(v=>!Number.isFinite(v)||v<0))throw Error('INVALID_POWER');}
-export function applyMel(power,filters){
- validPower(power);if(!Array.isArray(filters)||!filters.length||filters.some(f=>f.length!==power.length))throw Error('MEL_SHAPE');
+function validPower(values){if(!(Array.isArray(values)||values instanceof Float64Array||values instanceof Float32Array)||!values.length)throw Error('INVALID_POWER');for(let i=0;i<values.length;i++){const v=values[i];if(!Number.isFinite(v)||v<0)throw Error('INVALID_POWER');}}
+// Validated once; each filter keeps only its non-zero weight range. Summing that range left to
+// right adds the same non-zero terms in the same order as the dense sum, whose zero-weight terms
+// add exactly +0 for finite non-negative power, so results are bit-identical.
+function prepareMel(filters,length){
+ if(!Array.isArray(filters)||!filters.length||filters.some(f=>f?.length!==length))throw Error('MEL_SHAPE');
  for(const filter of filters)validPower(filter);
- return Float64Array.from(filters,filter=>{const value=filter.reduce((sum,w,k)=>sum+w*power[k],0);if(!Number.isFinite(value))throw Error('POWER_OVERFLOW');return value;});
+ return filters.map(filter=>{let first=0,last=filter.length-1;while(first<=last&&filter[first]===0)first++;while(last>=first&&filter[last]===0)last--;return {filter,first,last};});
+}
+function sparseMel(power,prepared){
+ validPower(power);if(prepared.some(p=>p.filter.length!==power.length))throw Error('MEL_SHAPE');
+ const result=new Float64Array(prepared.length);
+ for(let m=0;m<prepared.length;m++){const {filter,first,last}=prepared[m];let sum=0;for(let k=first;k<=last;k++)sum+=filter[k]*power[k];if(!Number.isFinite(sum))throw Error('POWER_OVERFLOW');result[m]=sum;}
+ return result;
+}
+export function applyMel(power,filters){
+ validPower(power);
+ return sparseMel(power,prepareMel(filters,power.length));
 }
 export function displayPowerDb(power,reference){
  if(!Number.isFinite(power)||power<0||!Number.isFinite(reference)||reference<0||power>reference*(1+1e-12))throw Error('INVALID_DISPLAY');
@@ -38,7 +51,7 @@ export function computeSpectrum(channels,sampleRate,{detail='balanced',offset=0,
  const count=validatePcm(channels,sampleRate);
  if(!Object.hasOwn(DETAILS,detail))throw Error('INVALID_DETAIL');
  if(!Number.isFinite(offset)||offset<0)throw Error('INVALID_OFFSET');
- const size=DETAILS[detail],hop=size/4,fft=new FFT(size),filters=makeMelFilters(sampleRate,size),window=Float64Array.from({length:size},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/size));
+ const size=DETAILS[detail],hop=size/4,fft=new FFT(size),filters=prepareMel(makeMelFilters(sampleRate,size),size/2+1),window=Float64Array.from({length:size},(_,i)=>.5-.5*Math.cos(2*Math.PI*i/size));
  const frameCount=Math.max(1,Math.ceil((count-size)/hop)+1);let reference=0;
  const results=channels.map(channel=>{
   const frames=[];
@@ -46,7 +59,7 @@ export function computeSpectrum(channels,sampleRate,{detail='balanced',offset=0,
    const start=j*hop,valid=Math.min(size,count-start),input=new Float64Array(size),output=fft.createComplexArray();let square=0;
    for(let i=0;i<valid;i++){input[i]=channel[start+i]*window[i];if(includeStatistics)square+=channel[start+i]**2;}
    fft.realTransform(output,input);
-   const power=Float64Array.from({length:size/2+1},(_,k)=>output[2*k]**2+output[2*k+1]**2),mel=applyMel(power,filters);
+   const power=Float64Array.from({length:size/2+1},(_,k)=>output[2*k]**2+output[2*k+1]**2),mel=sparseMel(power,filters);
    for(const p of mel)reference=Math.max(reference,p);
    const statistics=includeStatistics&&valid===size&&square/valid>1e-6?spectralStatistics(power,sampleRate,size):null;
    frames.push({from:offset+start/sampleRate,to:offset+(start+valid)/sampleRate,center:offset+(start+(size-1)/2)/sampleRate,timing:'window',padded_samples:size-valid,mel_power:mel,statistics});
