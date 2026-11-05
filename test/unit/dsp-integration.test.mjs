@@ -6,3 +6,18 @@ test('DSP pipeline authorizes before cache and keys numerical bands independentl
 
 test('worker entry direct numerical and error contracts match real worker',()=>{const channels=[tone()];const a=executeAnalysis({channels,sampleRate:8000,options:{kind:'dsp',band:[400,480]}});assert.equal(a.status,'ready');const b=executeAnalysis({channels,sampleRate:8000,options:{columns:4}});assert.ok(Buffer.isBuffer(b.png));assert.equal(executeAnalysis({channels,sampleRate:8000,options:{kind:'dsp',band:[0,9000]}}).error,'INVALID_BAND');});
 test('DSP active cancellation, timeout and maximum native-rate scalar budget',async()=>{const channels=[new Float32Array(192000*60),new Float32Array(192000*60)];channels[0][100]=.5;const c=new AbortController();const pending=analyzeSignal(channels,192000,{kind:'dsp',signal:c.signal});setTimeout(()=>c.abort(),1);await assert.rejects(pending,/CANCELLED/);await assert.rejects(analyzeSignal(channels,192000,{kind:'dsp',timeoutMs:1}),/TIMEOUT/);const r=await analyzeSignal(channels,192000,{kind:'dsp'});assert.equal(r.coverage.to,60);assert.equal(r.spectral.parameters.sample_rate_hz,192000);assert.ok(r.temporal.pitch.frames.length<=200);assert.ok(JSON.stringify(r).length<150000);await assert.rejects(analyzeSignal([tone()],8000,{kind:'invalid'}),/INVALID_ANALYSIS_KIND/);});
+
+
+test('real selective worker batch preserves individual numbers and isolates invalid products',async()=>{
+ const channels=[tone()],ctx={owner:'batch-owner',signal:new AbortController().signal},calls=[];
+ const pipeline=createPipeline({authorize:async()=>({file:'tone'}),decode:async()=>({channels,sampleRate:8000,coverage:{from:2,to:3},source:{sha256:'batch-tone'}}),analyze:async(c,s,o)=>{calls.push(o.features);return analyzeSignal(c,s,o);}});
+ const features=['levels','energy','spectral_peaks','band_energy','chroma','pitch','pitch_frames','onsets','tempo'];
+ const args={source_path:'tone',features,dsp_band_hz:[400,480]};
+ const result=await pipeline(args,ctx);assert.equal(result.status,'complete');assert.equal(calls.length,1);assert.equal(result.execution.components_computed,features.length);
+ for(const feature of features){
+  const individual=await analyzeSignal(channels,8000,{kind:'features',features:[feature],offset:2,...(feature==='band_energy'?{band:[400,480]}:{})});
+  assert.deepEqual(result.evidence[feature],individual.evidence[feature],feature);
+ }
+ const bad=await pipeline({...args,features:['band_energy','signal_image','levels','spectral_peaks','pitch'],dsp_band_hz:[0,9000],frequency_range_hz:[0,9000]},ctx);
+ assert.equal(calls.length,2);assert.deepEqual(calls[1],['band_energy','signal_image']);assert.equal(bad.execution.cache_hits,3);assert.equal(bad.status,'partial');assert.equal(bad.evidence.band_energy.error.code,'INVALID_BAND');assert.equal(bad.evidence.signal_image.error.code,'INVALID_FREQUENCY_RANGE');assert.deepEqual(bad.available_features,['levels','spectral_peaks','pitch']);assert.equal(bad.png,undefined);
+});

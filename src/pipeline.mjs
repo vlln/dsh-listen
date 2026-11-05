@@ -17,35 +17,54 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
   const request=normalizeRequest(args,onlyFeature);
   if(!context||typeof context.owner!=='string'||!context.owner||!(context.signal instanceof AbortSignal))throw Error('INVALID_CALLER');
   const checkCancel=()=>{if(context.signal.aborted)throw Error('CANCELLED');};checkCancel();
+  const propagateCancel=error=>{checkCancel();if(error?.message==='CANCELLED')throw error;};
   // Authorization always precedes cache access, and identity comes from decoded snapshot.
   const source=await authorize(request.source,context);
   let audio;
   try{checkCancel();audio=await decode(source.file,{...source,from:request.from,to:request.to===null?undefined:request.to,signal:context.signal});checkCancel();}finally{if(source.dispose)await source.dispose();}
-  const evidence={},missing=[];let hits=0,computed=0,png;
+  const evidence={},pending=[],results=new Map();let hits=0,computed=0,png;
+  const failed=error=>({status:'failed',reason:'extraction_failed',error:extractionFailure(error)});
+  const accept=(feature,key,result)=>{
+   checkCancel();
+   if(!result||result.status!=='ready'){
+    const error=Error(typeof result?.error==='string'?result.error:result?.error?.code??'INVALID_EXTRACTOR_RESULT');
+    propagateCancel(error);results.set(feature,failed(error));return;
+   }
+   if(feature==='signal_image'&&typeof result.png_base64!=='string'){results.set(feature,failed(Error('INVALID_EXTRACTOR_RESULT')));return;}
+   computed++;cache.set(key,result);results.set(feature,result);
+  };
   for(const feature of request.features){
    checkCancel();
-   const provider=NUMERIC_FEATURES.includes(feature)?{version:analyzeVersion+'-selective-v1'}:extractors[feature];
-   if(!provider){evidence[feature]={status:'unavailable',reason:'not_configured'};missing.push(feature);continue;}
-   try{if(provider.validate)await provider.validate();checkCancel();}catch(error){checkCancel();evidence[feature]={status:'unavailable',reason:'provider_changed'};missing.push(feature);continue;}
+   const numeric=NUMERIC_FEATURES.includes(feature),provider=numeric?{version:analyzeVersion+'-selective-v1'}:extractors[feature];
+   if(!provider){results.set(feature,{status:'unavailable',reason:'not_configured'});continue;}
+   try{if(provider.validate)await provider.validate();checkCancel();}catch(error){propagateCancel(error);results.set(feature,{status:'unavailable',reason:'provider_changed'});continue;}
    const parameters=feature==='signal_image'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:feature==='band_energy'?{band:request.dsp_band_hz}:{};
    const key=evidenceKey({owner:context.owner,sourceHash:audio.source.sha256,range:[audio.coverage.from,audio.coverage.to],component:feature,version:provider.version,parameters});
-   let result=cache.get(key);
-   if(result){hits++;}else{
-    try{
-     if(NUMERIC_FEATURES.includes(feature)){
-       const value=await analyze(audio.channels,audio.sampleRate,{signal:context.signal,offset:audio.coverage.from,kind:'features',features:[feature],...(feature==='signal_image'?{detail:request.spectral_detail,...(request.frequency_range_hz?{frequencyRange:request.frequency_range_hz}:{}),channelView:request.channel_view}:{}),...(feature==='band_energy'?{band:request.dsp_band_hz}:{})});
-       result=value.evidence?.[feature];
-       if(feature==='signal_image'&&result&&value.png)result={...result,png_base64:value.png.toString('base64')};
-      }else result=await provider.extract(audio,{signal:context.signal});
-      checkCancel();
-     if(!result||result.status!=='ready')throw Error('INVALID_EXTRACTOR_RESULT');
-     computed++;cache.set(key,result);
-    }catch(error){checkCancel();evidence[feature]={status:'failed',reason:'extraction_failed',error:extractionFailure(error)};missing.push(feature);continue;}
-   }
-   if(feature==='signal_image'){png=Buffer.from(result.png_base64,'base64');const {png_base64,...visible}=result;evidence[feature]=visible;}else evidence[feature]=result;
+   const cached=cache.get(key);
+   if(cached?.status==='ready'){hits++;results.set(feature,cached);continue;}
+   if(numeric){pending.push({feature,key});continue;}
+   try{accept(feature,key,await provider.extract(audio,{signal:context.signal}));}
+   catch(error){propagateCancel(error);results.set(feature,failed(error));}
+  }
+  if(pending.length){
+   checkCancel();
+   const features=pending.map(item=>item.feature);
+   try{
+    const value=await analyze(audio.channels,audio.sampleRate,{signal:context.signal,offset:audio.coverage.from,kind:'features',features,...(features.includes('signal_image')?{detail:request.spectral_detail,...(request.frequency_range_hz?{frequencyRange:request.frequency_range_hz}:{}),channelView:request.channel_view}:{}),...(features.includes('band_energy')?{band:request.dsp_band_hz}:{})});
+    checkCancel();
+    for(const {feature,key} of pending){
+     let result=value?.evidence?.[feature];
+     if(feature==='signal_image'&&result?.status==='ready'&&value.png)result={...result,png_base64:value.png.toString('base64')};
+     accept(feature,key,result);
+    }
+   }catch(error){propagateCancel(error);for(const {feature} of pending)results.set(feature,failed(error));}
   }
   checkCancel();
-  const available=request.features.filter(f=>!missing.includes(f));
+  for(const feature of request.features){
+   const result=results.get(feature);
+   if(feature==='signal_image'&&result.status==='ready'){png=Buffer.from(result.png_base64,'base64');const {png_base64,...visible}=result;evidence[feature]=visible;}else evidence[feature]=result;
+  }
+  const available=request.features.filter(f=>evidence[f].status==='ready'),missing=request.features.filter(f=>evidence[f].status!=='ready');
   return {analysis_id:randomUUID(),recipe_version:'v1',status:available.length===request.features.length?'complete':available.length?'partial':'failed',source:audio.source,coverage:audio.coverage,requested_features:request.features,available_features:available,missing_features:missing,evidence,execution:{cache_hits:hits,components_computed:computed},png};
  };
 }

@@ -22,6 +22,13 @@ export function selectiveAnalysis(channels,sampleRate,options={}){
  if(!Number.isFinite(offset)||offset<0)throw Error('INVALID_OFFSET');
  const coverage={from:offset,to:offset+channels[0].length/sampleRate};
  const ready=(method,data)=>({status:'ready',method,...data});
+ const fail=(keys,error)=>{
+  if(error?.message==='CANCELLED')throw error;
+  const code=['INVALID_BAND','INVALID_FREQUENCY_RANGE','EMPTY_FREQUENCY_RANGE','AGGREGATE_SAMPLE_LIMIT'].includes(error?.message)?error.message:'EXTRACTION_FAILED';
+  for(const key of keys)evidence[key]={status:'failed',error:code};
+ };
+ const statisticsFeatures=features.filter(f=>f==='energy'||f==='levels');
+ try{
  const statistics=features.some(f=>f==='energy'||f==='levels')?describeSignal(channels,sampleRate,{offset}):null;
  if(wanted.has('levels'))evidence.levels=ready('signal-levels-v1',{
   coverage,units:{amplitude:'full-scale linear',level:'dBFS',fraction:'0..1'},
@@ -33,8 +40,14 @@ export function selectiveAnalysis(channels,sampleRate,options={}){
   parameters:{...statistics.parameters,sample_rate_hz:sampleRate,quantiles:'linear interpolation; each display bin has equal weight',low_energy_comparison:'rms squared < 1e-6 with absolute power difference > 1e-18',max_low_energy_intervals:100},
   bins:statistics.energy,...energySummary(statistics.energy)
  });
- const spectralFeatures=features.filter(f=>SPECTRAL.includes(f));
- if(spectralFeatures.length){
+ }catch(error){fail(statisticsFeatures,error);}
+ let spectralFeatures=features.filter(f=>SPECTRAL.includes(f));
+ // Reject only the band product before the shared FFT pass; never rerun it.
+ const band=options.band??null;
+ if(wanted.has('band_energy')&&band!==null&&(!Array.isArray(band)||band.length!==2||!band.every(Number.isFinite)||band[0]<0||band[0]>=band[1]||band[1]>sampleRate/2)){
+  fail(['band_energy'],Error('INVALID_BAND'));spectralFeatures=spectralFeatures.filter(f=>f!=='band_energy');
+ }
+ if(spectralFeatures.length){try{
   const result=spectrumEvidence(channels,sampleRate,{offset,band:options.band??null,features:spectralFeatures});
   for(const feature of spectralFeatures){
    const own=feature==='spectral_peaks'?['peak_min_separation_bins','peak_floor_db','peak_interpolation','peak_reference']:feature==='chroma'?['chroma_range_hz','chroma_mapping']:[];
@@ -42,8 +55,9 @@ export function selectiveAnalysis(channels,sampleRate,options={}){
    evidence[feature]=ready(result.method,{coverage:result.coverage,units:feature==='spectral_peaks'?{frequency:'Hz',power:'dB relative to maximum non-DC bin'}:feature==='band_energy'?{frequency:'Hz',power_fraction:'0..1'}:{values:'normalized pitch-class power'},parameters:pick(result.parameters,[...FFT_PARAMETERS,...own]),...data});
   }
  }
+ catch(error){fail(spectralFeatures,error);}}
  const temporalFeatures=features.filter(f=>TEMPORAL.includes(f));
- if(temporalFeatures.length){
+ if(temporalFeatures.length){try{
   const result=temporalEvidence(channels,sampleRate,{offset,features:temporalFeatures});
   for(const feature of temporalFeatures){
    const pitch=feature==='pitch'||feature==='pitch_frames';
@@ -53,11 +67,13 @@ export function selectiveAnalysis(channels,sampleRate,options={}){
    evidence[feature]=ready(feature==='pitch'?'pitch-summary-v1':result.method,{coverage:pitch?result.coverage:coverage,units:pitch?{frequency:'Hz',time:'absolute source seconds',span:'semitones',periodicity:'0..1 autocorrelation'}:feature==='onsets'?{time:'absolute source seconds',strength:'relative power change'}:{tempo:'BPM',score:'0..1 autocorrelation'},parameters,...data});
   }
  }
+ catch(error){fail(temporalFeatures,error);}}
  let png;
- if(wanted.has('signal_image')){
+ if(wanted.has('signal_image')){try{
   const plot=preparePlot(channels,sampleRate,{...options,includeEnergy:false});
   const image=renderPlot(plot);png=image.png;
   evidence.signal_image=ready('signal-image-v1',{coverage:plot.coverage,parameters:plot.parameters,frequency_hz:plot.frequency_hz,image:pick(image.metadata,['method','width','height','channels','source_from','source_to','frequency_min_hz','frequency_max_hz','reference_power','digital_zero'])});
  }
+ catch(error){fail(['signal_image'],error);}}
  return {status:'ready',evidence,...(png?{png}:{})};
 }

@@ -11,4 +11,42 @@ test('provider mutation validation precedes cache lookup and blocks stale eviden
 test('known extraction failures expose safe code and recovery but never arbitrary messages',async()=>{const f=fixture();for(const [message,code] of [['TIMEOUT','TIMEOUT'],['ASR_OVER_RANGE','ASR_OVER_RANGE'],['AGGREGATE_SAMPLE_LIMIT','AGGREGATE_SAMPLE_LIMIT'],['PROCESS_EXIT_1 secret provider body','EXTRACTION_FAILED']]){const p=createPipeline({authorize:async()=>({file:'x'}),decode:async()=>({sampleRate:8000,channels:[new Float32Array(80)],coverage:{from:0,to:.01},source:{sha256:'x'}}),extractors:{events:{version:'1',extract:async()=>{throw Error(message);}}}});const r=await p({source_path:'x',features:['events']},f.context);assert.equal(r.evidence.events.error.code,code);assert.equal(typeof r.evidence.events.error.recovery,'string');assert.doesNotMatch(JSON.stringify(r),/secret provider body/);}});
 test('missing trusted caller identity fails closed',async()=>{const f=fixture();await assert.rejects(f.pipeline({source_path:'a',features:['energy']},{}),/INVALID_CALLER/);assert.throws(()=>createPipeline({}),/INVALID_PIPELINE/);});
 
-test('numeric injected analyzer is selective and caches overlap per feature without leaking image or evidence',async()=>{const f=fixture();const a=await f.pipeline({source_path:'a',features:['energy','pitch']},f.context);assert.equal(a.status,'complete');assert.deepEqual(Object.keys(a.evidence),['energy','pitch']);assert.equal(a.png,undefined);assert.equal(f.calls.analyze,2);const b=await f.pipeline({source_path:'a',features:['pitch','levels']},f.context);assert.deepEqual(Object.keys(b.evidence),['pitch','levels']);assert.equal(b.execution.cache_hits,1);assert.equal(f.calls.analyze,3);assert.equal(b.png,undefined);const c=await f.pipeline({source_path:'a',features:['signal_image','energy'],spectral_detail:'tonal'},f.context);assert.equal(c.execution.cache_hits,1);assert.equal(f.calls.analyze,4);assert.ok(c.png);assert.deepEqual(Object.keys(c.evidence),['signal_image','energy']);assert.equal(c.requested_parameters,undefined);assert.deepEqual(c.coverage,{from:0,to:.1});assert.equal(c.source.sha256,'abc');});
+test('numeric injected analyzer is selective and caches overlap per feature without leaking image or evidence',async()=>{const f=fixture();const a=await f.pipeline({source_path:'a',features:['energy','pitch']},f.context);assert.equal(a.status,'complete');assert.deepEqual(Object.keys(a.evidence),['energy','pitch']);assert.equal(a.png,undefined);assert.equal(f.calls.analyze,1);assert.equal(a.execution.components_computed,2);const b=await f.pipeline({source_path:'a',features:['pitch','levels']},f.context);assert.deepEqual(Object.keys(b.evidence),['pitch','levels']);assert.equal(b.execution.cache_hits,1);assert.equal(f.calls.analyze,2);assert.equal(b.png,undefined);const c=await f.pipeline({source_path:'a',features:['signal_image','energy'],spectral_detail:'tonal'},f.context);assert.equal(c.execution.cache_hits,1);assert.equal(f.calls.analyze,3);assert.ok(c.png);assert.deepEqual(Object.keys(c.evidence),['signal_image','energy']);assert.equal(c.requested_parameters,undefined);assert.deepEqual(c.coverage,{from:0,to:.1});assert.equal(c.source.sha256,'abc');});
+
+
+test('numeric batching computes exactly misses and caches only ready per-feature evidence',async()=>{
+ const calls=[],context={owner:'one',signal:new AbortController().signal};
+ const pipeline=createPipeline({authorize:async()=>({file:'x'}),decode:async()=>({sampleRate:8000,channels:[new Float32Array(80)],coverage:{from:0,to:.01},source:{sha256:'x'}}),analyze:async(c,s,o)=>{
+  calls.push(o);return {evidence:Object.fromEntries(o.features.map(feature=>[feature,feature==='band_energy'?{status:'failed',error:'INVALID_BAND'}:{status:'ready',value:feature}]))};
+ }});
+ const args={source_path:'x',features:['spectral_peaks','band_energy','pitch'],dsp_band_hz:[0,9000]};
+ const first=await pipeline(args,context);
+ assert.equal(calls.length,1);assert.deepEqual(calls[0].features,args.features);assert.equal(first.status,'partial');assert.equal(first.execution.components_computed,2);assert.equal(first.evidence.band_energy.error.code,'INVALID_BAND');
+ const second=await pipeline(args,context);
+ assert.equal(calls.length,2);assert.deepEqual(calls[1].features,['band_energy']);assert.equal(second.execution.cache_hits,2);assert.equal(second.execution.components_computed,0);
+ await pipeline({source_path:'x',features:['pitch','levels']},context);
+ assert.deepEqual(calls[2].features,['levels']);assert.ok(!('band' in calls[2]));assert.ok(!('detail' in calls[2]));
+ await pipeline({source_path:'x',features:['pitch','levels']},{...context,owner:'two'});
+ assert.deepEqual(calls[3].features,['pitch','levels']);
+});
+
+test('catastrophic numeric batch failure is not rerun and never caches failed products',async()=>{
+ let calls=0;const context={owner:'one',signal:new AbortController().signal};
+ const pipeline=createPipeline({authorize:async()=>({file:'x'}),decode:async()=>({sampleRate:8000,channels:[new Float32Array(80)],coverage:{from:0,to:.01},source:{sha256:'x'}}),analyze:async()=>{calls++;throw Error('private failure details');},extractors:{events:{version:'one',extract:async()=>({status:'ready',events:[]})}}});
+ const args={source_path:'x',features:['energy','pitch','events']};
+ const first=await pipeline(args,context);assert.equal(calls,1);assert.deepEqual(first.available_features,['events']);assert.equal(first.execution.components_computed,1);assert.doesNotMatch(JSON.stringify(first),/private failure/);
+ const second=await pipeline(args,context);assert.equal(calls,2);assert.equal(second.execution.cache_hits,1);assert.equal(second.evidence.pitch.error.code,'EXTRACTION_FAILED');
+});
+
+test('cancelled numeric batches propagate and cannot populate cache',async()=>{
+ for(const abortSignal of [false,true]){
+  let calls=0;const controller=new AbortController(),cache=new EvidenceCache();
+  const pipeline=createPipeline({cache,authorize:async()=>({file:'x'}),decode:async()=>({sampleRate:8000,channels:[new Float32Array(80)],coverage:{from:0,to:.01},source:{sha256:'x'}}),analyze:async(c,s,o)=>{
+   calls++;if(calls===1){if(abortSignal)controller.abort();else throw Error('CANCELLED');}
+   return {evidence:Object.fromEntries(o.features.map(feature=>[feature,{status:'ready'}]))};
+  }});
+  const args={source_path:'x',features:['energy','pitch']};
+  await assert.rejects(pipeline(args,{owner:'one',signal:controller.signal}),/CANCELLED/);
+  const ready=await pipeline(args,{owner:'one',signal:new AbortController().signal});assert.equal(calls,2);assert.equal(ready.execution.cache_hits,0);assert.equal(ready.execution.components_computed,2);
+ }
+});

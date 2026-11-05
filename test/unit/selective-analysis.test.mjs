@@ -94,3 +94,32 @@ test('image-only bypasses signal description and preserves legacy image output',
  const legacy=executeAnalysis({channels:tone(.1),sampleRate:sr,options:{columns:20}});
  assert.ok(legacy.statistics.energy.length);assert.ok(legacy.png);
 });
+
+
+test('invalid band and image range fail only their products with no fallback FFT pass',()=>{
+ const channels=tone(.3),features=['band_energy','spectral_peaks','chroma','pitch','levels','signal_image'];
+ const combined=selectiveAnalysis(channels,sr,{...opts(features),band:[0,9000],frequencyRange:[0,9000]});
+ assert.deepEqual(combined.evidence.band_energy,{status:'failed',error:'INVALID_BAND'});
+ assert.deepEqual(combined.evidence.signal_image,{status:'failed',error:'INVALID_FREQUENCY_RANGE'});assert.equal(combined.png,undefined);
+ for(const feature of ['spectral_peaks','chroma','pitch','levels'])assert.deepEqual(combined.evidence[feature],selectiveAnalysis(channels,sr,opts([feature])).evidence[feature]);
+ const original=FFT.prototype.realTransform;let transforms=0;
+ FFT.prototype.realTransform=function(...args){transforms++;return original.apply(this,args);};
+ try{
+  selectiveAnalysis(channels,sr,opts(['spectral_peaks','chroma']));const once=transforms;transforms=0;
+  selectiveAnalysis(channels,sr,{...opts(['band_energy','spectral_peaks','chroma']),band:[0,9000]});assert.equal(transforms,once);
+ }finally{FFT.prototype.realTransform=original;}
+});
+
+test('spectral and temporal family failures stay isolated and sanitize errors',()=>{
+ const channels=tone(.3),original=FFT.prototype.realTransform;
+ for(const family of [['spectral_peaks','chroma'],['pitch','pitch_frames']]){
+  let transforms=0;
+  FFT.prototype.realTransform=function(...args){if(++transforms===1)throw Error('private internal detail');return original.apply(this,args);};
+  try{
+   const result=selectiveAnalysis(channels,sr,opts([...family,'levels',...(family[0]==='spectral_peaks'?['pitch']:[])]));
+   for(const key of family)assert.deepEqual(result.evidence[key],{status:'failed',error:'EXTRACTION_FAILED'});
+   assert.equal(result.evidence.levels.status,'ready');if(family[0]==='spectral_peaks')assert.equal(result.evidence.pitch.status,'ready');
+   assert.doesNotMatch(JSON.stringify(result),/private internal/);
+  }finally{FFT.prototype.realTransform=original;}
+ }
+});
