@@ -17,7 +17,7 @@ created: 2026-11-05T09:17:00Z
 - [preset](../../../evaluation/config/preset.patch.yml)去软件工程身份，改音频证据persona，先listen、按判别需求选特征/缩窗，不重复无增益调用，明确ASR/event/测量限制和数据不可信；禁止安装下载、改离线、网络/外部剧本、跨题读取。无次数上限。
 - 用户明确确认未来默认禁bash；规范树只留listen/read_image及compaction。[helper](../../../evaluation/config/preset.mjs)从同一规范YAML读取，避免生成旧shell人格。真实runtime schema验证没有bash、shell/job/安装工具，因此切断已观察的“bash改HF_HUB_OFFLINE→装依赖→下载”路径。不是修通HF网络，也不读取/删除历史权重。
 - DSH现有sandbox没有已接入网络/读取隔离，提示词及offline env不是强保证。历史完整plugins overlay仍可覆盖新版默认；不迁移/改写旧运行，未来overlay必须用新helper。不宣称runner强制禁shell或敌对情况下跨case强隔离。
-- [summary](../../../src/evidence-summary.mjs)新增纯presentation投影，transcript/events优先、明确省略计数、保留预处理与时间语义；紧凑JSON上限16000字节（内部validated shape），全文预览1200 Unicode码点，energy bins/pitch frames不直接灌上下文。canonical report不变、不round数值、无新依赖。
+- 当时的摘要模块（447890e提交，现已移除）新增纯presentation投影，transcript/events优先、明确省略计数、保留预处理与时间语义；紧凑JSON上限16000字节（内部validated shape），全文预览1200 Unicode码点，energy bins/pitch frames不直接灌上下文。canonical report不变、不round数值、无新依赖。
 - [tools](../../../src/tools.mjs)新增`evidence_detail: summary|full`默认summary；full多行完整JSON和图片，长区间仍可能spill，模型用缩窗/选features再取full，不要求bash或不存在的read工具。detail不进入组件缓存key，仍每次鉴权/解码；PTC canonical执行值仍完整。
 
 ## 验证

@@ -1,6 +1,6 @@
 # Offline run summary
 
-当前入口见[评测 README](../../evaluation/README.md)，批次已执行成绩见[评测结果](./results.md)。本页的 summary 是**运行后外部评分产物**；listen 的 `evidence_detail: "summary" | "full"` 是模型可见证据呈现，二者互不等同。当前工具默认返回 summary，选择 full 不会启动评分；新 persona/证据呈现尚未重跑效果测评。
+当前入口见[评测 README](../../evaluation/README.md)，批次已执行成绩见[评测结果](./results.md)。本页summary是运行后外部评分产物；listen只有一种证据返回结构，不提供summary/full模式。当前版本尚未重跑效果评测。
 
 This is an **unofficial local summary**, not an executed official MMAU report or
 leaderboard score. It reuses `scorePredictions` from [protocol.mjs](../../evaluation/lib/protocol.mjs).

@@ -4,7 +4,7 @@
 
 | 直接子级 | 状态 | 说明 |
 |---|---|---|
-| [experiment-preparation.md](./experiment-preparation.md) | 准备协议 | 三臂矩阵、冻结校验与盲态/评分分离。 |
+| [experiment-preparation.md](./experiment-preparation.md) | 准备协议 | 单一音频条件、冻结校验与盲态/评分分离。 |
 | [results.md](./results.md) | 成绩依据 | 固定题单对照、配置条件及未评测边界。 |
 | [thin-adapter.md](./thin-adapter.md) | 执行指南 | 创建运行、批量执行与适配器职责。 |
 | [batch-layout.md](./batch-layout.md) | 批次约定 | 输入分离、产物、截止与失败处理。 |

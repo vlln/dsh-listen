@@ -13,7 +13,7 @@
 | BL-0007 | done | 零新依赖DSP与测量摘要 | [0022](../plans/0022-dsp-evidence/README.md)、[0023](../plans/0023-model-free-measurements/README.md) |
 | BL-0008 | done | 禁bash对照、persona/HF路径/summary引导修复 | [0024](../plans/0024-evidence-guidance/README.md) |
 | BL-0009 | candidate | 有效同模型无音频baseline及受控增益验收 | [验收基线](./acceptance.md)；需逐批授权 |
-| BL-0010 | candidate | 修复后persona/summary的主模型效果验证 | 未执行，不挪用旧版50/60 |
+| BL-0010 | candidate | 极简persona/统一工具返回的主模型效果验证 | 未执行，不挪用旧版50/60 |
 | BL-0011 | candidate | 强读取/网络隔离、资源/进程/GUI/许可门槛 | [工程矩阵](./engineering-acceptance-status.md) |
 | BL-0012 | deferred | ASR派生语速/对齐和模型质量评分 | 不下载新模型；不把现有稀疏F0称自然度/语速 |
 

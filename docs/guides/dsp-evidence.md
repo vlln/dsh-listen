@@ -16,7 +16,7 @@
 
 ## 无新模型测量摘要
 
-`evidence.dsp.measurements`随显式`dsp`返回，不增加工具或默认组件，不隐式调用ASR。模型默认看到有界summary（摘要可能只展示部分低能量区间等，遗漏有计数），完整帧/区间可用`evidence_detail:"full"`并缩短from/to、选择dsp取回；canonical执行值与组件缓存不裁剪。DSP方法/缓存版本为`dsp-v2`；原频谱/时域算法版本不变。
+`evidence.dsp.measurements`随显式`dsp`返回，不增加工具或默认组件，不隐式调用ASR。统一呈现本次请求计算出的数据，不另作摘要裁剪；用from/to和features控制范围。DSP方法/缓存版本为`dsp-v2`。
 
 - `energy.rms_quantiles`和`dynamic_range_db`：既有100ms展示bin的RMS分位数，以及20log10(p90/p10)。零分母返回null与原因；不是LUFS或标准响度动态范围。
 - `energy.low_energy`：bin RMS低于0.001（-60dBFS）的源时间区间、完整区间数/总时长/占比。最多返回100段，截断有显式标记，不合并中间非低能量部分。它不是VAD、语音停顿或静音语义标签。

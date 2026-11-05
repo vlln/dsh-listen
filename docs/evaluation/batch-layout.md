@@ -55,4 +55,4 @@ runtime、results和scoring都在case cwd外。此布局仅实现数据分离，
 
 ## 准备状态
 
-[run-batch.mjs](../../evaluation/cli/run-batch.mjs)已实现600000ms截止、独立输入引用和结果留档；[run-preview.mjs](../../evaluation/legacy/run-preview.mjs)仅历史预检，不作为新批次入口。native preset已替代拦截式装配；旧run/overlay不得直接作为新默认复跑。listen默认summary、可选full仅控制模型证据呈现，与离线scoring/summary无关；persona/summary改动尚未评测，不沿用历史成绩。本次文档整理不发模型请求、不安装或更新运行实例。
+[run-batch.mjs](../../evaluation/cli/run-batch.mjs)已实现600000ms截止、独立输入引用和结果留档；[run-preview.mjs](../../evaluation/legacy/run-preview.mjs)仅历史预检，不作为新批次入口。native preset已替代拦截式装配；旧run/overlay不得直接作为新默认复跑。listen只有统一证据返回结构，与离线scoring/summary无关；当前版本尚未评测，不沿用历史成绩。本次文档整理不发模型请求、不安装或更新运行实例。

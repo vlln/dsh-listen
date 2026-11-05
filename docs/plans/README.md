@@ -40,4 +40,6 @@
 
 | [0028 实验准备](./0028-experiment-preparation/README.md) | done / complete | 三臂冻结批次、本地fixture与离线配对分析 |
 
+| [0029 单一工具输出](./0029-single-output/README.md) | done / complete | 删除summary/full及关联实验条件 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

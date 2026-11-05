@@ -11,4 +11,4 @@
 | [fixtures](fixtures/README.md) | 无付费模型的本地传输验证 |
 | [legacy](legacy/README.md) | 历史preview、准备器与预算兼容，不是默认入口 |
 
-默认无shell，listen支持summary/full；每题600000ms总截止，不设模型/音频调用次数上限。旧完整plugins overlay仍可覆盖新默认，新run须核对实际装配；无shell不是宿主网络/跨case读取强隔离。历史run与.work不改写、不自动复跑。
+默认无shell，listen统一返回请求范围内证据；每题600000ms总截止，不设模型/音频调用次数上限。旧完整plugins overlay仍可覆盖新默认，新run须核对实际装配；无shell不是宿主网络/跨case读取强隔离。历史run与.work不改写、不自动复跑。
