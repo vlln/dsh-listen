@@ -1,8 +1,9 @@
 import {Worker} from 'node:worker_threads';
 import {validatePcm} from './signal.mjs';
 export async function analyzeSignal(channels,sampleRate,options={}){
- const allowed=new Set(['signal','timeoutMs','offset','columns','detail','frequencyRange','channelView']);
+ const allowed=new Set(['signal','timeoutMs','offset','columns','detail','frequencyRange','channelView','kind','band']);
  for(const key of Object.keys(options))if(!allowed.has(key))throw Error('UNKNOWN_ANALYSIS_PARAMETER');
+ if(options.kind!==undefined&&!['signal','dsp'].includes(options.kind))throw Error('INVALID_ANALYSIS_KIND');
  const {signal,timeoutMs=20000,...plotOptions}=options;
  if(signal!==undefined&&!(signal instanceof AbortSignal))throw Error('INVALID_ABORT_SIGNAL');
  if(signal?.aborted)throw Error('CANCELLED');
@@ -20,7 +21,7 @@ export async function analyzeSignal(channels,sampleRate,options={}){
   worker.on('error',error=>{reason??=error.message;});
   worker.on('exit',code=>{
    clearTimeout(timer);signal?.removeEventListener('abort',abort);
-   if(reason)reject(Error(reason));else if(result?.error)reject(Error(result.error));else if(code!==0||!result)reject(Error('ANALYSIS_WORKER_FAILED'));else resolve({...result,png:Buffer.from(result.png)});
+   if(reason)reject(Error(reason));else if(result?.error)reject(Error(result.error));else if(code!==0||!result)reject(Error('ANALYSIS_WORKER_FAILED'));else resolve(result.png?{...result,png:Buffer.from(result.png)}:result);
   });
   if(signal?.aborted)abort();
  });
