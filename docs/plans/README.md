@@ -46,4 +46,6 @@
 
 | [0031 无损精简](./0031-lossless-evidence/README.md) | done / complete | 元数据去重、体积测量与共享数值计算 |
 
+| [0032 当前版本真实评测](./0032-audio-evaluation/README.md) | pending | 三域预检与固定六十题单条件基线 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。
