@@ -23,7 +23,7 @@ export function createPipeline({authorize,decode=decodeAudio,analyze=analyzeSign
   const evidence={},missing=[];let hits=0,computed=0,png;
   for(const feature of request.features){
    checkCancel();
-   const provider=feature==='signal'?{version:analyzeVersion}:feature==='dsp'?{version:'dsp-v1'}:extractors[feature];
+   const provider=feature==='signal'?{version:analyzeVersion}:feature==='dsp'?{version:'dsp-v2'}:extractors[feature];
    if(!provider){evidence[feature]={status:'unavailable',reason:'not_configured'};missing.push(feature);continue;}
    try{if(provider.validate)await provider.validate();checkCancel();}catch(error){checkCancel();evidence[feature]={status:'unavailable',reason:'provider_changed'};missing.push(feature);continue;}
    const parameters=feature==='signal'?{detail:request.spectral_detail,frequencyRange:request.frequency_range_hz,channelView:request.channel_view}:feature==='dsp'?{band:request.dsp_band_hz??null}:{};
