@@ -47,7 +47,7 @@ runtime、results和scoring都在case cwd外。此布局仅实现数据分离，
 
 - 10题开发参考与固定60题是历史选题条件，不是本页授权的新任务；历史成绩/条件见[评测结果](./results.md)。真实调用须另有批次授权，不能从剩余历史预算推导，也不把已暴露题目继续称作未见封存集。
 - 每题一个独立DSH headless进程/会话，使用当前原生audio-evaluation preset（证据persona、compaction、read_image和listen，无通用shell），无评测工具拦截、无音频调用次数上限。不限制模型请求次数，不再加载历史40/240次预算；请求数仅从会话事件观测统计。用户批准的后续语义替代历史3次限制，旧批次不重写。
-- `session_timeout_ms=600000`。从启动本题headless进程前开始，用单调时钟计时；包含模型请求、提取、工具执行及模型等待，不因进度/重试重置。依赖安装和批次准备在会话计时外单独记录。
+- 新run `session_timeout_ms=300000`；0032及更早历史run记录为600000，按原值重放、不改写。从启动本题headless进程前开始，用单调时钟计时；包含模型请求、提取、工具执行及模型等待，不因进度/重试重置。依赖安装和批次准备在会话计时外单独记录。
 - 到期立即取消整个会话并发TERM，标记timeout；只允许有界终止宽限后KILL本题受管进程，宽限不再接受结果或追加推理。取消/回收失败则停止批次，避免失控后台任务；后代进程回收需先有实际测试，不能把只杀父进程当保证。
 - 到期后出现final也不算成功；已发生请求的可测统计保留，预测写空串，计入预定分母。单题普通失败/timeout可继续下一题；认证/服务端配额错误或清理失败停止批次，剩余题记not_run并留在分母。
 - result.json显式记录id/status/model_output以及可测的duration_ms/model_requests/tool_calls/usage；缺测字段省略或null，不填0。usage区分input_tokens/output_tokens/cache_read_tokens。manifest统一使用samples数组，run元数据引用共享数据版本。
@@ -55,4 +55,4 @@ runtime、results和scoring都在case cwd外。此布局仅实现数据分离，
 
 ## 准备状态
 
-[run-batch.mjs](../../evaluation/cli/run-batch.mjs)已实现600000ms截止、独立输入引用和结果留档；[run-preview.mjs](../../evaluation/legacy/run-preview.mjs)仅历史预检，不作为新批次入口。native preset已替代拦截式装配；旧run/overlay不得直接作为新默认复跑。listen只有统一证据返回结构，与离线scoring/summary无关；当前版本尚未评测，不沿用历史成绩。本次文档整理不发模型请求、不安装或更新运行实例。
+[run-batch.mjs](../../evaluation/cli/run-batch.mjs)按run记录显式传递截止（新run 300000ms）、独立输入引用和结果留档；[run-preview.mjs](../../evaluation/legacy/run-preview.mjs)仅历史预检，不作为新批次入口。native preset已替代拦截式装配；旧run/overlay不得直接作为新默认复跑。listen只有统一证据返回结构，与离线scoring/summary无关；当前版本尚未评测，不沿用历史成绩。本次文档整理不发模型请求、不安装或更新运行实例。

@@ -10,7 +10,7 @@
 
 1. 模型路由和必要凭据服务引用，不读取或复制密钥。
 2. 若替换preset-audio-evaluation，id必须保持audio-evaluation，plugins必须是由evaluationPlugins(baseUrl, listenConfig)生成的完整显式YAML列表，或复制规范patch的完整列表，只配置audio-listen子行。不要在plugins数组嵌入动态!!js表达式。listenConfig显式给scratch、localExecution和已批准的本地提取器；不得自动开启外部处理或下载模型。
-3. 不配置请求次数预算，不加载预算patch或请求拦截，不加max_audio_calls。历史request-budget/restrict-headless入口仅无操作兼容。模型请求和音频调用不设次数上限；每题600000ms总截止保持不变。
+3. 不配置请求次数预算，不加载预算patch或请求拦截，不加max_audio_calls。历史request-budget/restrict-headless入口仅无操作兼容。模型请求和音频调用不设次数上限；新run每题300000ms总截止；历史run保留其记录值。
 4. 不恢复persistent-shell、宿主工具或旧audio-evaluation-restriction。旧runtime overlays可能含完整旧plugins列表并覆盖新默认，不能作为新批次配置直接复用。
 
 历史run与.work overlays不迁移、不改写、不自动复跑；旧轨迹只能解释其实际装配，不能视为新默认的证据。

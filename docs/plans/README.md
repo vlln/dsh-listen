@@ -48,4 +48,6 @@
 
 | [0032 当前版本真实评测](./0032-audio-evaluation/README.md) | done / complete | 三域预检、49/60单条件基线与成本诊断 |
 
+| [0033 参数改名与截止](./0033-path-image-deadline/README.md) | done / complete | path参数、图像无用计算移除、新run 300000ms截止 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

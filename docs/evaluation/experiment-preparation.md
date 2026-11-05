@@ -8,7 +8,7 @@
 |---|---|---|---|
 | audio | 有 | listen / read_image | 统一完整请求证据，过滤免责声明并紧凑表示数字 |
 
-共同条件：persona仅`You are an Agent`，deepseek-official/deepseek-flash，固定60题（每域20），并发10，每会话600000ms总截止，无请求次数上限。工具不再提供`evidence_detail`，配置没有`defaultEvidenceDetail`；不再有summary/full两种呈现。请求signal时，统一输出保留energy数组等完整证据，不用摘要替代。
+共同条件：persona仅`You are an Agent`，deepseek-official/deepseek-flash，固定60题（每域20），并发10，每会话300000ms总截止（0032为600000ms，不可直接混比），无请求次数上限。工具不再提供`evidence_detail`，配置没有`defaultEvidenceDetail`；不再有summary/full两种呈现。请求signal时，统一输出保留energy数组等完整证据，不用摘要替代。
 
 用户已取消no-audio对照及旧三臂矩阵。历史已准备矩阵视为取消，不得执行、改名、重标条件或改写其`.work`产物；必须使用新输出目录重新prepare唯一audio条件。本文及准备命令都不自动授权或启动执行。题目/选项原文、顺序与回答协议不改；新的极简persona和统一输出不能归功于历史50/60。
 

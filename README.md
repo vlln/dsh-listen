@@ -44,7 +44,7 @@ DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-l
 
 ## 使用方式
 让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view（仅适用于signal_image）。工具不接受question/prompt，语义判断留在主Agent。
-示例：`listen({source_path:"recording.wav",features:["transcript"],from:0,to:10})`只取转写；`features:["tempo","onsets"]`只取节奏；`features:["band_energy"],dsp_band_hz:[400,600]`只取指定频带能量比例。旧signal/dsp捆绑特征不再接受，不提供默认大礼包。方法见[DSP证据](./docs/guides/dsp-evidence.md)。
+示例：`listen({path:"recording.wav",features:["transcript"],from:0,to:10})`只取转写；`features:["tempo","onsets"]`只取节奏；`features:["band_energy"],dsp_band_hz:[400,600]`只取指定频带能量比例。旧signal/dsp捆绑特征不再接受，不提供默认大礼包。方法见[DSP证据](./docs/guides/dsp-evidence.md)。
 
 | features值 | 返回 |
 |---|---|
