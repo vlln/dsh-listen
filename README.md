@@ -45,6 +45,7 @@ DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-l
 ## 使用方式
 让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view。工具不接受question/prompt，语义判断留在主Agent。
 示例：`listen({source_path:"recording.wav",features:["signal"],from:0,to:10})`；随后可缩到1–2秒、改transient，不必自己转码/裁文件。数值特征用`features:["dsp"]`，可加`dsp_band_hz:[400,600]`计算频带功率比例；默认特征不变，方法与局限见[DSP证据](docs/dsp-evidence.md)。
+默认`evidence_detail:"summary"`优先呈现有界转写/事件/数值摘要，明确`fields_omitted`；不是全量帧数据。需要细节时对同一来源选择相关features、缩短from/to并用`evidence_detail:"full"`，得到多行完整结果；长区间仍可能触发宿主输出spill，继续缩窗/减组件，不要求bash解析。底层canonical执行值和缓存仍完整，presentation选择不分裂组件缓存，但每次调用仍重新鉴权和解码。
 支持1–8声道，信号分析保留原采样率和各声道；ASR/事件分支显式混为单声道，可能发生相位抵消。实际区间总标量样本限23040000，多声道高采样率时需缩短区间。
 from/to均可不填，分别默认开头/结尾；都不填分析整个音频。超过源时长的边界截至结尾，返回source.duration_seconds为完整时长、coverage为实际分析区间；截取后空区间拒绝，实际分析仍限60秒。结果包含覆盖、有效参数、方法/单位、限制和图像附件。`complete`仅针对本次请求项；不会证明所有声音均识别。候选标签/ASR都可能错误，静音或无转写不是“无人声”。
 
