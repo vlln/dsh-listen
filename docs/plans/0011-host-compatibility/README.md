@@ -2,7 +2,7 @@
 
 分支：`fix/0011-host-compatibility`。用户批准删除额外cwd读取边界、支持短附件ID，MMAU保留原题呈现并由适配器批量运行。基于未合并的安装修复分支，不推送、不发布、不重启人工体验实例。
 
-- [实施记录](01-host-compatibility.md)：兼容范围及评测协议。
-- [验证报告](02-report.md)：complete，宿主读取、短ID和系统专项实证及限制。
+- [实施记录](./01-host-compatibility.md)：兼容范围及评测协议。
+- [验证报告](./02-report.md)：complete，宿主读取、短ID和系统专项实证及限制。
 
 上述分支/体验实例描述属于执行时点；当前状态见[文档导航](../../README.md)。返回[容器索引](../README.md)。

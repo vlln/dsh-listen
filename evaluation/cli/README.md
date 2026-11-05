@@ -1,0 +1,12 @@
+# 日常CLI
+
+从项目根执行，不以本目录为cwd。参数、授权与产物规范见[操作指南](../../docs/evaluation/thin-adapter.md)。
+
+| 文件 | 用途 |
+|---|---|
+| [create-run.mjs](create-run.mjs) | 引用既有manifest/home/overlay创建独立run，不安装或推理 |
+| [run-batch.mjs](run-batch.mjs) | 校验输入后按固定worker pool执行，每题600000ms截止 |
+| [summarize-run.mjs](summarize-run.mjs) | 仅读结果及外部keys，导出本地汇总与官方评分输入 |
+| [audit-run-tools.mjs](audit-run-tools.mjs) | 离线工具错误与投影截断审计 |
+
+create-run不自动合并模型patch，也不冻结overlay/包/dirty状态；旧run不覆盖不续跑。官方Python scorer另行调用，不能将本地匹配输出标为官方执行。

@@ -1,7 +1,7 @@
 # 贡献与实验规范
 
 ## 工作边界
-用户已授权按Goal实施验证，以[验收基线](docs/acceptance.md)为准。正式基建与产品代码在独立分支；spike不合并，不把原型通过当产品验收。
+用户已授权按Goal实施验证，以[验收基线](./docs/project/acceptance.md)为准。正式基建与产品代码在独立分支；spike不合并，不把原型通过当产品验收。
 
 ## 分支与提交
 - main：初始化锚点及未来正式发布；develop：文档/实现集成。
@@ -24,7 +24,7 @@
 
 ## 测试与评估基础设施
 - Node22内置node:test/assert；`npm run gate`运行静态/依赖检查及test/infra负控，不替代业务验证。
-- `npm run gate:feature`运行check与单元/开发集成覆盖门禁；`npm run test:unit`为定向入口。真实DSH/可选本地extractor验证需已有运行时路径，配置及实际命令见[0024验证报告](docs/plans/0024-evidence-guidance/02-report.md)；未配置造成skip不能冒称实跑。
+- `npm run gate:feature`运行check与单元/开发集成覆盖门禁；`npm run test:unit`为定向入口。真实DSH/可选本地extractor验证需已有运行时路径，配置及实际命令见[0024验证报告](./docs/plans/0024-evidence-guidance/02-report.md)；未配置造成skip不能冒称实跑。
 - `npm ci --ignore-scripts --no-audit --no-fund`复现依赖，不运行install脚本。
 - CI声明Linux/macOS Node22；没有推送/远程运行证据前不称CI已绿。
 - 各层测试不重复计数；正式全链路/安装/DSH隔离验证在SYSTEM_TEST，付费benchmark不进CI。

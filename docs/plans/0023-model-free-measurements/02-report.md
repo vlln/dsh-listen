@@ -8,9 +8,9 @@ created: 2026-11-05T07:55:00Z
 
 ## 结果
 
-完成[计划](01-plan.md)。[摘要实现](../../../src/dsp-measurements.mjs)复用现有signal统计和temporal候选，新增energy/diagnostics/pitch摘要，接入显式dsp，缓存/结果版本dsp-v2。默认组件和split工具数量不变，无新依赖、模型下载、外发或部署。ASR派生统计延期。
+完成[计划](./01-plan.md)。[摘要实现](../../../src/dsp-measurements.mjs)复用现有signal统计和temporal候选，新增energy/diagnostics/pitch摘要，接入显式dsp，缓存/结果版本dsp-v2。默认组件和split工具数量不变，无新依赖、模型下载、外发或部署。ASR派生统计延期。
 
-signal与dsp仍独立worker/cache，同时请求会重复计算统计；这是有意保持组件隔离的权衡，不声称零开销。首候选偏好最短强周期，不保证真实F0；100ms能量bin不是VAD/停顿，方法见[说明](../../dsp-evidence.md)。
+signal与dsp仍独立worker/cache，同时请求会重复计算统计；这是有意保持组件隔离的权衡，不声称零开销。首候选偏好最短强周期，不保证真实F0；100ms能量bin不是VAD/停顿，方法见[说明](../../guides/dsp-evidence.md)。
 
 ## 测试证据
 

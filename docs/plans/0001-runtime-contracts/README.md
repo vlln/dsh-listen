@@ -2,6 +2,6 @@
 
 历史准备记录，正文中的状态和未执行项属于报告形成时点；项目阶段与授权见[文档导航](../../README.md)，权威状态以被引文档frontmatter及人类确认记录为准。
 
-- [收敛报告](09-report-consolidation.md)：complete，契约审查、覆盖输出核验与正式基建准备。
+- [收敛报告](./09-report-consolidation.md)：complete，契约审查、覆盖输出核验与正式基建准备。
 
 本目录仅发现该报告，不补造此前执行单元或Plan。返回[容器索引](../README.md)。

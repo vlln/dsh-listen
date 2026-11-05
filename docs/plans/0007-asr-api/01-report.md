@@ -20,7 +20,7 @@ TDD实现makeAsrProvider：配置endpoint/model/授权（部署非工具参数�
 configureExtractors/Config接Plugin→Pipeline，默认disabled无key/权重；启用错误endpoint/未授权外发/要求key却无resolver构造时拒绝。loopback真实multipart经Pipeline映射source offset并cache一次，提取器设置4项通过。完整SDK gate121/121 PASS，extractors line/branch100%，包21426字节。凭据resolver只能由部署注入，当前官方entry尚无已验证的凭据服务绑定：requiresKey启用会fail-closed，不能宣称BYOK用户路径完整。
 
 # 本地模式与实际模型
-prepareExtractors异步选择api/local，Config新增asrMode/asrPython/asrModelDirectory，无默认下载或绝对路径。配置测试2项PASS，静态/包预算通过（22715字节、673215闭包）。用户已有MLX权重路径真实Node provider转写1/1 PASS，详见[本地记录](02-local-verification.md)。独立review进行中，尚不宣称完整feature gate通过。
+prepareExtractors异步选择api/local，Config新增asrMode/asrPython/asrModelDirectory，无默认下载或绝对路径。配置测试2项PASS，静态/包预算通过（22715字节、673215闭包）。用户已有MLX权重路径真实Node provider转写1/1 PASS，详见[本地记录](./02-local-verification.md)。独立review进行中，尚不宣称完整feature gate通过。
 
 # 最终feature门禁
 实际已授权本地环境+真实SDK gate129/129 PASS，ASR/local-ASR line100%、branch86.11%/86.67%，pipeline96.43%；包22868字节。provider变更校验发生在缓存查找前，回归确认旧结果不返回。可合并本feature，默认不安装Python/MLX/权重，真实本地ASR已有受控样例证据；不宣称音乐/环境或benchmark效果已过。

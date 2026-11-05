@@ -9,8 +9,8 @@ created: 2026-11-05T09:36:00Z
 ## 完成范围
 
 - 根AGENTS/CONTRIBUTING/README/CHANGELOG去除尚无代码/单元测试/无MMAU成绩等失实现状，规则与实现入口分工明确。
-- 重建[docs导航](../../README.md)、[续接](../../continuation.md)、[工程矩阵](../../engineering-acceptance-status.md)、[待办](../../backlog.md)。不保存动态Goal/进程状态，不promote设计或宣称发布。
-- 新建[成绩摘要](../../evaluation-results.md)：保留45/41/50及禁bash配对，明确同一46题41/39、新persona/summary未评测及历史外援越界，不仅引用忽略目录日志。
+- 重建[docs导航](../../README.md)、[续接](../../project/continuation.md)、[工程矩阵](../../project/engineering-acceptance-status.md)、[待办](../../project/backlog.md)。不保存动态Goal/进程状态，不promote设计或宣称发布。
+- 新建[成绩摘要](../../evaluation/results.md)：保留45/41/50及禁bash配对，明确同一46题41/39、新persona/summary未评测及历史外援越界，不仅引用忽略目录日志。
 - [执行索引](../README.md)按实际目录补0001–0025，0010缺号不虚构；7个已有目录缺README已补，0001早期单元/0009无Plan按实际记，不造证据。
 - 设计/ADR/接口/AC及旧实验加历史语境/实现指针，保持frontmatter、冻结语义、原成绩不变。
 - [evaluation入口](../../../evaluation/README.md)及相关文档区分当前无shell规范、summary/full、600000ms、无限制请求，与历史preview/预算shim/旧准备器。核对实际CLI，不把create-run规划快照/命名当实现事实。

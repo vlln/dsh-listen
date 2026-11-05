@@ -8,7 +8,7 @@ created: 2026-11-04T10:10:00Z
 
 ## 实现
 
-[汇总脚本](../../../evaluation/summarize-run.mjs)读取显式run目录和共享外部keys，不读音频、不调模型、不访问网络。统计MMAU总体micro、领域、难度、sub-category正确率；输出correct/total和fraction，同时留存逐题正确性。完成覆盖、失败/超时/未运行/缺结果分开；耗时median/p95、请求、工具name/status和token都有缺测计数，不把null填成0，不把cache token重复加总。
+[汇总脚本](../../../evaluation/cli/summarize-run.mjs)读取显式run目录和共享外部keys，不读音频、不调模型、不访问网络。统计MMAU总体micro、领域、难度、sub-category正确率；输出correct/total和fraction，同时留存逐题正确性。完成覆盖、失败/超时/未运行/缺结果分开；耗时median/p95、请求、工具name/status和token都有缺测计数，不把null填成0，不把cache token重复加总。
 
 输出scoring/summary.json、summary.md、predictions.json、official-input.json，独占创建scoring以拒绝覆盖，失败保留原始证据。带答案的official-input只外部评分使用。本地匹配标记official=false、official_scorer_executed=false，不冒称官方CLI已执行；固定版本官方函数有限合成对照不等于全数据兼容性证明。
 

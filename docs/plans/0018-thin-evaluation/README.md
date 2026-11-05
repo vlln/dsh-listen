@@ -1,6 +1,6 @@
 # 精简评测适配器
 
-> 历史重构记录：下面请求上限/计费patch及bash可见面属于本次验证，非当前默认；后续变更见[0020](../0020-remove-request-limits/README.md)和[0024](../0024-evidence-guidance/README.md)。当前使用见[薄适配器](../../../evaluation/thin-adapter.md)，项目状态见[文档导航](../../README.md)。
+> 历史重构记录：下面请求上限/计费patch及bash可见面属于本次验证，非当前默认；后续变更见[0020](../0020-remove-request-limits/README.md)和[0024](../0024-evidence-guidance/README.md)。当前使用见[薄适配器](../../evaluation/thin-adapter.md)，项目状态见[文档导航](../../README.md)。
 
 用户批准回归DSH+preset作为执行核心。分支refactor/0018-thin-evaluation；只重构/离线验证，不运行新模型、不变旧产物或3187。
 
@@ -18,4 +18,4 @@
 - create-run/预算8/8通过：引用home不安装、不复制媒体、独立run目录、40/240及321等显式上限正确，非法数字拒绝。
 - 实际安装版DSH+preset+通用预算patch本地确定性transport2/2：模型可见bash/listen/read_image、4次listen成功，5次模型请求计入传入的预算文件；无外部供应商请求。
 
-只保留必要截止、计费保护、输入完整性和结果留档。未新增队列/自动重试/工具策略或另一套隔离框架。旧批次不改写，正式效果验收状态不变。使用说明见[薄适配器](../../../evaluation/thin-adapter.md)。
+只保留必要截止、计费保护、输入完整性和结果留档。未新增队列/自动重试/工具策略或另一套隔离框架。旧批次不改写，正式效果验收状态不变。使用说明见[薄适配器](../../evaluation/thin-adapter.md)。

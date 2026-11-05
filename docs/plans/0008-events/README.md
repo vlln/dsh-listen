@@ -2,10 +2,10 @@
 
 本容器保留从候选准入到真实分类器的证据链；早期“未下载/未验证”只描述其当时阶段，不覆盖后续报告。项目状态及授权见[文档导航](../../README.md)。
 
-- [计划](01-plan.md)：固定词表事件证据与可选运行时。
-- [开发报告](01-report.md)：complete，证据格式、候选元数据和feature收尾。
-- [运行时准入](02-runtime-admission.md)：运行时与制品边界。
-- [隔离探测](03-isolated-probe.md)：可选模型环境验证。
-- [真实分类器](04-real-classifier.md)：真实推理与预处理证据。
+- [计划](./01-plan.md)：固定词表事件证据与可选运行时。
+- [开发报告](./01-report.md)：complete，证据格式、候选元数据和feature收尾。
+- [运行时准入](./02-runtime-admission.md)：运行时与制品边界。
+- [隔离探测](./03-isolated-probe.md)：可选模型环境验证。
+- [真实分类器](./04-real-classifier.md)：真实推理与预处理证据。
 
 返回[容器索引](../README.md)。

@@ -1,6 +1,6 @@
 # 范围反馈修复与后续模型切换
 
-> 历史诊断记录：本次严格越界拒绝随后被用户修订的[0015结尾截取](../0015-clamp-audio-range/README.md)替代；不追溯改写本次测试。当前边界见[执行契约](../../interface/0002-executable-v1.md)，项目状态见[文档导航](../../README.md)。
+> 历史诊断记录：本次严格越界拒绝随后被用户修订的[0015结尾截取](../0015-clamp-audio-range/README.md)替代；不追溯改写本次测试。当前边界见[执行契约](../../design/interface/0002-executable-v1.md)，项目状态见[文档导航](../../README.md)。
 
 分支 `fix/0014-range-feedback`，用户要求先修复两次INVALID_RANGE，后续用deepseek-flash。本轮不运行新评测、不修改旧批次或3187实例。
 
@@ -16,4 +16,4 @@
 
 ## 模型
 
-后续模型选择固定[model.patch.yml](../../../evaluation/model.patch.yml)内置deepseek-official/deepseek-flash；prepare-reference-batch默认元数据同步。不改历史gpt-6.1-sol运行/overlay，不将跨主模型分差归因于工具。不读取凭据，不测试真实flash请求；首次新批次需核验路由认证，不静默回退。
+后续模型选择固定[model.patch.yml](../../../evaluation/config/model.patch.yml)内置deepseek-official/deepseek-flash；prepare-reference-batch默认元数据同步。不改历史gpt-6.1-sol运行/overlay，不将跨主模型分差归因于工具。不读取凭据，不测试真实flash请求；首次新批次需核验路由认证，不静默回退。

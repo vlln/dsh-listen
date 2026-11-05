@@ -8,7 +8,7 @@ created: 2026-11-05T06:39:00Z
 
 ## 结论
 
-[计划](01-plan.md)范围已实现，零新增运行时依赖。listen显式dsp、split audio_dsp和dsp_band_hz已接入；默认行为不变。详见[DSP证据](../../dsp-evidence.md)。仅完成开发离线验证，不是全平台/部署/效果验收。
+[计划](./01-plan.md)范围已实现，零新增运行时依赖。listen显式dsp、split audio_dsp和dsp_band_hz已接入；默认行为不变。详见[DSP证据](../../guides/dsp-evidence.md)。仅完成开发离线验证，不是全平台/部署/效果验收。
 
 ## 验证证据
 
