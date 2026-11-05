@@ -1,4 +1,4 @@
-// Build from the installed runtime's actual minimal definition, not an allowlist.
+// Keep the installed minimal reference separate from the shell-free evaluation contract.
 import fs from 'node:fs';
 import path from 'node:path';
 import {createRequire} from 'node:module';
@@ -13,5 +13,12 @@ export function minimalPlugins(baseUrl){
  return row.config.plugins;
 }
 export function evaluationPlugins(baseUrl,config={},entry='dsh-listen'){
- return [...minimalPlugins(baseUrl),{id:'audio-listen',name:entry,config}];
+ // Canonical evaluation snapshot: overlays must not restore minimal's shell/persona.
+ const require=createRequire(process.env.DSH_RUNTIME_ROOT?path.join(process.env.DSH_RUNTIME_ROOT,'package.json'):fs.realpathSync(process.argv[1]));
+ const yaml=require('js-yaml');
+ const text=fs.readFileSync(new URL('./preset.patch.yml',import.meta.url),'utf8').replace("!!js dshHomePath('data', 'dsh-listen-evaluation')",'evaluation-scratch');
+ const patch=yaml.load(text);
+ const plugins=patch.flatMap(operation=>operation.insert??[]).find(row=>row.config?.id==='audio-evaluation')?.config?.plugins;
+ if(!Array.isArray(plugins)||plugins.at(-1)?.id!=='audio-listen')throw Error('INVALID_EVALUATION_PRESET');
+ return [...plugins.slice(0,-1),{id:'audio-listen',name:entry,config}];
 }
