@@ -44,4 +44,6 @@
 
 | [0030 按需特征](./0030-selective-features/README.md) | done / complete | 细粒度必填features、选择性计算和工具描述 |
 
+| [0031 无损精简](./0031-lossless-evidence/README.md) | done / complete | 元数据去重、体积测量与共享数值计算 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

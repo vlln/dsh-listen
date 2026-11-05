@@ -10,5 +10,6 @@
 | [audit-run-tools.mjs](audit-run-tools.mjs) | 离线工具错误与投影截断审计 |
 | [prepare-experiment.mjs](prepare-experiment.mjs) | 单一音频条件及配置/工作区冻结，不执行模型 |
 | [analyze-experiment.mjs](analyze-experiment.mjs) | 盲态轨迹与评分后配对分析，分离输入 |
+| [measure-evidence.mjs](measure-evidence.mjs) | 本地合成PCM证据字节分解，不调用模型或估算token |
 
 create-run不自动合并模型patch，也不冻结overlay/包/dirty状态；旧run不覆盖不续跑。官方Python scorer另行调用，不能将本地匹配输出标为官方执行。
