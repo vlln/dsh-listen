@@ -50,4 +50,6 @@
 
 | [0033 参数改名与截止](./0033-path-image-deadline/README.md) | done / complete | path参数、图像无用计算移除、新run 300000ms截止 |
 
+| [0034 mel提速与真实评测](./0034-image-desc-mel-eval/README.md) | done / complete | 显示字段说明、无损mel提速、300s下三次48/60、path说明实验 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。
