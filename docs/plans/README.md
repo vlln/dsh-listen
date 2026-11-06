@@ -52,4 +52,6 @@
 
 | [0034 mel提速与真实评测](./0034-image-desc-mel-eval/README.md) | done / complete | 显示字段说明、无损mel提速、300s下三次48/60、path说明实验 |
 
+| [0035 项目收敛](./0035-project-closure/README.md) | done / complete | HEAD全门禁复测、四批成绩汇总、证据索引与分支处置 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

@@ -61,3 +61,4 @@ created: 2026-11-05T18:00:00Z
 - 300 s截止下成绩稳定在48/60，耗时约为0032的三分之一。
 - 未改schema结构（exactly-one source仍由运行时校验），未做附件感知read_image（三批均无read_image调用），未改音乐长探索。音乐超时题（8ee655ce、40dd3406）在多批次中反复超时，若要进一步提升需要单独研究探索策略，但这会涉及工具外的行为，需用户决定。
 - 证据保存在 `.work/evaluation/experiments/0034/`、`0035/`（compare.json、official-report.txt、formal-blind/、replicate-blind/）。
+- 收官门禁复测、四批成绩汇总与分支处置见[0035收敛记录](../0035-project-closure/README.md)。
