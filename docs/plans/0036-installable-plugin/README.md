@@ -68,6 +68,7 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
 
 ## 未做
 
+- 版本后续升到 `0.1.1`（README 加榜单图，`files` 增加 `docs/evaluation/mmau-leaderboard.svg`，tarball 48,823 字节）。
 - 未发布 npm、未推到 GitHub（因此 README 的安装命令只能是“本仓库打包 + tarball”；git 源一行安装要等推送且获批）。
 - 未在 Desktop 上安装验证；Linux/Windows 未测。
 - `mode: split`（四个拆分工具）未做安装冒烟，只有单元/系统测试覆盖。

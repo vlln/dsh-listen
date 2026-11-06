@@ -6,6 +6,12 @@
 
 开发预览：已有实现、本地门禁与固定子集评测，未公开发布，完整验收未闭环（见 [工程状态](./docs/project/engineering-acceptance-status.md)）。
 
+## 在 MMAU 上的位置
+
+![MMAU test-mini 平均正确率对比](./docs/evaluation/mmau-leaderboard.svg)
+
+官方 `MMAU-test-mini` 1000 题全量，`deepseek-flash` 做推理、`dsh-listen` 提供证据，官方 Python scorer 给出 **74.60%（746/1000）**。在这张参照表里仅次于人类上界——但**不是同名次比较**：高亮行是 `MMAU-v05.15.25` 修订版数据 + 工具形态，其余是论文版本数据 + 音频模型端到端。细节与失败分析见[实测结果](#实测结果mmau)。
+
 ## 30 秒安装
 
 仓库尚未发布到 npm / GitHub，安装用本仓库打出的 tarball。前置：Node 22+、`dsh` 0.2.1-rc.5 左右、本机已有 `ffmpeg`/`ffprobe`。
