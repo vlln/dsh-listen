@@ -6,7 +6,7 @@
 
 - 已有正式插件：信号/图像、原采样率多声道解码、Pipeline/缓存、DSH适配、可选ASR/events、显式数值DSP及测量摘要。
 - 增量证据以[执行索引](../plans/README.md)为入口；0021修ASR时间戳容错，0022–0023加无模型数值证据，0024修persona/默认无shell和summary/full。
-- 0024代码`447890e`、文档`8a792df`为整理前锚点；此后增量链为`perf/0031-lossless-evidence`→`spike/0032-audio-evaluation`→`perf/0033-path-image-deadline`→`perf/0034-image-desc-mel-eval`（含0035收敛文档）→`feat/0036-installable-plugin`；用户批准后已 fast-forward 合入`develop`（`cfcad99`，0.1.2可安装bundle）。`main`仍是初始化锚点，仓库没有remote、未推送。运行`git status`/`git log`核实，不直接merge到main，不将spike一并带入。
+- 0024代码`447890e`、文档`8a792df`为整理前锚点；此后增量链为`perf/0031-lossless-evidence`→`spike/0032-audio-evaluation`→`perf/0033-path-image-deadline`→`perf/0034-image-desc-mel-eval`（含0035收敛文档）→`feat/0036-installable-plugin`；用户批准后 fast-forward 合入`develop`，随后 `main` 同步到同一提交并推送。2026-11-06 迁移到`Projects/DshPlugins/dsh-listen`，公开仓库 `github.com/vlln/dsh-listen`（默认分支`main`）；用户安装走 `dsh plugin --profile web add github:vlln/dsh-listen`。运行`git status`/`git log`核实，不直接merge到main，不将spike一并带入。
 
 ## 已证实与未证实
 

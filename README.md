@@ -7,13 +7,12 @@
 ## 安装
 
 ```sh
-npm pack
-dsh plugin --profile web add ./dsh-listen-0.1.2.tgz
+dsh plugin --profile web add github:vlln/dsh-listen
 ```
 
-卸载：`dsh plugin --profile web remove dsh-listen`。
+要钉版本就加提交号，例如 `github:vlln/dsh-listen#4961c02`。装完重启 `dsh web`；Plugins 页里同样填这个地址。
 
-GUI 的 Plugins 页要装已发布的包源；本地 tarball 走 CLI。
+前置：Node 22+、`dsh` 0.2.1-rc.5、本机有 `ffmpeg`/`ffprobe`。卸载：`dsh plugin --profile web remove dsh-listen`。
 
 ## 成绩（MMAU）
 
@@ -113,7 +112,7 @@ flowchart LR
 ## 插件管理
 
 ```sh
-dsh plugin --profile web add ./dsh-listen-0.1.5.tgz    # 装或升级
+dsh plugin --profile web add github:vlln/dsh-listen    # 装或升级
 dsh plugin --profile web remove dsh-listen             # 卸载
 dsh --profile web --dump-config | grep -A6 dsh-listen  # 看生效配置
 ```
