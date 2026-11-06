@@ -83,10 +83,10 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
 
 | 语言 | title | description |
 |---|---|---|
-| en | Listen to Sound | Help agents understand sound: the listen tool covers transcript, spectrogram, levels, spectrum, pitch and tempo. |
-| zh | 听声音 | 让 Agent 听懂声音：listen 工具帮助 Agent 转写、声谱图、电平、频谱、音高和节奏理解声音。 |
+| en | Listen to Sound | Help agents understand sound: listen provides transcript, spectrogram, levels, spectrum, pitch and tempo. |
+| zh | 听声音 | 让 Agent 听懂声音：listen 提供转写、声谱图、电平、频谱、音高和节奏。 |
 
-复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.4 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
+复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.5 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
 
 ## 未做
 

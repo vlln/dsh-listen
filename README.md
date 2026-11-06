@@ -13,6 +13,8 @@ dsh plugin --profile web add ./dsh-listen-0.1.2.tgz
 
 卸载：`dsh plugin --profile web remove dsh-listen`。
 
+GUI 的 Plugins 页要装已发布的包源；本地 tarball 走 CLI。
+
 ## 成绩（MMAU）
 
 ![MMAU test-mini 平均正确率](./docs/evaluation/mmau-leaderboard.svg)
@@ -83,9 +85,44 @@ flowchart LR
 
 参数语义见[设计基线](./docs/design/README.md)，各特征边界见 [DSP 证据](./docs/guides/dsp-evidence.md)。
 
+## 配置
+
+| 设置 | 默认 | 说明 |
+|---|---|---|
+| `scratch` | `$DSH_HOME/data/dsh-listen/scratch` | 解码与中间文件目录 |
+| `mode` | `aggregate` | `aggregate` 只给 `listen`；`split` 给四个拆分工具 |
+| `localExecution` | `true` | 宿主文件系统解析出的是本进程可读路径；沙箱或远程文件系统设 `false` |
+| `asrEnabled` / `asrMode` | `false` / `api` | 可选转写：本地 MLX 或 OpenAI 兼容端点 |
+| `eventsEnabled` | `false` | 可选声音标签：本地 LiteRT / YAMNet |
+| `allowExternalAudio` | `false` | 允许外发音频 |
+
+## 限制
+
+- 单次区间最多 60 秒；多声道高采样率时更短（总标量样本 23,040,000 上限）。
+- 支持 1–8 声道；ASR 与事件分支混成单声道。
+- 支持的格式取决于本机 ffmpeg。
+- 不回答语义问题，不做音频生成、播放或编辑。
+
+## 安全与数据
+
+- 音频在本地解码；除配置 ASR API 并打开 `allowExternalAudio`，不外发。
+- 证据进入主 Agent 上下文；主 Agent 用云模型时，证据也发到模型服务。
+- 不读凭据本体；key 由宿主凭据服务或环境变量提供。
+- 中间文件写入 `scratch`，调用结束清理。
+
+## 插件管理
+
+```sh
+dsh plugin --profile web add ./dsh-listen-0.1.5.tgz    # 装或升级
+dsh plugin --profile web remove dsh-listen             # 卸载
+dsh --profile web --dump-config | grep -A6 dsh-listen  # 看生效配置
+```
+
+包声明了 `dsh.bundle.patch`，`add` 会自动加进 profile 的 bundle 列表，不用手写 insert。旧版手工 insert 过的要先删掉。
+
 ## 兼容性
 
-实测 `dsh` 0.2.1-rc.5 + Node 22 + macOS arm64。
+实测 `dsh` 0.2.1-rc.5 + Node 22 + macOS arm64（2026-11-06）。声明范围 `engines.dsh: ^0.2.1-rc.5`。dsh Desktop、Linux、Windows 和 0.2.0 及更早版本未测。
 
 ## 开发
 
