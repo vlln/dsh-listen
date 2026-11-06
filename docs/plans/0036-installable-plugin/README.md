@@ -52,7 +52,7 @@ dsh-listen (dsh-listen): Error: cannot get property "fs" without inject
 
 ## 图标（机械验证 + 视觉）
 
-- 机械：通过运行时自己的 `readPluginMeta("dsh-listen", profileURL)` 解析安装后的包，得到 `title: {en:"Audio evidence", zh:"音频证据"}`、描述、`data:image/svg+xml;base64` 图标；解码后与仓库 `icon.svg` 逐字节一致；374 字节，在 256 KiB 内，`files` 与 `exports` 都包含。
+- 机械：通过运行时自己的 `readPluginMeta("dsh-listen", profileURL)` 解析安装后的包，得到标题与描述（当时为 `Audio evidence` / `音频证据`，0.1.3 起改为 `Listen to Audio` / `听音频`）、描述、`data:image/svg+xml;base64` 图标；解码后与仓库 `icon.svg` 逐字节一致；374 字节，在 256 KiB 内，`files` 与 `exports` 都包含。
 - 视觉：把该 SVG 渲染成位图查看，图形是 5 根圆头竖条、蓝→青渐变的波形，36×36 透明画布、主体在 8..28，与官方图标的极简风格一致，无裁切或过细笔画。
 - **Plugins 页面里的实际展示仍待用户看一眼**（见下），我不把“解析成功”写成“页面视觉通过”。
 
@@ -60,7 +60,7 @@ dsh-listen (dsh-listen): Error: cannot get property "fs" without inject
 
 持久私有 home `.work/station-0036/home`（web profile 已装最终 0.1.0 产物）、工作区 `.work/station-0036/workspace`、固定端口 **3187**（不碰 3080 主 GUI）。2026-11-06 启动的 URL 为 `http://127.0.0.1:3187/?token=iaIGIXY5QPuXr1qUrT1irNEUfKS4LCdqTPIbLYGVKjc`（token 每次重启重新生成，重启后从日志取）。启动日志无 `did not activate` / `failed to import`。启动日志在 `.work/station-0036/server.log`；URL 带一次性 token，每次重启重新生成，取日志里那一行。
 
-用户手动验收点：Plugins 页出现 **Audio evidence** 且图标正确 → 新建会话让它 `listen` 一个本地音频 → 确认返回 `status: complete` 与声谱图。
+用户手动验收点：Plugins 页出现 **听音频 / Listen to Audio**（0.1.3 起；0.1.2 及更早叫 Audio evidence）且图标正确 → 新建会话让它 `listen` 一个本地音频 → 确认返回 `status: complete` 与声谱图。
 
 ## README 里的评测结论
 
@@ -76,6 +76,17 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
   - 两次真实 headless 会话（stock 装配 / 评测 preset），fixture transport 发出 `listen`：均 `completed`，返回 `status: complete` 与 `signal_image`+`levels`，无 `UNSUPPORTED_EXECUTION_WORLD`。
   - 门禁：覆盖率门禁 302 项 300 通过 0 失败 2 跳过；基础设施 15/15。
 - 隔离 web 进程（`.work/station-0036/home`，端口 3187）重装 0.1.2 后启动：`--dump-config` 显示 `dsh-listen` 行与 `localExecution: true`，宿主日志无 `did not activate` / `failed to import`，运行时 `readPluginMeta` 解析出标题、描述与图标。
+
+## 插件名与简介（0.1.3）
+
+用户指出原名太抽象。`locale/*.json` 改为：
+
+| 语言 | title | description |
+|---|---|---|
+| en | Listen to Audio | Agent tools that read audio: call listen for transcript, spectrogram, levels, spectrum, pitch and tempo. |
+| zh | 听音频 | 让 Agent 直接读音频：调用 listen 取转写、声谱图、电平、频谱、音高和节奏。 |
+
+复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.3 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
 
 ## 未做
 
