@@ -81,12 +81,6 @@ flowchart LR
   on["onsets / tempo"] --> c10["50 ms 平滑包络 → 起音新奇度<br/>起音候选 / BPM 候选"]
 ```
 
-- 不接收问题，只按参数返回测量结果。
-- `features` 必填，没有默认捆绑；没选的特征不算。
-- 单个特征失败只影响自己的键，其他照常返回。缓存按"音频 sha256 + 区间 + 参数"分键。
-- 计算保留全精度，送模型时非整数用 5 位有效数字。
-- `spectral_detail`/`frequency_range_hz`/`channel_view` 只影响出图；用在纯数值请求上直接报错，不静默忽略。
-
 参数语义见[设计基线](./docs/design/README.md)，各特征边界见 [DSP 证据](./docs/guides/dsp-evidence.md)。
 
 ## 兼容性
