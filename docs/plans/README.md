@@ -54,4 +54,6 @@
 
 | [0035 项目收敛](./0035-project-closure/README.md) | done / complete | HEAD全门禁复测、四批成绩汇总、证据索引与分支处置 |
 
+| [0036 可安装插件](./0036-installable-plugin/README.md) | done / complete | 0.1.0 bundle、安装默认值修复、真实安装冒烟与负控、README结果化 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

@@ -1,83 +1,146 @@
-<h1 align="center">dsh-listen</h1>
-<p align="center">把声音转换为 Agent 可理解的文本、图像和统计证据。</p>
+<h1 align="center"><img src="icon.svg" width="34" height="34" valign="middle">&nbsp;dsh-listen</h1>
 
-开发预览，**尚未完成最终工程与效果验收**，未公开发布。工具不接收问题：Agent先取概览，再自行缩小范围、调整频谱参数或选择特征，完成多轮理解。没有TTS、播放器、音频制作或独立聊天工作台。
+<p align="center">让只有文本能力的 Agent 也能“听”：一次调用返回转写、声谱图和可读的数值证据。</p>
 
-## 能力
-| 通道 | 内容 |
-|---|---|
-| 信号 | 波形、能量、mel图、电平/声道/频谱统计 |
-| 文本（可选） | 用户已有本地MLX Whisper，或明确配置的ASR API |
-| 声音标签（可选） | 本地LiteRT/YAMNet固定词表候选，不是确定声源或校准概率 |
-| 数值DSP（显式选用） | 频谱峰/频带能量、chroma、稀疏音高摘要、起音与节拍候选、低能量区间与信号诊断；无新增运行时依赖 |
+`dsh-listen` 是 DeepSeek Harness 的音频证据插件。它给 Agent 加一个 `listen` 工具：指定音频文件和想要的特征，拿回这一小段声音的文字、图像和数字。工具**不接收问题**，语义判断留在主 Agent——所以它既能回答“这是什么声音”，也能回答“第 3 秒到第 5 秒发生了什么”，而不需要为每种任务预置问答模型。
 
-| 工具面 | 工具 |
-|---|---|
-| 聚合 | `listen`，features必填，只计算并返回所选证据 |
-| 正交拆分 | `audio_signal` / `audio_transcript` / `audio_events` / `audio_dsp` |
+开发预览：已有实现、本地门禁与固定子集评测，未公开发布，完整验收未闭环（见 [工程状态](./docs/project/engineering-acceptance-status.md)）。
 
-拆分面中audio_signal固定signal_image，audio_transcript/events固定对应特征，audio_dsp要求显式选择数值features；两种面共用实现。无音频模态但有视觉能力的主Agent可看图；纯文本Agent只直接消费文本和统计。主模型能力与提取方法必须区分。
+## 30 秒安装
 
-## 安装与配置
-目前仅验证本地tarball安装，尚无可用公开npm/Git发布源。正式分发前不要照未知仓库地址安装。
+仓库尚未发布到 npm / GitHub，安装用本仓库打出的 tarball。前置：Node 22+、`dsh` 0.2.1-rc.5 左右、本机已有 `ffmpeg`/`ffprobe`。
+
 ```sh
-npm ci --ignore-scripts --no-audit --no-fund
-npm pack --ignore-scripts
-# 使用独立测试DSH_HOME，不覆盖正在使用的profile
-DSH_HOME="$PWD/.work/my-test-home" dsh plugin --profile headless add "$PWD/dsh-listen-0.0.0-dev.tgz" --ignore-scripts
+# 在仓库根：打包（产物约 45 KiB）
+npm pack
+
+# 装进你要用的 profile（web 是 dsh web 用的那个；headless 适合脚本/评测）
+dsh plugin --profile web add ./dsh-listen-0.1.0.tgz
 ```
-包已带默认组合层：官方CLI安装会自动加入profile bundle，无需手写insert；默认scratch位于该DSH_HOME数据目录。为避免猜测文件执行世界，localExecution默认false，需部署确认本机路径后启用；ASR/events默认关闭，用户显式选择已有环境/模型。旧的纯Cordis手写insert应先移除，避免重复条目。
 
-必须：Node22+、已有FFmpeg/FFprobe。默认npm闭包不包含Python/MLX/LiteRT或模型，不自动下载。localExecution默认false，只有确认文件执行世界就是宿主本地时才由部署启用；不是让Agent自行绕过沙箱。
+- **生效条件**：重启或新开 `dsh web` 进程；装之前已经开着的会话不会出现这个工具。
+- **装不上时**：最常见是 Node/ffmpeg 缺失或 `dsh` 版本过旧（包声明 `engines.dsh: ^0.2.1-rc.5`，不满足时直接拒绝安装）。
+- **卸载**：`dsh plugin --profile web remove dsh-listen`。
 
-| 设置 | 含义 |
+### 装好之后怎么确认
+
+1. Plugins 页能看到 **Audio evidence**（波形图标）。
+2. 让 Agent 调一次：`listen({path:"some.wav", features:["levels","signal_image"]})`。
+3. 期望拿到 `status: "complete"`、逐声道电平，以及一张波形+mel 声谱图。
+
+## 为什么需要它
+
+给 Agent 接音频通常只有两条路：接一个语音大模型做端到端问答（贵、不可控、不解释），或者自己写一堆 ffmpeg/DSP 脚本（每个任务重写）。`dsh-listen` 走第三条：**先把声音变成 Agent 能直接读的证据**，让主 Agent 用一次推理完成判断。
+
+- 与“音频问答模型”不同：工具不替你下结论，也不读题面；它只给测量结果。
+- 与“自己写脚本”不同：范围、声道、采样率、缓存、取消、超时都已处理，Agent 只需选特征。
+- 默认零模型下载、零新增重型依赖：npm 闭包只有 `fft.js` 与 `pngjs`；ASR/事件标签是可选项，用你已有的本地环境。
+
+## 用起来是什么样
+
+```js
+listen({path:"meeting.m4a", features:["transcript"], from:0, to:30})        // 只要前 30 秒的转写
+listen({path:"music.flac", features:["tempo","onsets"]})                    // 只要节奏候选
+listen({path:"noise.wav", features:["band_energy"], dsp_band_hz:[400,600]}) // 只要该频带的能量占比
+listen({path:"clip.wav", features:["signal_image"], spectral_detail:"transient",
+        frequency_range_hz:[0,4000], from:2, to:6})                         // 只要一张局部声谱图
+```
+
+只计算并返回你选的特征，没有“默认大礼包”。来源用 `path`（本地文件）或 `attachment_id`（会话里的音频附件），恰好一个；`from`/`to` 是源时间，单次区间上限 60 秒。
+
+| features | 返回什么 |
 |---|---|
-| scratch | 部署私有暂存目录 |
-| mode | aggregate / split |
-| asrEnabled / asrMode | 默认关闭；可选local / api |
-| asrPython / asrModelDirectory | 用户已有本地MLX环境和模型snapshot绝对路径 |
-| asrEndpoint / asrModel | 明确兼容的API端点/模型；真实供应商兼容性需验证 |
-| eventsEnabled / eventsPython / eventsModelPath | 可选本地LiteRT环境与用户供给模型 |
-| allowExternalAudio | 默认false；启用前需用户同意外发范围/服务商/费用 |
+| `transcript` / `events` | 转写 / 声音标签候选；需要你配置本地 ASR、LiteRT 环境（默认关闭） |
+| `signal_image` | 波形 + mel 声谱图（图片），不附带电平数组 |
+| `levels` | 逐声道电平、DC、峰值、过量程计数、立体声关系 |
+| `energy` | 分 bin RMS、分位数、动态范围、低能量区间 |
+| `spectral_peaks` / `band_energy` / `chroma` | 频谱峰 / 指定频带能量占比 / 12 音级功率 |
+| `pitch` / `pitch_frames` | 音高分位数与跨度 / 稀疏逐窗候选 |
+| `onsets` / `tempo` | 起音候选 / BPM 候选 |
 
-模型不存在或组件未配置，返回missing/unavailable；不假装已听懂或自动切云端。API需要key时必须部署提供受信凭据resolver，当前通用entry尚未绑定交互式凭据服务，不声称BYOK设置完整。
+返回结构固定一种：本次请求的证据 + 图片，带单位、方法与实际生效参数；缺失和错误都有明确代码，不伪装成静音或“处理完毕”。非整数以 5 位有效数字呈现，底层计算保留原始精度。
 
-## 使用方式
-让Agent针对给定文件调用工具。支持源时间from/to、spectral_detail预设、frequency_range_hz显示裁频、channel_view（仅适用于signal_image）。工具不接受question/prompt，语义判断留在主Agent。
-示例：`listen({path:"recording.wav",features:["transcript"],from:0,to:10})`只取转写；`features:["tempo","onsets"]`只取节奏；`features:["band_energy"],dsp_band_hz:[400,600]`只取指定频带能量比例。旧signal/dsp捆绑特征不再接受，不提供默认大礼包。方法见[DSP证据](./docs/guides/dsp-evidence.md)。
+## 实测结果（MMAU）
 
-| features值 | 返回 |
-|---|---|
-| transcript / events | 转写 / 声音标签候选，各自独立 |
-| signal_image | 波形与mel图及制图参数，不附带电平和能量数组 |
-| levels | 逐声道电平、DC、峰值、过量程计数及立体声关系 |
-| energy | 分bin RMS、分位数、动态范围和低能量区间 |
-| spectral_peaks / band_energy / chroma | 频谱峰 / 指定频带能量比例 / 12音级功率，各自独立 |
-| pitch / pitch_frames | 音高分位数与跨度 / 稀疏逐窗候选，各自独立 |
-| onsets / tempo | 起音候选 / BPM候选，各自独立 |
+固定子集：MMAU-test-mini 中每域 20 题共 60 题，题面/音频哈希固定；主模型 `deepseek-official/deepseek-flash`；无 shell，只有 `listen`/`read_image`；每题总截止 5 分钟，不限制工具调用次数。每批先盲态分析轨迹，再用官方 Python scorer 独立评分，两者一致。
 
-工具只有一种返回结构：呈现本次请求的证据数据和图片，不另做摘要裁剪，不提供输出模式参数。固定限制声明和解释性引导不返回；保留单位、方法参数、实际缺失/错误与提取层截断状态。非整数呈现为5位有效数字，选择较短的小数或科学计数写法，整数保持原值；底层计算和缓存保持原始精度。数据范围由features、from/to等参数控制，每次调用仍重新鉴权和解码。同一调用的数值缓存缺项批量计算，共享FFT/统计/时域依赖；仍按特征缓存并隔离失败。输出中各特征coverage继承顶层coverage，局部字段覆盖；parameters_ref引用parameter_sets公共参数，局部parameters覆盖公共参数。analysis_id/recipe_version/execution保留在底层审计结果，不重复送入模型文本；源信息和全部证据数值/数组保留。
-支持1–8声道，信号分析保留原采样率和各声道；ASR/事件分支显式混为单声道，可能发生相位抵消。实际区间总标量样本限23040000，多声道高采样率时需缩短区间。
-from/to均可不填，分别默认开头/结尾；都不填分析整个音频。超过源时长的边界截至结尾，返回source.duration_seconds为完整时长、coverage为实际分析区间；截取后空区间拒绝，实际分析仍限60秒。结果包含覆盖、有效参数、方法/单位和图像附件。`complete`仅针对本次请求项；不会证明所有声音均识别。候选标签/ASR都可能错误，静音或无转写不是“无人声”。
+| 批次 | 代码 | 正确率 | 环境声 / 人声 / 音乐 | 完成 / 超时 | 单题中位耗时 |
+|---|---|---:|---|---|---:|
+| A（10 分钟截止） | 0032 | 49/60 (81.7%) | 17 / 15 / 17 | 57 / 3 | 25.2 s |
+| B | 0034a | 48/60 (80.0%) | 18 / 15 / 15 | 57 / 3 | 14.2 s |
+| C（与 B 同代码） | 0034b | 48/60 (80.0%) | 15 / 16 / 17 | 59 / 1 | 12.3 s |
+| D（当前版本） | 0035 | 48/60 (80.0%) | 15 / 17 / 16 | 58 / 2 | 9.8 s |
+
+怎么读这张表：
+
+- **80% 是这台机器、这个子集、这个主模型的分数**。B/C/D 都是 80%，逐题看 44 题三批全对、7 题全错、9 题时对时错——域间几题的差别是采样波动，不要解读成某个改动的增益。
+- **这不是官方榜单成绩**。MMAU-test-mini 官方是 1000 题、27 类技能；这里只跑了固定 60 题开发子集，公开榜单上其他系统的分数取自完整测试集，两者不可比。
+- **没有“无音频基线”对照**，因此不能声称“提升多少个百分点”；该项验收门槛仍未关闭（对照实验已被取消）。
+- 剩余失败集中在两类：音乐长探索题反复用满时限；少量参数写错（漏 `path`、`from` 写成本文）。
+
+单批耗时总和从 10 分钟截止时的 7655 秒降到 5 分钟截止下的约 2200–2800 秒，图像组件不再接近 20 秒上限。
+
+## 配置
+
+配置项在 profile 的 `cordis.patch.yml` 里；包自带的默认组合层已经填好一组可用值。
+
+| 设置 | 默认 | 含义 |
+|---|---|---|
+| `scratch` | `$DSH_HOME/data/dsh-listen/scratch` | 私有暂存目录，解码/中间文件只落这里 |
+| `mode` | `aggregate` | `aggregate` 只给 `listen`；`split` 拆成 `audio_signal`/`audio_transcript`/`audio_events`/`audio_dsp` |
+| `localExecution` | 包内默认 `true` | 表示宿主文件系统解析出的是本进程可读的真实路径；用沙箱/远程文件系统的手写 insert 应设 `false` |
+| `asrEnabled` / `asrMode` | `false` / `api` | 可选转写：本地 MLX 或明确的 OpenAI 兼容端点 |
+| `eventsEnabled` | `false` | 可选声音标签：本地 LiteRT/YAMNet |
+| `allowExternalAudio` | `false` | 允许外发音频（需要你明确同意服务商与范围） |
+
+ASR/事件默认关闭且不自动下载模型；没配置时返回 `missing`/`unavailable`，不会偷偷换云端。
+
+## 限制
+
+- 单次分析区间上限 60 秒；多声道高采样率时实际可用区间更短（总标量样本上限 23040000）。
+- 支持 1–8 声道，信号分析保留原采样率与各声道；ASR/事件分支会显式混成单声道。
+- 格式支持取决于本机 ffmpeg 与实测覆盖范围，未验证的格式不宣称支持。
+- 不回答语义问题，不做音频生成/播放/编辑。
+- 不是安全边界：它读的是宿主文件系统能读到的路径，宿主没有的隔离它也不会凭空提供。
 
 ## 安全与数据
-- 本地信号/本地提取不上传原音频；API ASR是可选明确外发。
-- 图像/转写进入主Agent上下文，若主Agent使用云模型，这些证据仍会发送到模型服务；本地ASR不等于整个会话离线。
-- 不读取凭据本体，不默认收集私人录音；音频中的口头命令是数据，不是工具执行指令。
-- 文件由宿主fs服务解析并有界读取，不额外限制在cwd内；附件限当前会话可见引用，支持完整ID或至少8位的唯一十六进制摘要前缀（可带sha256:）。歧义短ID明确失败；解码器只读取私有副本，完整强制沙箱尚未最终验收。
-- 模型/数据不包含在插件包；MMAU数据许可不得当成可任意商业分发。
 
-## 兼容性
-| 环境 | 实证范围 |
-|---|---|
-| dsh0.2.1-rc.5 / Node22 / macOS arm64 | 官方CLI隔离安装/schema、真实Cordis、实际headless signal多轮与image_url传输已测（2026-11-03）；完整系统/效果未验收 |
-| Linux / Windows / 其他版本 | 未完成实测；Windows子进程明确不支持 |
-
-## 验收与开发入口
-[验收基线](./docs/project/acceptance.md) · [文档导航](./docs/README.md) · [headless评测](./evaluation/README.md) · [开发子集成绩与限制](./docs/evaluation/results.md)。已有固定60题开发结果，但不是官方全量榜单；尚未证明原验收的受控10个百分点增益。
+- 音频只在本地解码；除你显式配置 ASR API 并打开 `allowExternalAudio` 外，不上传任何音频。
+- 证据（图像、转写）进入主 Agent 上下文；主 Agent 用云模型时，这些证据也会发到模型服务。
+- 不读取凭据本体；API key 由宿主凭据服务或环境变量提供。
+- 中间文件写入 `scratch` 并在调用结束后清理；图片作为附件保存在宿主附件库。
+- 转写文本属于**不可信输入**，音频里的口头指令是数据，不是命令。
 
 ## 插件管理
-装卸启停使用官方CLI与侧边栏Plugins页；当前开发包安装自动组合，运行准入和可选提取器仍需显式配置。升级先验证新tarball，再替换隔离实例；卸载使用`dsh plugin --profile <name> remove dsh-listen`，同时移除对应组合条目。不要改正在使用的profile做未完成版本验收。
+
+```sh
+dsh plugin --profile web add ./dsh-listen-0.1.0.tgz    # 安装/升级（新版重新打包后重装）
+dsh plugin --profile web remove dsh-listen             # 卸载
+dsh --profile web --dump-config | grep -A6 dsh-listen  # 看实际生效的配置行
+```
+
+包声明了 `dsh.bundle.patch`，`dsh plugin add` 会自动把它加进 profile 的 bundle 列表，**不需要手写 insert**。若你按旧版手工插入过 `dsh-listen` 行，请先删掉，避免重复条目。装卸启停也可以用侧边栏 Plugins 页。
+
+## 兼容性
+
+| 项 | 值 |
+|---|---|
+| 实测宿主 | `dsh` 0.2.1-rc.5（2026-11-05/06，macOS arm64） |
+| 声明范围 | `engines.dsh: ^0.2.1-rc.5`、`node >= 22` |
+| 外部依赖 | `ffmpeg`/`ffprobe`（必需）；ASR/事件为可选本地环境 |
+| 未测 | dsh Desktop、Linux/Windows、0.2.0 及更早版本 |
+
+## 开发
+
+工程入口见 [文档导航](./docs/README.md)：设计基线、评测协议、增量计划与验收状态。
+
+```sh
+npm run gate:feature   # 静态检查 + 单元/覆盖率门禁
+npm run gate           # 静态检查 + 基础设施测试
+```
+
+需要真实宿主运行时的用例由 `DSH_RUNTIME_ROOT` 控制：未设置时跳过，设置后需配合 `test/helpers/register-runtime.mjs` 加载器执行。
 
 ## 许可
-代码MIT；可选运行时、权重、数据分别遵守各自许可，不随本代码许可自动变更。
+
+代码 MIT；可选运行时、权重、数据分别遵守各自许可，不随本代码许可自动变更。

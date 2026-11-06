@@ -6,7 +6,7 @@
 
 - 已有正式插件：信号/图像、原采样率多声道解码、Pipeline/缓存、DSH适配、可选ASR/events、显式数值DSP及测量摘要。
 - 增量证据以[执行索引](../plans/README.md)为入口；0021修ASR时间戳容错，0022–0023加无模型数值证据，0024修persona/默认无shell和summary/full。
-- 0024代码`447890e`、文档`8a792df`为整理前锚点；此后增量链为`perf/0031-lossless-evidence`→`spike/0032-audio-evaluation`→`perf/0033-path-image-deadline`→`perf/0034-image-desc-mel-eval`（HEAD含0035收敛文档），各分支保留、未合并`develop`。运行`git status`/`git log`核实，不直接merge到main，不将spike一并带入。
+- 0024代码`447890e`、文档`8a792df`为整理前锚点；此后增量链为`perf/0031-lossless-evidence`→`spike/0032-audio-evaluation`→`perf/0033-path-image-deadline`→`perf/0034-image-desc-mel-eval`（含0035收敛文档）→`feat/0036-installable-plugin`（0.1.0可安装bundle），各分支保留、未合并`develop`。运行`git status`/`git log`核实，不直接merge到main，不将spike一并带入。
 
 ## 已证实与未证实
 

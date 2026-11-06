@@ -6,7 +6,7 @@ export const inject=['tools','fs','workingDirectory','attachments'];
 export const Config=z.object({
  scratch:z.string().description('Private deployment scratch location; no automatic model downloads.'),
  mode:z.union(['aggregate','split']).default('aggregate'),
- localExecution:z.boolean().default(false).description('Enable only after verifying fs paths refer to host execution world.'),
+ localExecution:z.boolean().default(false).description('Deployment confirmation that resolved paths are readable in this process. The bundled patch sets true; leave false for sandboxed or remote filesystems.'),
  asrEnabled:z.boolean().default(false),
  asrMode:z.union(['api','local']).default('api'),
  asrPython:z.string().default(''),

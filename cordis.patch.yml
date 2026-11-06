@@ -1,9 +1,13 @@
+# Installed-bundle defaults. `localExecution` is the deployment confirmation that the host
+# filesystem service resolves real local paths: without it every `path` call fails with
+# UNSUPPORTED_EXECUTION_WORLD. Keep it false in a hand-written insert when the host runs a
+# sandboxed or remote filesystem and you cannot read resolved paths in this process.
 - insert:
     - id: dsh-listen
       name: dsh-listen
       config:
         scratch: !!js dshHomePath('data', 'dsh-listen', 'scratch')
         mode: aggregate
-        localExecution: false
+        localExecution: true
         asrEnabled: false
         eventsEnabled: false
