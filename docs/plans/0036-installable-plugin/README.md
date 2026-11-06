@@ -66,6 +66,17 @@ dsh-listen (dsh-listen): Error: cannot get property "fs" without inject
 
 README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/0034b/0035）的成绩、域内分布、完成/超时、单题中位耗时，并写清三条边界——这是本机本子集本模型的 80%，不是官方 1000 题榜单成绩；域间几题差异是采样波动；没有无音频基线所以不能谈增益。数据源与[评测结果](../../evaluation/results.md)一致。
 
+## 合并与独立进程复测（2026-11-06）
+
+用户批准合并后：
+
+- `develop` 从 `eb8fb78` fast-forward 到 `cfcad99`（与 `feat/0036-installable-plugin` 一致），`main` 仍是初始化锚点，未推送（无 remote）。
+- 从合并后的 develop 打包 `dsh-listen-0.1.2.tgz`（44,613 字节，SHA256 `778c8a34…`），在**独立进程**里重测：
+  - `dsh plugin --profile headless add` 退出 0；已安装 `src` 与 checkout 逐文件哈希一致；profile bundles 含 `dsh-listen`；`engines.dsh` 与 `localExecution: true` 都在。
+  - 两次真实 headless 会话（stock 装配 / 评测 preset），fixture transport 发出 `listen`：均 `completed`，返回 `status: complete` 与 `signal_image`+`levels`，无 `UNSUPPORTED_EXECUTION_WORLD`。
+  - 门禁：覆盖率门禁 302 项 300 通过 0 失败 2 跳过；基础设施 15/15。
+- 隔离 web 进程（`.work/station-0036/home`，端口 3187）重装 0.1.2 后启动：`--dump-config` 显示 `dsh-listen` 行与 `localExecution: true`，宿主日志无 `did not activate` / `failed to import`，运行时 `readPluginMeta` 解析出标题、描述与图标。
+
 ## 未做
 
 - 版本后续升到 `0.1.1`（README 加榜单图，`files` 增加 `docs/evaluation/mmau-leaderboard.svg`，tarball 48,823 字节）。
