@@ -28,7 +28,7 @@ created: 2026-11-03T13:00:00Z
 单listen只是聚合候选，非最终决定。正交特征可拆为signal/transcript/events工具，共用同一底层Pipeline。具体[粒度对照规划](../../evaluation/experiments/0002-tool-granularity-comparison.md)比较同能力同资源预算下的正确率/交互/成本；不将Agent工具数与安装包数捆绑。
 
 ## 3. Agent可见参数提案（聚合方案）
-沿用source_path/attachment_id/from/to；新增以下受限参数，不增加自由文本：
+沿用source_path/attachment_id/from/to（**来源参数2026-11-05改为`path`**，见[0033](../../plans/0033-path-image-deadline/README.md)）；新增以下受限参数，不增加自由文本：
 
 | 参数 | 默认/允许值 | 影响与边界 |
 |---|---|---|

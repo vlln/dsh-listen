@@ -3,7 +3,7 @@
 通过listen的必填features显式选择所需特征，无默认捆绑。split的audio_dsp也要求选择数值features；无新增依赖或模型下载。
 
 ```json
-{"source_path":"audio.wav","features":["spectral_peaks","band_energy"],"from":0,"to":10,"dsp_band_hz":[400,600]}
+{"path":"audio.wav","features":["spectral_peaks","band_energy"],"from":0,"to":10,"dsp_band_hz":[400,600]}
 ```
 
 ## 返回结构与用途

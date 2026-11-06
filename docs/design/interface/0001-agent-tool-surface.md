@@ -23,7 +23,7 @@ created: 2026-11-03T12:16:44Z
 ## 2. 最小入口 listen（名称暂定）
 | 参数 | 类型 | 规则 |
 |---|---|---|
-| source_path | string? | 本地文件，与attachment_id恰好一个 |
+| source_path | string? | 本地文件，与attachment_id恰好一个。**2026-11-05起实际参数名为`path`**，见[0033](../../plans/0033-path-image-deadline/README.md)；本表保留草案原文 |
 | attachment_id | string? | 当前会话有权访问的音频附件 |
 | from | number? | 原文件秒数，默认0 |
 | to | number? | 原文件秒数，默认文件末尾 |
