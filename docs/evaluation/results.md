@@ -42,6 +42,20 @@
 
 本机证据在 `.work/evaluation/experiments/0034/`、`0035/`；配置、无损证据与解释见[0034报告](../plans/0034-image-desc-mel-eval/README.md)，收官核对与分支处置见[0035收敛记录](../plans/0035-project-closure/README.md)。
 
+### 官方 MMAU-test-mini 1000 题（官方 scorer）
+
+| 运行标识 | 条件 | 总体 | sound | music | speech | 完成/超时/失败 |
+|---|---|---:|---:|---:|---:|---:|
+| 2026-11-06T06-10-07-483Z-71b80f4e | 5分钟截止、并发10、官方千题 |746/1000 (74.60%)|243/333 (72.97%)|228/334 (68.26%)|275/333 (82.58%)|981/18/1|
+
+- 官方 Python scorer 与本地匹配完全一致，无缺失预测；唯一 failed 是 provider 侧工具参数流损坏，保留在分母。
+- 排除30道开发题后 725/970（74.74%），排除全部60道曾用于开发的题后 700/940（74.47%）——对已接触题目没有明显过拟合。
+- 音频最长 34.5 秒，60 秒区间上限在本批从未生效；每题都能一次听完整段。
+- 完成率 98.1%（高于 95% 门槛）；7,047 次工具调用、70 次错误（1.0%），最多的是漏 `path`（36 次）。
+- 能力极值：`Temporal Reasoning` 19/56、`Emotion Flip Detection` 9/20、`Melodic Structure Interpretation` 16/33 最弱；`Key highlight Extraction` 21/21、`Multi Speaker Role Mapping` 27/27 最强。
+- 这是官方测试集全量自跑，不是榜单提交；榜单是对音频大模型的端到端评测，系统形态不同。论文时代参考值（Gemini 1.5 Pro 66.15%、Qwen2-Audio 55.4%）基于早期数据版本，当前数据属 `MMAU-v05.15.25` 修订版，不逐名次对比。
+- 详见[0037报告](../plans/0037-full-mini-evaluation/README.md)。
+
 ## bash贡献的配对结论
 
 仅后两轮为指定干预：保持2734c86、原persona/输出/题单，禁用bash。

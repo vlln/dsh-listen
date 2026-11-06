@@ -56,4 +56,6 @@
 
 | [0036 可安装插件](./0036-installable-plugin/README.md) | done / complete | 0.1.0 bundle、安装默认值修复、真实安装冒烟与负控、README结果化 |
 
+| [0037 官方千题](./0037-full-mini-evaluation/README.md) | done / complete | 官方MMAU-test-mini 1000题全量74.60%、官方scorer一致、子集与成本 |
+
 本索引不改写历史试验结果、不提升任何权威文档状态。

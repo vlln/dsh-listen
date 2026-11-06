@@ -8,13 +8,14 @@ import {experimentMatrix,conditions,experimentPlugins} from '../config/experimen
 import {createRun} from './create-run.mjs';
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const save=(file,data)=>fs.writeFile(file,JSON.stringify(data,null,2)+'\n',{flag:'wx',mode:0o600});
-export async function prepareExperiment({manifestPath,outputDirectory,workerHomes,modelPatchPath,audioConfig={}}){
+export async function prepareExperiment({manifestPath,outputDirectory,workerHomes,modelPatchPath,audioConfig={},expectedSamples=60}){
  if(!Array.isArray(workerHomes)||workerHomes.length!==10)throw Error('TEN_WORKER_HOMES_REQUIRED');
  const homes=await Promise.all(workerHomes.map(x=>fs.realpath(x)));if(new Set(homes).size!==10)throw Error('WORKER_HOMES_MUST_BE_DISTINCT');
  if(audioConfig.allowExternalAudio||audioConfig.asrEnabled&&audioConfig.asrMode!=='local')throw Error('LOCAL_EXTRACTORS_ONLY');
  if(audioConfig.mode&&audioConfig.mode!=='aggregate')throw Error('AGGREGATE_MODE_REQUIRED');
  const source=JSON.parse(await fs.readFile(manifestPath,'utf8'));
- if(!Array.isArray(source.samples)||source.samples.length!==60)throw Error('FIXED_SIXTY_REQUIRED');
+ if(!Number.isInteger(expectedSamples)||expectedSamples<1)throw Error('INVALID_EXPECTED_SAMPLES');
+ if(!Array.isArray(source.samples)||source.samples.length!==expectedSamples)throw Error(`SAMPLE_COUNT_MISMATCH: expected ${expectedSamples}, received ${source.samples?.length}`);
  const model=await fs.readFile(modelPatchPath,'utf8');
  const canonicalModel=await fs.readFile(new URL('../config/model.patch.yml',import.meta.url),'utf8');
  if(model.trim()!==canonicalModel.trim())throw Error('MODEL_ONLY_PATCH_REQUIRED');
@@ -53,7 +54,7 @@ export async function prepareExperiment({manifestPath,outputDirectory,workerHome
   metadata.experiment_contract_sha256=hash(JSON.stringify({experiment:metadata.experiment,preset_path:metadata.preset_path,overlay_path:metadata.overlay_path,worker_homes:metadata.worker_homes,concurrency:metadata.concurrency,session_timeout_ms:metadata.session_timeout_ms,frozen_files:metadata.frozen_files}));
   await fs.writeFile(runPath,JSON.stringify(metadata,null,2)+'\n',{mode:0o600});runs[condition]=run;
  }
- await save(path.join(root,'experiment.json'),{...experimentMatrix,commit,source_manifest_sha256:hash(await fs.readFile(manifestPath)),model_patch_sha256:hash(model),runs,approval:'preparation_only_not_authorized_to_execute',source_case_ids:cases.map(x=>x.id)});
+ await save(path.join(root,'experiment.json'),{...experimentMatrix,commit,sample_count:cases.length,expected_samples:expectedSamples,source_manifest_sha256:hash(await fs.readFile(manifestPath)),model_patch_sha256:hash(model),runs,approval:'preparation_only_not_authorized_to_execute',source_case_ids:cases.map(x=>x.id)});
  return {directory:root,runs};
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){

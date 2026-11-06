@@ -31,7 +31,7 @@ test('prepare frozen single-condition sixty-case experiment without inference or
  await assert.rejects(prepareExperiment({...settings,audioConfig:{mode:'split'}}),/AGGREGATE/);await assert.rejects(prepareExperiment({...settings,audioConfig:{asrEnabled:true}}),/LOCAL_EXTRACTORS/);
  await assert.rejects(prepareExperiment(settings),{code:'EEXIST'});await assert.rejects(prepareExperiment({...settings,workerHomes:[homes[0]]}),/TEN_WORKER/);await assert.rejects(prepareExperiment({...settings,workerHomes:Array(10).fill(homes[0])}),/DISTINCT/);await assert.rejects(prepareExperiment({...settings,audioConfig:{allowExternalAudio:true}}),/LOCAL_EXTRACTORS/);
  const bad=path.join(root,'bad.yml');await fs.writeFile(bad,'deepseek-official deepseek-flash plugins: []');await assert.rejects(prepareExperiment({...settings,modelPatchPath:bad}),/MODEL_ONLY/);
- const invalidManifest=path.join(root,'invalid.json');await fs.writeFile(invalidManifest,JSON.stringify({samples:samples.slice(1)}));await assert.rejects(prepareExperiment({...settings,manifestPath:invalidManifest}),/FIXED_SIXTY/);
+ const invalidManifest=path.join(root,'invalid.json');await fs.writeFile(invalidManifest,JSON.stringify({samples:samples.slice(1)}));await assert.rejects(prepareExperiment({...settings,manifestPath:invalidManifest}),/SAMPLE_COUNT_MISMATCH/);
  for(const [field,error] of [['task_sha256',/TASK_HASH_MISMATCH/],['audio_sha256',/AUDIO_HASH_MISMATCH/]]){
   await fs.writeFile(invalidManifest,JSON.stringify({samples:samples.map((row,i)=>i?row:{...row,[field]:'invalid'})}));
   await assert.rejects(prepareExperiment({...settings,manifestPath:invalidManifest,outputDirectory:path.join(root,field)}),error);

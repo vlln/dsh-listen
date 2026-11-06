@@ -6,6 +6,7 @@
 | [inspect-parquet.mjs](inspect-parquet.mjs) | 已有Parquet元数据检查 |
 | [audit-parquet.mjs](audit-parquet.mjs) | 缓存标注/媒体对应审计 |
 | [prepare-mmau.mjs](prepare-mmau.mjs) | 分区准备；依赖既有隔离Parquet reader环境 |
+| [prepare-mini-full.mjs](prepare-mini-full.mjs) | 解出test-mini全部1000题（媒体按LFS SHA256校验、题面用已核标注）；本地准备，不调模型不外发 |
 
 [媒体准入](../../../docs/evaluation/dataset-admission.md)记录版本与许可；历史固定题单准备器归[legacy](../../legacy/README.md)，不是新run自动安装/准备步骤。不能按Parquet物理行序混用标注版本，970封存子集不是官方1000题榜。
 

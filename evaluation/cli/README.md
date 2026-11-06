@@ -8,7 +8,7 @@
 | [run-batch.mjs](run-batch.mjs) | 校验输入后按固定worker pool执行，新run每题300000ms截止；历史600000ms元数据显式保留 |
 | [summarize-run.mjs](summarize-run.mjs) | 仅读结果及外部keys，导出本地汇总与官方评分输入 |
 | [audit-run-tools.mjs](audit-run-tools.mjs) | 离线工具错误与投影截断审计 |
-| [prepare-experiment.mjs](prepare-experiment.mjs) | 单一音频条件及配置/工作区冻结，不执行模型 |
+| [prepare-experiment.mjs](prepare-experiment.mjs) | 单一音频条件及配置/工作区冻结，不执行模型；`expectedSamples` 声明题量（默认60），1000题需显式传入 |
 | [analyze-experiment.mjs](analyze-experiment.mjs) | 盲态轨迹与评分后配对分析，分离输入 |
 | [measure-evidence.mjs](measure-evidence.mjs) | 本地合成PCM证据字节分解，不调用模型或估算token |
 
