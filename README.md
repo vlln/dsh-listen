@@ -8,9 +8,46 @@
 
 ## 在 MMAU 上的位置
 
-![MMAU test-mini 平均正确率对比](./docs/evaluation/mmau-leaderboard.svg)
+![MMAU test-mini 平均正确率](./docs/evaluation/mmau-leaderboard.svg)
 
-官方 `MMAU-test-mini` 1000 题全量，`deepseek-flash` 做推理、`dsh-listen` 提供证据，官方 Python scorer 给出 **74.60%（746/1000）**。在这张参照表里仅次于人类上界——但**不是同名次比较**：高亮行是 `MMAU-v05.15.25` 修订版数据 + 工具形态，其余是论文版本数据 + 音频模型端到端。细节与失败分析见[实测结果](#实测结果mmau)。
+官方 `MMAU-test-mini` 全量 1000 题，`deepseek-flash` 做推理、`dsh-listen` 提供证据，官方 Python scorer 给出 **74.60%（746/1000）**，在这张参照表里仅次于人类上界。表中其余行来自 [MMAU 论文](https://arxiv.org/abs/2410.19168)结果表的 Test-mini 列（含“纯文本 LLM + 人工字幕”这条与我们最接近的路线：GPT-4o 强字幕 57.30）。两组数字的数据版本与系统形态不同——我们用的是当前 `MMAU-v05.15.25` 修订版、以工具形态作答，论文行是早期版本、音频模型端到端——所以只作量级参照，不作为名次声明；详见[评测结果](./docs/evaluation/results.md)。
+
+分域看强弱项更清楚：
+
+![MMAU test-mini 分域正确率](./docs/evaluation/mmau-domains.svg)
+
+人声（Speech）是我们最强的一域：82.58，略高于论文报告的人类上界 82.17；环境声（Sound）72.97，音乐（Music）68.26 最弱。三域都明显高于论文中最好的其他系统（57.35 / 64.86 / 50.98）。逐题、逐技能与 18 个超时题的分析见[0037 运行记录](./docs/plans/0037-full-mini-evaluation/README.md)。
+
+## 设计
+
+只加**一个工具**（可选拆成四个），把"听"拆成 Agent 可以自己组合的原子操作：选特征、选时间窗、选显示方式，不用为每种问题准备一个问答模型。
+
+```mermaid
+flowchart TD
+  A["listen(path 或 attachment_id, features[], from, to)"] --> B{来源}
+  B -->|path| C[宿主 fs 解析 + 有界读取]
+  B -->|attachment_id| D[当前会话附件授权]
+  C --> E[ffmpeg 解码，保留原采样率与声道]
+  D --> E
+  E --> F[区间裁剪 from/to，单次 ≤60 s]
+  F --> G{按所选 features 分支}
+  G --> H[共享 FFT/时域计算 + 按特征缓存]
+  H --> I[证据装配：数值 + 单位 + 方法 + 实际参数 + coverage]
+  I --> J{选了 signal_image?}
+  J -->|是| K[渲染波形 + mel 声谱图，存为附件]
+  J -->|否| L[跳过渲染与制图统计]
+  I --> M[返回 evidence，图片以附件引用]
+```
+
+内部几条关键取舍：
+
+- **不接收问题**。工具不知道题面，只按参数返回测量结果；语义推理、要不要再听一遍，全在 Agent 侧。
+- **只算所选**。`features` 必填、无默认礼包；没选 `signal_image` 就不做制图统计，没选数值特征就不算频谱统计。
+- **失败隔离**。单个特征失败只让该键返回 `error` 状态，其他特征照常返回；缓存按"音频 sha256 + 区间 + 参数"分键，不会把不同区间或参数的结果混用。
+- **计算与呈现分离**。数值底层保留完整精度，送给模型时非整数用 5 位有效数字；返回里带单位、方法与实际生效参数，但不附固定免责声明或解释性引导。
+- **可组合的显示参数**。`spectral_detail` / `frequency_range_hz` / `channel_view` 只影响图像渲染；把它们用到纯数值请求上会被明确拒绝，而不是静默忽略。
+
+完整的参数语义与契约见 [设计基线](./docs/design/README.md)，各特征的实测边界见 [DSP 证据说明](./docs/guides/dsp-evidence.md)。
 
 ## 30 秒安装
 

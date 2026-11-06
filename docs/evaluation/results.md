@@ -55,7 +55,7 @@
 - 能力极值：`Temporal Reasoning` 19/56、`Emotion Flip Detection` 9/20、`Melodic Structure Interpretation` 16/33 最弱；`Key highlight Extraction` 21/21、`Multi Speaker Role Mapping` 27/27 最强。
 - 这是官方测试集全量自跑，不是榜单提交；榜单是对音频大模型的端到端评测，系统形态不同。论文时代参考值（Gemini 1.5 Pro 66.15%、Qwen2-Audio 55.4%）基于早期数据版本，当前数据属 `MMAU-v05.15.25` 修订版，不逐名次对比。
 - 详见[0037报告](../plans/0037-full-mini-evaluation/README.md)。
-- 首屏榜单图（[SVG](./mmau-leaderboard.svg)，由 `mmau-leaderboard.mjs` 生成）把本行与 MMAU 论文结果表 Test-mini 列放在一起，图内含版本/形态差异说明；论文数字仅供量级参照。
+- 首屏两张图（总榜 [SVG](./mmau-leaderboard.svg)、分域 [SVG](./mmau-domains.svg)，均由 `mmau-leaderboard.mjs` 生成）把本行与论文 Test-mini 列放在一起；图内只放标签与数值，版本/形态差异写在 README 正文。
 
 ## bash贡献的配对结论
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-listen",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "private": true,
   "type": "module",
   "description": "Give a text-only agent ears: the listen tool returns transcript, signal images and numeric audio evidence, without passing the question to the model",
@@ -10,7 +10,7 @@
   "main": "./src/index.mjs",
   "exports": { ".": "./src/index.mjs", "./package.json": "./package.json", "./cordis.patch.yml": "./cordis.patch.yml", "./locale/*.json": "./locale/*.json" },
   "icon": "./icon.svg",
-  "files": ["src", "cordis.patch.yml", "icon.svg", "locale", "LICENSE", "README.md", "docs/evaluation/mmau-leaderboard.svg"],
+  "files": ["src", "cordis.patch.yml", "icon.svg", "locale", "LICENSE", "README.md", "docs/evaluation/mmau-*.svg"],
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
   "scripts": {
     "test:infra": "node --test test/infra/*.test.mjs",

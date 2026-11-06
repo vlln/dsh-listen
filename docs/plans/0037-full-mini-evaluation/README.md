@@ -71,12 +71,12 @@ created: 2026-11-06T07:40:00Z
 
 ## 榜单图（README 首屏）
 
-`docs/evaluation/mmau-leaderboard.svg` 由 `docs/evaluation/mmau-leaderboard.mjs` 生成（`node docs/evaluation/mmau-leaderboard.mjs`）：
+两张图都由 `docs/evaluation/mmau-leaderboard.mjs` 生成（`node docs/evaluation/mmau-leaderboard.mjs`），图内只放标签与数值，解释文字在 README 正文：
 
-- 参照行取自 MMAU 论文（arXiv:2410.19168）结果表的 **Test-mini 平均正确率**列：Human 82.23、GPT-4o + strong captions 57.30、Gemini Pro v1.5 54.90、Llama-3-Ins + strong captions 52.10、Qwen2-Audio-Instruct 49.20、GPT-4o + weak captions 45.70、Qwen-Audio-Chat 43.10、SALAMONN 33.70、MuLLaMa 31.90、GAMA-IT 30.20、Random 26.00。
-- 本项目行为 74.60%（本页实测），图中高亮并标注“本项目”。
-- 图面自带两行说明：数据版本（论文版本 vs `MMAU-v05.15.25`）与系统形态（音频模型端到端 vs 文本模型 + 工具）不同，仅作量级参照。
-- 选 Test-mini 列而非 Test 列的原因：我们跑的是 test-mini 分片；BenchLM 等聚合站跟踪的是 9000 题 test 分片（答案不公开），两者不能并排。
+- `mmau-leaderboard.svg`：总分榜。参照行取自 MMAU 论文（arXiv:2410.19168）结果表 **Test-mini 平均正确率**列：Human 82.23、GPT-4o + strong captions 57.30、Gemini Pro v1.5 54.90、Llama-3-Ins + strong captions 52.10、Qwen2-Audio-Instruct 49.20、GPT-4o + weak captions 45.70、Qwen-Audio-Chat 43.10、SALAMONN 33.70、MuLLaMa 31.90、GAMA-IT 30.20、Random 26.00；本项目 74.60% 高亮。
+- `mmau-domains.svg`：分域三组柱，每组为 本项目 / 人类上界 / 论文最佳其他系统。论文最佳其他系统（Sound 57.35 / Speech 64.86 / Music 50.98）由脚本在论文行中取最大值，不手填。
+- 选 Test-mini 而非 Test 列的原因：我们跑的是 test-mini 分片；BenchLM 等聚合站跟踪 9000 题 test 分片（答案不公开），两者不能并排。
+- 版本与形态差异写在 README 正文与[评测结果](../../evaluation/results.md)，不在图内堆文字。
 
 ## 可比较边界
 
