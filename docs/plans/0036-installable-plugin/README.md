@@ -60,7 +60,7 @@ dsh-listen (dsh-listen): Error: cannot get property "fs" without inject
 
 持久私有 home `.work/station-0036/home`（web profile 已装最终 0.1.0 产物）、工作区 `.work/station-0036/workspace`、固定端口 **3187**（不碰 3080 主 GUI）。2026-11-06 启动的 URL 为 `http://127.0.0.1:3187/?token=iaIGIXY5QPuXr1qUrT1irNEUfKS4LCdqTPIbLYGVKjc`（token 每次重启重新生成，重启后从日志取）。启动日志无 `did not activate` / `failed to import`。启动日志在 `.work/station-0036/server.log`；URL 带一次性 token，每次重启重新生成，取日志里那一行。
 
-用户手动验收点：Plugins 页出现 **听音频 / Listen to Audio**（0.1.3 起；0.1.2 及更早叫 Audio evidence）且图标正确 → 新建会话让它 `listen` 一个本地音频 → 确认返回 `status: complete` 与声谱图。
+用户手动验收点：Plugins 页出现 **听声音 / Listen to Sound**（0.1.4 起；0.1.3 曾用 听音频 / Listen to Audio，0.1.2 及更早叫 Audio evidence）且图标正确 → 新建会话让它 `listen` 一个本地音频 → 确认返回 `status: complete` 与声谱图。
 
 ## README 里的评测结论
 
@@ -83,10 +83,10 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
 
 | 语言 | title | description |
 |---|---|---|
-| en | Listen to Audio | Agent tools that read audio: call listen for transcript, spectrogram, levels, spectrum, pitch and tempo. |
-| zh | 听音频 | 让 Agent 直接读音频：调用 listen 取转写、声谱图、电平、频谱、音高和节奏。 |
+| en | Listen to Sound | Help agents understand sound: the listen tool covers transcript, spectrogram, levels, spectrum, pitch and tempo. |
+| zh | 听声音 | 让 Agent 听懂声音：listen 工具帮助 Agent 转写、声谱图、电平、频谱、音高和节奏理解声音。 |
 
-复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.3 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
+复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.4 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
 
 ## 未做
 
