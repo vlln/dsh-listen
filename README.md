@@ -7,10 +7,10 @@
 ## 安装
 
 ```sh
-dsh plugin --profile web add github:vlln/dsh-listen
+dsh plugin --profile web add @vlln/dsh-listen
 ```
 
-要钉版本就加提交号，例如 `github:vlln/dsh-listen#4961c02`。装完重启 `dsh web`；Plugins 页里同样填这个地址。
+装完重启 `dsh web`；Plugins 页里填同一个包名。
 
 前置：Node 22+、`dsh` 0.2.1-rc.5、本机有 `ffmpeg`/`ffprobe`。卸载：`dsh plugin --profile web remove dsh-listen`。
 
@@ -112,7 +112,7 @@ flowchart LR
 ## 插件管理
 
 ```sh
-dsh plugin --profile web add github:vlln/dsh-listen    # 装或升级
+dsh plugin --profile web add @vlln/dsh-listen          # 装或升级
 dsh plugin --profile web remove dsh-listen             # 卸载
 dsh --profile web --dump-config | grep -A6 dsh-listen  # 看生效配置
 ```

@@ -36,7 +36,7 @@ export async function checkBundle(pkg,root='.'){
  if(!/\.(svg|png|jpe?g|webp)$/i.test(icon))throw Error('BUNDLE_ICON_FORMAT');
  const info=await stat(target);if(info.size>256*1024)throw Error('BUNDLE_ICON_TOO_LARGE');
  if(icon.endsWith('.svg')){const text=await readFile(target,'utf8');if(!/^<svg[\s>]/.test(text.trim())||/<script|<image|xlink:href=|href="https?:/.test(text)||/currentColor/.test(text))throw Error('BUNDLE_ICON_NOT_SELF_CONTAINED');}
- const patchText=await readFile(path.resolve(root,patch),'utf8');if(!patchText.includes(`name: ${pkg.name}`))throw Error('BUNDLE_PATCH_NAME_MISMATCH');
+ const patchText=await readFile(path.resolve(root,patch),'utf8'),namePattern=new RegExp(`name:\\s*['\"]?${pkg.name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}['\"]?`);if(!namePattern.test(patchText))throw Error('BUNDLE_PATCH_NAME_MISMATCH');
  for(const locale of ['locale/en.json','locale/zh.json']){const data=JSON.parse(await readFile(path.resolve(root,locale),'utf8'));if(typeof data?.meta?.title!=='string'||!data.meta.title)throw Error(`BUNDLE_LOCALE_TITLE: ${locale}`);}
  return {patch,icon:info.size};
 }

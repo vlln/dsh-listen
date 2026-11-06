@@ -4,7 +4,7 @@
 # sandboxed or remote filesystem and you cannot read resolved paths in this process.
 - insert:
     - id: dsh-listen
-      name: dsh-listen
+      name: '@vlln/dsh-listen'
       config:
         scratch: !!js dshHomePath('data', 'dsh-listen', 'scratch')
         mode: aggregate

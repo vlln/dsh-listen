@@ -98,6 +98,16 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
   - 站点 web profile 从同一 git 源安装并重启：启动无激活失败，`readPluginMeta` 解析出「听声音 / Listen to Sound」。
 - 一处踩坑：站点 profile 里残留旧的**绝对路径 tarball 依赖**（迁移前打的 `.work/0041/...tgz`），移动后该路径失效，`dsh plugin add` 报的是 `prepare`/`allowBuilds` 的通用诊断，实际原因是死链；先 `remove` 再 `add` 即可。给用户装包时不要留旧的 file: 依赖。
 
+## 改名到 npm scope（2026-11-06）
+
+`dsh-listen` 在 npm 上已被他人占用（0.0.1 占位），改发 `@vlln/dsh-listen`：
+
+- `package.json`：`name` 改 scoped、去掉 `private`、加 `publishConfig.access=public`。
+- `cordis.patch.yml`：insert 行的 `name:` 改为 `'@vlln/dsh-listen'`（`id: dsh-listen` 与 `config.id` 语义不变）。
+- `scripts/gates.mjs`：`checkBundle` 允许 patch 里包名带引号。
+- 复测：`npm run check` 通过；`test:infra` 15/15；覆盖率门禁 300 通过；scoped tarball 独立进程安装后 stock 与 preset 两种装配的会话都 `listen` completed。
+- 评测 harness（`evaluation/config/*`）仍写 `name: dsh-listen`，对应历史批次；新批次要显式改成 `@vlln/dsh-listen`。
+
 ## 未做
 
 - 版本后续升到 `0.1.1`（README 加榜单图，`files` 增加 `docs/evaluation/mmau-leaderboard.svg`，tarball 48,823 字节）。
