@@ -88,6 +88,16 @@ README 增“实测结果（MMAU）”一节：四批固定 60 题（0032/0034a/
 
 复核：`readPluginMeta` 从安装后的 profile 解析出上面两组文案；独立进程重装 0.1.5 后两次会话 `listen` 均 completed；隔离 web 进程重装后启动无激活失败。
 
+## 发布（2026-11-06）
+
+- 迁移到 `Projects/DshPlugins/dsh-listen`，连同 `.work`（旧冻结run里的绝对路径随之失效，重放前要重建 worker home）。
+- 公开仓库 `https://github.com/vlln/dsh-listen`（`gh repo create vlln/dsh-listen --public`），推送 `main` 与 `develop`，默认分支 `main`，topics：`dsh-plugin` `deepseek-harness` `audio` `speech` `tool`。实验分支仍只在本地。
+- 安装通道验证：
+  - 钉提交：`dsh plugin --profile headless add github:vlln/dsh-listen#4961c02` → 0.1.5 装入，`src` 一致，两次真实会话 `listen` completed。
+  - 新 web profile：`dsh plugin --profile web add github:vlln/dsh-listen#c4dabf5` → 干净安装，无需 `allowBuilds`（包没有 `prepare`/`postinstall`）。
+  - 站点 web profile 从同一 git 源安装并重启：启动无激活失败，`readPluginMeta` 解析出「听声音 / Listen to Sound」。
+- 一处踩坑：站点 profile 里残留旧的**绝对路径 tarball 依赖**（迁移前打的 `.work/0041/...tgz`），移动后该路径失效，`dsh plugin add` 报的是 `prepare`/`allowBuilds` 的通用诊断，实际原因是死链；先 `remove` 再 `add` 即可。给用户装包时不要留旧的 file: 依赖。
+
 ## 未做
 
 - 版本后续升到 `0.1.1`（README 加榜单图，`files` 增加 `docs/evaluation/mmau-leaderboard.svg`，tarball 48,823 字节）。
